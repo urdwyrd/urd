@@ -6,6 +6,8 @@
 
 Define in Urd. Test in Wyrd. Ship anywhere.
 
+In Norse mythology, Urð is the Norn of fate — the keeper of what is and what was. The schema that defines the world. Wyrd, its Old English cognate, is destiny unfolding — what happens. The runtime that executes it.
+
 ---
 
 > ⚠️ **Nothing here is set in stone.** This project is early and in motion. Designs will be revised. Assumptions will be proven wrong. Entire approaches may be scrapped and rebuilt from scratch. Like any good roguelike, death is not a bug — it's a mechanic. Each failed run carries forward what was learned.
@@ -129,6 +131,8 @@ Follow the build at **[urd.dev](https://urd.dev)**.
 
 - **[urd.dev](https://urd.dev)** — Development journal. Transparent progress, technical artifacts.
 - **[urd.world](https://urd.world)** — Product face. Schema docs, live demos, getting started.
+
+Both sites are coming soon. Their source will live in this repo.
 
 ## License
 
