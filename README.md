@@ -1,6 +1,6 @@
 ![Urd](.github/assets/banner.png)
 
-# URd
+# URD & WYRD
 
 **A declarative schema system for interactive worlds**
 
