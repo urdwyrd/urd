@@ -1,4 +1,6 @@
-# Urd
+![Urd](.github/assets/banner.png)
+
+# URd
 
 **A declarative schema system for interactive worlds**
 
