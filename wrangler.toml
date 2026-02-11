@@ -1,0 +1,3 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "urd-dev"
+pages_build_output_dir = "sites/urd.dev/dist"
