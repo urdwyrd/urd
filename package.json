@@ -1,5 +1,6 @@
 {
   "private": true,
+  "packageManager": "pnpm@10.29.2",
   "scripts": {
     "dev": "pnpm --filter urd.dev dev",
     "build": "pnpm --filter urd.dev build",
