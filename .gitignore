@@ -1,0 +1,13 @@
+# Node / JS
+node_modules/
+dist/
+.astro/
+
+# Rust (for later)
+target/
+Cargo.lock
+
+# General
+.env
+.DS_Store
+*.log
