@@ -9,8 +9,15 @@ Cargo.lock
 
 # General
 .env
+.env.*
 .DS_Store
+Thumbs.db
 *.log
+*.tsbuildinfo
+
+# Cloudflare
+.wrangler/
+.dev.vars
 
 # Editor / AI tooling
 .claude/
