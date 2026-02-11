@@ -1,0 +1,240 @@
+---
+import Base from "../layouts/base.astro";
+---
+
+<Base title="Urd · Define worlds">
+  <canvas id="rune-canvas" aria-hidden="true"></canvas>
+
+  <main class="hero">
+    <div class="hero-content">
+      <h1 class="wordmark">
+        <span class="wordmark-urd">URD</span>
+        <span class="wordmark-sep">·</span>
+        <span class="wordmark-wyrd">WYRD</span>
+      </h1>
+
+      <p class="tagline">Define in Urd. Test in Wyrd. Ship Anywhere.</p>
+
+      <p class="description">
+        A declarative schema system for interactive worlds — author in
+        Schema Markdown, compile to JSON, run everywhere.
+      </p>
+
+      <p class="coming-soon">Coming soon</p>
+
+      <a
+        href="https://github.com/urdwyrd/urd"
+        class="github-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        View on GitHub <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+  </main>
+
+  <script>
+    const RUNES = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛝᛟᛞ";
+    const RUNE_COUNT = 25;
+    const MAX_OPACITY = 0.05;
+
+    interface Rune {
+      char: string;
+      x: number;
+      y: number;
+      size: number;
+      speed: number;
+      phase: number;
+      breathSpeed: number;
+    }
+
+    function createRune(canvasHeight: number, canvasWidth: number): Rune {
+      return {
+        char: RUNES[Math.floor(Math.random() * RUNES.length)],
+        x: Math.random() * canvasWidth,
+        y: Math.random() * canvasHeight,
+        size: 14 + Math.random() * 18,
+        speed: 0.15 + Math.random() * 0.35,
+        phase: Math.random() * Math.PI * 2,
+        breathSpeed: 0.3 + Math.random() * 0.4,
+      };
+    }
+
+    function initRuneCanvas(): void {
+      const canvas = document.getElementById("rune-canvas") as HTMLCanvasElement | null;
+      if (!canvas) return;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
+
+      let width = window.innerWidth;
+      let height = window.innerHeight;
+
+      function resize(): void {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas!.width = width;
+        canvas!.height = height;
+      }
+
+      resize();
+      window.addEventListener("resize", resize);
+
+      const runes: Rune[] = Array.from({ length: RUNE_COUNT }, () =>
+        createRune(height, width)
+      );
+
+      if (prefersReducedMotion) {
+        // Static render — no animation
+        ctx.font = "16px Georgia, serif";
+        ctx.fillStyle = `rgba(218, 184, 96, ${MAX_OPACITY})`;
+        for (const rune of runes) {
+          ctx.font = `${rune.size}px Georgia, serif`;
+          ctx.fillText(rune.char, rune.x, rune.y);
+        }
+        return;
+      }
+
+      let time = 0;
+
+      function draw(): void {
+        ctx!.clearRect(0, 0, width, height);
+        time += 0.016;
+
+        for (const rune of runes) {
+          rune.y -= rune.speed;
+
+          // Wrap around when rune drifts above viewport
+          if (rune.y < -30) {
+            rune.y = height + 30;
+            rune.x = Math.random() * width;
+          }
+
+          // Breathing opacity via sine wave
+          const breath = (Math.sin(time * rune.breathSpeed + rune.phase) + 1) / 2;
+          const opacity = breath * MAX_OPACITY;
+
+          ctx!.font = `${rune.size}px Georgia, serif`;
+          ctx!.fillStyle = `rgba(218, 184, 96, ${opacity})`;
+          ctx!.fillText(rune.char, rune.x, rune.y);
+        }
+
+        requestAnimationFrame(draw);
+      }
+
+      requestAnimationFrame(draw);
+    }
+
+    initRuneCanvas();
+  </script>
+</Base>
+
+<style>
+  #rune-canvas {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .hero {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .hero-content {
+    max-width: 640px;
+    animation: fadeUp 0.6s ease-out both;
+  }
+
+  .wordmark {
+    font-family: var(--wordmark);
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+    margin-bottom: 1.5rem;
+  }
+
+  .wordmark-urd {
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .wordmark-sep {
+    color: var(--faint);
+    margin: 0 0.15em;
+  }
+
+  .wordmark-wyrd {
+    background: linear-gradient(135deg, var(--purple-light), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .tagline {
+    font-family: var(--display);
+    font-size: clamp(1.1rem, 3vw, 1.4rem);
+    font-weight: 300;
+    color: var(--dim);
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.01em;
+  }
+
+  .description {
+    font-family: var(--body);
+    font-size: clamp(1rem, 2.5vw, 1.15rem);
+    color: var(--faint);
+    line-height: 1.7;
+    margin-bottom: 2rem;
+  }
+
+  .coming-soon {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 2rem;
+  }
+
+  .github-link {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--gold);
+    text-decoration: none;
+    padding: 0.6em 1.4em;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .github-link:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold-light);
+  }
+
+  .github-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+</style>

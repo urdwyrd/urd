@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+/* ── Gloaming Theme ── */
+:root {
+  /* Surface */
+  --bg: #0e0f16;
+  --raise: #14151e;
+  --deep: #0a0a12;
+  --surface: #1a1b25;
+  --border: #28273a;
+  --border-light: #353348;
+
+  /* Text */
+  --text: #f2ece0;
+  --dim: #d4cbb8;
+  --faint: #9e9585;
+
+  /* Brand + Category Colours */
+  --gold: #dab860;
+  --gold-light: #f0d78c;
+  --gold-dim: #a08a58;
+  --gold-dark: #5a4e35;
+
+  --purple: #b090dd;
+  --purple-light: #ccb0f0;
+  --purple-dim: #1f1530;
+
+  --blue: #6a9acc;
+  --blue-light: #90bbdd;
+  --blue-dim: #1a2535;
+
+  --green: #70b080;
+  --green-light: #a0d8aa;
+  --green-dim: #1a2a1f;
+
+  --amber: #cc7a3a;
+  --amber-light: #e8a060;
+  --amber-dim: #2a1a10;
+
+  --rose: #cc8888;
+  --rose-dim: #2a1515;
+
+  /* Document taxonomy (maps category → colour) */
+  --doc-research: var(--rose);
+  --doc-research-dim: var(--rose-dim);
+  --doc-contract: var(--gold);
+  --doc-contract-dim: #1e1a0e;
+  --doc-authoring: var(--blue);
+  --doc-authoring-dim: var(--blue-dim);
+  --doc-architecture: var(--amber);
+  --doc-architecture-dim: var(--amber-dim);
+  --doc-runtime: var(--purple);
+  --doc-runtime-dim: var(--purple-dim);
+  --doc-validation: var(--green);
+  --doc-validation-dim: var(--green-dim);
+
+  /* Typography */
+  --wordmark: "Georgia", "Times New Roman", serif;
+  --display: "Outfit", "Helvetica Neue", sans-serif;
+  --body: "Source Serif 4", "Georgia", serif;
+  --mono: "JetBrains Mono", "Consolas", monospace;
+}
+
+/* ── Base Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--body);
+  font-size: 20px;
+  line-height: 1.6;
+  color: var(--text);
+  background-color: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Animations ── */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
