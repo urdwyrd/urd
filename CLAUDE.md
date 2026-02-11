@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Important Note: The production code will run in a hospital
+**Important: The production code will run in a hospital.** Urd and Wyrd will be used as a clinical narrative and decision support layer that sits between raw medical systems and the humans who must make treatment decisions. Code quality, correctness, and safety are not aspirational — they are mandatory.
 
 ## Project
 
