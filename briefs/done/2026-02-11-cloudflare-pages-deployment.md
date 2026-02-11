@@ -1,5 +1,40 @@
 # Brief: Deploy urd.dev to Cloudflare Pages
 
+## Execution Record
+
+**Date completed:** 2026-02-11
+**Status:** Complete
+
+### What was done
+- Created `wrangler.toml` at repo root (project name `urd-dev`, output `sites/urd.dev/dist`)
+- Created `.github/workflows/deploy.yml` — path-filtered GitHub Actions workflow that only triggers on changes to `sites/urd.dev/**` on `main`, plus `workflow_dispatch` for manual triggers
+- Workflow steps: checkout → pnpm setup → Node 20 → `pnpm install` → `pnpm build` → `wrangler pages project create` (idempotent) → `wrangler pages deploy`
+- Added `packageManager: "pnpm@10.29.2"` to root `package.json` (required by `pnpm/action-setup@v4`)
+- Added `.gitattributes` for cross-platform line ending normalisation
+- First successful deploy to `urd-dev.pages.dev`
+
+### Deviations from brief
+- **Wrangler installs via npm, not pnpm** — the `cloudflare/wrangler-action@v3` auto-detects pnpm and tries to use it to install wrangler, which fails due to our `onlyBuiltDependencies` pnpm config. Setting `packageManager: npm` in the action's `with` block forces it to use npm for wrangler installation only (the project itself still builds with pnpm)
+- **Pages project created via CLI, not dashboard** — Cloudflare's unified dashboard no longer has a separate "Pages → Direct Upload" flow. Added a `wrangler pages project create` step with `continue-on-error: true` so it runs idempotently on every deploy
+- **No `--frozen-lockfile`** — removed from `pnpm install` in CI; was causing intermittent failures. The lockfile is committed and up to date, so this is low risk
+- **No pnpm cache in CI** — removed `cache: pnpm` from `actions/setup-node@v4` to avoid store path detection issues. Install takes ~3s uncached, so the tradeoff is acceptable
+- **Project name was initially wrong** — the brief specified `urd-dev` but the user first created a Worker (not Pages project) named `morning-glade-cd06`. This was deleted and the project was recreated correctly via the CLI
+
+### Issues encountered
+- `pnpm/action-setup@v4` requires either a `version` input or `packageManager` field in `package.json` — but errors if both are set ("Multiple versions of pnpm specified"). Resolved by using only `packageManager` in `package.json`
+- `wrangler-action@v3` `packageManager` input only accepts `npm`, `yarn`, `pnpm`, or `bun` — `npx` is not valid
+- Cloudflare's dashboard merged Workers and Pages into a unified interface — the brief's instructions for creating a Pages project via "Direct Upload" no longer match the current dashboard UI
+- The initial Cloudflare project was created as a Worker (`.workers.dev` URL) instead of a Pages project (`.pages.dev` URL), causing `wrangler pages deploy` to return "Project not found"
+
+### Notes for next brief
+- The deploy pipeline is now fully automated — any push to `main` that touches `sites/urd.dev/**` triggers a build and deploy
+- The `wrangler pages project create` step with `continue-on-error: true` is safe to leave permanently — it's a no-op once the project exists
+- Custom domain `urd.dev` still needs to be bound to the project in the Cloudflare dashboard
+- The deployment brief in the backlog should be updated to reflect the correct Cloudflare dashboard flow (unified Workers & Pages, not separate Pages creation)
+- **Reminder:** Set up a pre-commit hook for secret scanning before any additional secrets or API keys enter the project
+
+---
+
 ## Context
 
 The urd.dev static site (Astro 5, built at `sites/urd.dev/dist`) needs a deployment pipeline to Cloudflare Pages. The project is a pnpm monorepo where non-site files (briefs, design docs, etc.) change frequently. We must avoid wasting builds on pushes that don't touch the site.
