@@ -11,3 +11,6 @@ Cargo.lock
 .env
 .DS_Store
 *.log
+
+# Editor / AI tooling
+.claude/
