@@ -1,0 +1,13 @@
+# gitleaks configuration
+# https://github.com/gitleaks/gitleaks
+
+title = "urd repo gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+  paths = [
+    '''briefs/.*\.md''',
+    '''\.gitleaks\.toml''',
+  ]

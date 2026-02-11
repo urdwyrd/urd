@@ -4,9 +4,16 @@
   "scripts": {
     "dev": "pnpm --filter urd.dev dev",
     "build": "pnpm --filter urd.dev build",
-    "preview": "pnpm --filter urd.dev preview"
+    "preview": "pnpm --filter urd.dev preview",
+    "prepare": "husky"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild", "sharp"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "sharp"
+    ]
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
   }
 }
