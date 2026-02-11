@@ -4,21 +4,37 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:** Complete | Partial | Blocked
+**Date completed:** 2026-02-11
+**Status:** Complete
 
 ### What was done
-- (List what was actually built, committed, and configured)
+- Created monorepo directory structure: `design/themes/gloaming/`, `design/themes/parchment/`, `docs/`, `packages/`, `sites/urd.dev/` with `.gitkeep` files for empty directories
+- Set up pnpm workspace (`pnpm-workspace.yaml` covering `sites/*` and `packages/*`)
+- Root `package.json` (private, with `dev`/`build`/`preview` scripts filtering to urd.dev)
+- `.gitignore` covering Node, Rust, and general artifacts
+- Scaffolded Astro 5 project at `sites/urd.dev/` with TypeScript strict mode
+- Installed Tailwind CSS v4 (via `@tailwindcss/vite` plugin), Svelte 5 integration (`@astrojs/svelte`)
+- Full Gloaming theme CSS custom properties: surface, text, brand/category colours, document taxonomy mapping
+- Typography system: Google Fonts loaded via `<link>` (Outfit, Source Serif 4, JetBrains Mono), Georgia for wordmark
+- Coming Soon page at `/` with gradient wordmark (URD · WYRD), tagline, description, GitHub link
+- Rune canvas: ~25 Elder Futhark runes drifting upward with sine-wave breathing opacity (max 0.05), respects `prefers-reduced-motion`
+- SVG favicon with gold "U" on dark background
+- Static build output verified — `pnpm build` produces `dist/` ready for Cloudflare Pages
 
 ### Deviations from brief
-- (Anything that diverged from the plan, and why)
+- Used `@tailwindcss/vite` plugin directly instead of `@astrojs/tailwind` integration — `@astrojs/tailwind` does not support Tailwind CSS v4. The Vite plugin is the official Tailwind v4 approach and works identically with Astro
+- Google Fonts loaded via `<link>` tags in the HTML head rather than CSS `@import` — CSS `@import url()` after `@import "tailwindcss"` triggers a spec-violation warning. The `<link>` approach is the recommended pattern and includes `preconnect` hints for performance
 
 ### Issues encountered
-- (Problems hit during execution, workarounds applied)
+- `pnpm` was not installed globally — resolved by running `npm install -g pnpm`
+- `pnpm approve-builds` is interactive and could not be completed non-interactively — resolved by adding `pnpm.onlyBuiltDependencies` to the root `package.json` to allowlist esbuild and sharp
+- CRLF line ending warnings from Git on Windows — cosmetic only, does not affect functionality
 
 ### Notes for next brief
-- (Observations, suggestions, things noticed that should inform future work)
-- **Reminder:** Set up a pre-commit hook for secret scanning (e.g., `git-secrets` or `secretlint`) before any deployment configuration or API keys enter the project. GitHub's built-in secret scanning is active on public repos, but a local hook catches mistakes before they're pushed.
+- The Svelte integration is installed but has no islands yet — the only client JS is the vanilla rune canvas script. The Svelte runtime chunk (`client.svelte.*.js`, ~22KB gzipped ~9KB) is included by Astro automatically; consider whether to defer Svelte installation until the first island is actually needed to save bundle size
+- The `design/` directories are empty and awaiting manual placement of design brief files
+- The `docs/` directory is empty and awaiting markdown conversion of the .docx design documents
+- **Reminder:** Set up a pre-commit hook for secret scanning (e.g., `git-secrets` or `secretlint`) before any deployment configuration or API keys enter the project. GitHub's built-in secret scanning is active on public repos, but a local hook catches mistakes before they're pushed
 
 ---
 
