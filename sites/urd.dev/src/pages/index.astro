@@ -1,5 +1,7 @@
 ---
 import Base from "../layouts/base.astro";
+import urdLogo from "../assets/logos/urd-logo-dark.svg?raw";
+import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
 ---
 
 <Base title="Urd · Define Worlds">
@@ -8,9 +10,15 @@ import Base from "../layouts/base.astro";
   <main class="hero">
     <div class="hero-content">
       <h1 class="wordmark">
-        <span class="wordmark-urd">URD</span>
-        <span class="wordmark-sep">·</span>
-        <span class="wordmark-wyrd">WYRD</span>
+        <span class="wordmark-half">
+          <span class="logo logo-urd" aria-hidden="true" set:html={urdLogo} />
+          <span class="wordmark-urd">URD</span>
+        </span>
+
+        <span class="wordmark-half">
+          <span class="logo logo-wyrd" aria-hidden="true" set:html={wyrdLogo} />
+          <span class="wordmark-wyrd">WYRD</span>
+        </span>
       </h1>
 
       <p class="tagline">Define in Urd. Test in Wyrd. Ship Anywhere.</p>
@@ -160,8 +168,12 @@ import Base from "../layouts/base.astro";
   }
 
   .wordmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(1.5rem, 4vw, 3rem);
     font-family: var(--wordmark);
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
     font-weight: 400;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -169,16 +181,29 @@ import Base from "../layouts/base.astro";
     margin-bottom: 1.5rem;
   }
 
+  .wordmark-half {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .logo {
+    width: clamp(80px, 16vw, 160px);
+    height: clamp(80px, 16vw, 160px);
+    opacity: 0.85;
+  }
+
+  .logo :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
   .wordmark-urd {
     background: linear-gradient(135deg, var(--gold-light), var(--gold));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-  }
-
-  .wordmark-sep {
-    color: var(--faint);
-    margin: 0 0.15em;
   }
 
   .wordmark-wyrd {

@@ -1,0 +1,21 @@
+{
+  "name": "Urd",
+  "short_name": "Urd",
+  "description": "Define in Urd. Test in Wyrd. Ship Anywhere.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e0f16",
+  "theme_color": "#0e0f16",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
