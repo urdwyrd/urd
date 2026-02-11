@@ -1,0 +1,2 @@
+# Normalise line endings to LF on checkout (cross-platform consistency)
+* text=auto eol=lf
