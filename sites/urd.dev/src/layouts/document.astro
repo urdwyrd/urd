@@ -1,0 +1,282 @@
+---
+import Base from "./base.astro";
+import Nav from "../components/Nav.astro";
+
+interface TocEntry {
+  depth: number;
+  text: string;
+  id: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  category: string;
+  format: string;
+  date: string;
+  status: string;
+  toc: TocEntry[];
+  colour: string;
+}
+
+const MONTHS: Record<string, string> = {
+  "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr",
+  "05": "May", "06": "Jun", "07": "Jul", "08": "Aug",
+  "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec",
+};
+
+const { title, description, category, format, date, status, toc, colour } = Astro.props;
+
+const [year, month] = date.split("-");
+const displayDate = `${MONTHS[month] ?? month} ${year}`;
+---
+
+<Base title={`${title} · Urd`} description={description}>
+  <Nav />
+
+  <div class="doc-page">
+    <aside class="doc-toc" aria-label="Table of contents">
+      <div class="doc-toc-panel">
+        <p class="doc-toc-heading">Contents</p>
+        <ol class="doc-toc-list">
+          {toc.map((entry) => (
+            <li class:list={[`depth-${entry.depth}`]}>
+              <a href={`#${entry.id}`} class="doc-toc-link">{entry.text}</a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </aside>
+
+    <article class="doc-content">
+      <header class="doc-header">
+        <div class="doc-header-meta">
+          <span class="doc-header-pill" style={`--pill-colour: ${colour}`}>{format}</span>
+          <span class="doc-header-category">{category}</span>
+          <span class="doc-header-date">{displayDate}</span>
+          <span class="doc-header-status">{status}</span>
+        </div>
+        <h1 class="doc-title">{title}</h1>
+        <p class="doc-description">{description}</p>
+      </header>
+
+      <div class="prose">
+        <slot />
+      </div>
+    </article>
+  </div>
+
+  <script>
+    const tocLinks = document.querySelectorAll('.doc-toc-link');
+    const headings = document.querySelectorAll('.prose h2[id], .prose h3[id]');
+
+    if (tocLinks.length > 0 && headings.length > 0) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              const id = entry.target.id;
+              tocLinks.forEach((link) => {
+                link.classList.toggle(
+                  'active',
+                  link.getAttribute('href') === `#${id}`
+                );
+              });
+            }
+          }
+        },
+        { rootMargin: '0px 0px -80% 0px' }
+      );
+
+      for (const heading of headings) {
+        observer.observe(heading);
+      }
+    }
+  </script>
+</Base>
+
+<style>
+  /* ── Page Grid ── */
+  .doc-page {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 48px 32px;
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    gap: 48px;
+  }
+
+  /* ── TOC Sidebar ── */
+  .doc-toc-panel {
+    position: sticky;
+    top: 24px;
+    background: var(--raise);
+    border-radius: 8px;
+    padding: 20px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-shadow:
+      inset 1px 1px 0 rgba(255, 255, 255, 0.03),
+      inset -1px 0 0 rgba(0, 0, 0, 0.3),
+      2px 0 8px rgba(0, 0, 0, 0.3);
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-light) transparent;
+  }
+
+  .doc-toc-panel::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .doc-toc-panel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .doc-toc-panel::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 3px;
+  }
+
+  .doc-toc-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--faint);
+  }
+
+  .doc-toc-heading {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-toc-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .doc-toc-link {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    text-decoration: none;
+    display: block;
+    padding: 4px 10px;
+    border-left: 2px solid transparent;
+    border-radius: 2px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    line-height: 1.4;
+  }
+
+  .doc-toc-link:hover,
+  .doc-toc-link.active {
+    color: var(--gold);
+    border-left-color: var(--gold);
+  }
+
+  .depth-3 .doc-toc-link.active {
+    color: var(--gold-dim);
+    border-left-color: var(--gold-dim);
+  }
+
+  .doc-toc-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+    border-radius: 2px;
+  }
+
+  .depth-3 .doc-toc-link {
+    font-size: 11px;
+    padding-left: 24px;
+    color: var(--faint);
+    opacity: 0.8;
+  }
+
+  /* ── Document Header ── */
+  .doc-header {
+    margin-bottom: 40px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+
+  .doc-header-pill {
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--pill-colour);
+    background: color-mix(in srgb, var(--pill-colour) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--pill-colour) 20%, transparent);
+    border-radius: 4px;
+    padding: 2px 8px;
+    line-height: 1.6;
+  }
+
+  .doc-header-category {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--faint);
+  }
+
+  .doc-header-date,
+  .doc-header-status {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+  }
+
+  .doc-title {
+    font-family: var(--display);
+    font-size: clamp(26px, 4vw, 36px);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin-bottom: 12px;
+  }
+
+  .doc-description {
+    font-family: var(--body);
+    font-size: 18px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 980px) {
+    .doc-page {
+      grid-template-columns: 1fr;
+      padding: 32px 18px;
+      gap: 32px;
+    }
+
+    .doc-toc-panel {
+      position: static;
+      max-height: none;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .doc-page {
+      padding: 24px 16px;
+      gap: 24px;
+    }
+  }
+</style>

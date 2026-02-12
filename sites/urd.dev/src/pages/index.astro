@@ -1,10 +1,13 @@
 ---
 import Base from "../layouts/base.astro";
+import Nav from "../components/Nav.astro";
 import urdLogo from "../assets/logos/urd-logo-dark.svg?raw";
 import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
+import DocumentExplorer from "../components/DocumentExplorer.svelte";
 ---
 
 <Base title="Urd · Define Worlds">
+  <Nav />
   <canvas id="rune-canvas" aria-hidden="true"></canvas>
 
   <main class="hero">
@@ -28,7 +31,7 @@ import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
         Schema Markdown, compile to JSON, run everywhere.
       </p>
 
-      <p class="coming-soon">Coming soon</p>
+
 
       <a
         href="https://github.com/urdwyrd/urd"
@@ -40,6 +43,10 @@ import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
       </a>
     </div>
   </main>
+
+  <section id="documents" class="documents-section">
+    <DocumentExplorer client:visible />
+  </section>
 
   <script>
     const RUNES = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛝᛟᛞ";
@@ -157,8 +164,7 @@ import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
+    padding: 4rem 2rem;
     text-align: center;
   }
 
@@ -230,16 +236,6 @@ import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
     margin-bottom: 2rem;
   }
 
-  .coming-soon {
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    font-weight: 400;
-    color: var(--gold-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin-bottom: 2rem;
-  }
-
   .github-link {
     display: inline-block;
     font-family: var(--display);
@@ -261,5 +257,12 @@ import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
   .github-link:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
+  }
+
+  .documents-section {
+    position: relative;
+    z-index: 1;
+    padding: 48px 0 96px;
+    border-top: 1px solid var(--border);
   }
 </style>

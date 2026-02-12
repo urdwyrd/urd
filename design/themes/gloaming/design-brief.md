@@ -410,19 +410,23 @@ quiet aliveness — the site breathes, it doesn't dance.
 
 ## 7. Document Taxonomy
 
-Six categories, each mapped to a system architecture component.
-Full specification in `urd-document-taxonomy.md`.
+Seven categories, each mapped to a system architecture component or
+cross-cutting concern. Full specification in `urd-document-taxonomy.md`.
 
 ```
  Category       Colour    Meaning
  ─────────────  ────────  ─────────────────────────────────
  Research       Rose      Pre-architecture discovery
+ Strategy       Gold      Product vision, roadmap, positioning
  Contract       Gold      The .urd.json data model
  Authoring      Blue      Writer Mode / input layer
  Architecture   Amber     Compiler + system design
  Runtime        Purple    Wyrd execution engine
  Validation     Green     Testing framework
 ```
+
+Strategy shares gold with Contract — both define "what Urd is" at
+different levels of abstraction.
 
 Every document on the site gets a pill badge in its category colour.
 Filter buttons in the Deep Dives section correspond to these categories.

@@ -5,12 +5,13 @@ architecture diagram's existing component colors.
 
 ---
 
-## The Six Categories
+## The Seven Categories
 
-Each category maps directly to a zone in the system architecture diagram.
-Every document produced belongs to exactly one category.
+Each category maps to a zone in the system architecture diagram or to a
+cross-cutting concern. Every document produced belongs to exactly one
+category.
 
-The six base hues below are canonical — derived from the architecture
+The base hues below are canonical — derived from the architecture
 diagram and invariant across themes. Themes may adjust saturation and
 lightness for their surface palette, but the hue identity is fixed.
 
@@ -23,7 +24,13 @@ lightness for their surface palette, but the hue identity is fixed.
  Architecture   Amber           #cc7a3a     Compiler + system design
  Runtime        Purple          #b090dd     Wyrd execution engine
  Validation     Green           #70b080     Testing framework
+ Strategy       Gold            #dab860     Product vision, roadmap, positioning
 ```
+
+**Note:** Strategy shares gold with Contract. Both relate to "what the
+project is" — Contract defines the technical data model, Strategy defines
+the product and market positioning. They share a hue but are distinct
+categories for filtering and organisation.
 
 ### Extended Palette (theme-derived)
 
@@ -63,6 +70,28 @@ it informs the system but isn't part of it.
 
 **Future documents in this category:** Market updates, competitive analysis
 refreshes, user research, community feedback synthesis.
+
+---
+
+### Strategy — Gold #dab860
+> *Product vision, roadmap, and market positioning. The "what" and "why" of the project.*
+
+| Document                          | Format               | Date     | Size         |
+|-----------------------------------|----------------------|----------|--------------|
+| Urd + Wyrd Product Vision v2.0    | Product Strategy      | Feb 2026 | 3,000 words  |
+
+**Why gold?** Strategy documents define the project at its highest level —
+what it is, who it's for, and where it's going. They share gold with
+Contract because both answer "what is Urd?" — Strategy at the product
+level, Contract at the technical level. Gold is the brand colour and the
+natural home for documents that define the project's identity.
+
+**The rule:** If a document's primary purpose is to define the product
+direction, market positioning, or roadmap, it's Strategy. If it defines
+the technical data model, it's Contract.
+
+**Future documents:** Updated roadmaps, market positioning refreshes,
+revenue model updates, partnership strategy.
 
 ---
 
@@ -169,6 +198,7 @@ proof point write-ups.
  Question                                          → Category
  ────────────────────────────────────────────────── ──────────────
  Does it study the problem space or market?         → Research (Rose)
+ Does it define the product vision or roadmap?      → Strategy (Gold)
  Does it define what the data model looks like?     → Contract (Gold)
  Does it define how writers create content?         → Authoring (Blue)
  Does it define how the system is built or compiles?→ Architecture (Amber)
@@ -188,6 +218,11 @@ are *represented*. That's Contract, not Architecture or Runtime.
 
 ```
   ┌─────────────────────────────────────────────────────────┐
+  │                    STRATEGY  (Gold)                      │
+  │                    Product Vision                        │
+  └──────────────────────────┬──────────────────────────────┘
+                             │ motivates
+  ┌──────────────────────────▼──────────────────────────────┐
   │                    RESEARCH  (Rose)                      │
   │         Landscape Analysis  ·  Pain Points Report        │
   └──────────────────────────┬──────────────────────────────┘
@@ -232,7 +267,7 @@ are *represented*. That's Contract, not Architecture or Runtime.
 - Documents referenced from the diagram link back to urd.dev with matching colors
 
 ### In the repository
-- Document frontmatter includes a `category` field matching these six values
+- Document frontmatter includes a `category` field matching these seven values
 - The Astro build generates the correct color tokens from this field
 
 ### CSS Variables
@@ -248,5 +283,5 @@ Variable naming convention (consistent across all themes):
 --doc-{category}-border: /* card and pill borders */
 ```
 
-Categories: `research`, `contract`, `authoring`, `architecture`,
-`runtime`, `validation`.
+Categories: `research`, `strategy`, `contract`, `authoring`,
+`architecture`, `runtime`, `validation`.

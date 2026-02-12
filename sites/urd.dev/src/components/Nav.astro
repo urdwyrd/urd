@@ -1,0 +1,80 @@
+---
+---
+
+<nav class="site-nav" aria-label="Site navigation">
+  <a href="/" class="nav-wordmark">URD.DEV</a>
+  <div class="nav-links">
+    <a href="/#documents" class="nav-link">Documents</a>
+    <a
+      href="https://github.com/urdwyrd/urd"
+      class="nav-link"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      GitHub <span aria-hidden="true">↗</span>
+    </a>
+  </div>
+</nav>
+
+<style>
+  .site-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 2;
+  }
+
+  .nav-wordmark {
+    font-family: var(--wordmark);
+    font-size: 1rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--gold);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .nav-wordmark:hover {
+    color: var(--gold-light);
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .nav-link {
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--dim);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+  }
+
+  .nav-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  @media (max-width: 520px) {
+    .site-nav {
+      padding: 14px 18px;
+    }
+
+    .nav-links {
+      gap: 16px;
+    }
+  }
+</style>
