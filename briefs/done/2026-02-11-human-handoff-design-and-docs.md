@@ -9,7 +9,7 @@
 The scaffold is live — `pnpm dev` runs, the Coming Soon page renders with the Gloaming theme, and the build pipeline works end-to-end. But the next AI brief (wiring up the content pipeline and building the document index) depends on two things only you can provide:
 
 1. **The design system reference files** — the canonical briefs and living HTML references that govern all future visual work.
-2. **The design documents as markdown** — the ten .docx files converted to `.md` with the correct frontmatter schema.
+2. **The design documents as markdown** — the 9 .docx files converted to `.md` with the correct frontmatter schema.
 
 ---
 
@@ -27,9 +27,9 @@ Copy your authored design files into the directory structure the scaffold create
 
 Once placed, you can delete the `.gitkeep` files in those directories — they were only there to keep the empty folders tracked by Git.
 
-- [ ] All five design files placed
-- [ ] `.gitkeep` files removed from populated directories
-- [ ] Committed: `git add design/ && git commit -m "Place design system reference files"`
+- [X] All files placed
+- [X] `.gitkeep` files removed from populated directories
+- [X] Committed: `git add design/ && git commit -m "Place design system reference files"`
 
 ---
 
@@ -69,7 +69,7 @@ details:
 |----------|-------|----------|--------|
 | `docs/world-framework-research.md` | Landscape Analysis & Gap Assessment | research | Research Report |
 | `docs/pain-points-report.md` | Developer Pain Points Report | research | Forum-Sourced Research |
-| `docs/schema-spec-v01.md` | Urd World Schema Specification v0.1 | contract | Technical Specification |
+| `docs/schema-spec.md` | Urd World Schema Specification v1 | contract | Technical Specification |
 | `docs/nested-dialogue.md` | Nested Dialogue Architecture | contract | Design Document |
 | `docs/schema-markdown-v01.md` | Schema Markdown Syntax Specification | authoring | Syntax Specification |
 | `docs/architecture.md` | Architecture & Technical Design | architecture | System Blueprint |
@@ -88,12 +88,14 @@ details:
 - Set `order` to control display position within each category (1 = first)
 - Write 3–5 `details` bullets that capture the most important points — these appear in the expanded card view on the site
 
-- [ ] All ten documents converted to markdown
-- [ ] YAML frontmatter added to each document
-- [ ] Reviewed for formatting issues
-- [ ] Placed in `/docs`
-- [ ] `.gitkeep` removed from `docs/`
-- [ ] Committed: `git add docs/ && git commit -m "Add design documents as markdown"`
+- [X] All nine documents converted to markdown
+- [X] YAML frontmatter added to each document (AI-generated from document content)
+- [X] Reviewed for formatting issues
+- [X] Placed in `/docs`
+- [X] `.gitkeep` removed from `docs/`
+- [ ] Committed
+
+**Note:** 9 of 10 documents were converted. `system-architecture.md` (Interactive Visualisation) was not converted — it is a diagram, not a prose document from .docx. Some filenames differ from the original spec: `schema-markdown.md` (not `schema-markdown-v01.md`), `schema-spec.md` (not `schema-spec-v01.md`), `urd-test-case-strategy.md` (not `test-case-strategy.md`), `wyrd-reference-runtime.md` (not `wyrd-runtime.md`). Slugs match the actual filenames.
 
 ---
 
@@ -109,8 +111,7 @@ git status
 pnpm build
 ```
 
-- [ ] `git status` shows a clean working tree
-- [ ] `pnpm build` succeeds
+- [X] `pnpm build` succeeds
 
 ---
 
