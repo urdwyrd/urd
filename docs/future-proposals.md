@@ -4,7 +4,7 @@ slug: "future-proposals"
 description: "Design work for capabilities planned beyond v1. These proposals are not part of the v1 specification and MUST NOT be implemented by v1 runtimes. They are preserved here to inform forward-compatible architectural decisions."
 category: "strategy"
 format: "Proposal Collection"
-date: "2026-02"
+date: "2026-02-12"
 status: "draft"
 order: 99
 tags:

@@ -4,7 +4,7 @@ slug: "architecture"
 description: "Four components connected by one contract. The compiler (5-phase pipeline). The Wyrd reference runtime (immutable state, event sourcing, deterministic rules). The testing framework (Monte Carlo, reachability, coverage). Developer tooling (LSP server, VS Code extension)."
 category: "architecture"
 format: "System Blueprint"
-date: "2026-02"
+date: "2026-02-12"
 status: "v1.0 complete"
 order: 1
 tags:

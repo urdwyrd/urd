@@ -4,7 +4,7 @@ slug: "schema-markdown"
 description: "The writer-facing authoring format. Feels as clean as ink for pure dialogue but compiles directly to the world schema. Seven symbols: @ for entity references, ? for conditions, > for effects, * and + for choice types, → for section jumps, == for section headers."
 category: "authoring"
 format: "Syntax Specification"
-date: "2026-02"
+date: "2026-02-12"
 status: "v0.1 complete"
 order: 1
 tags:

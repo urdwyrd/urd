@@ -4,7 +4,7 @@ slug: "reference-card-engine-developers"
 description: "Quick reference for developers consuming .urd.json files. Covers the eight schema blocks, property types, containment model, visibility, conditions, effects, dialogue structure, and runtime evaluation order."
 category: "runtime"
 format: "Reference Card"
-date: "2026-02"
+date: "2026-02-12"
 status: "v1.0"
 order: 2
 tags:

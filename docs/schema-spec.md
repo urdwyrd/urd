@@ -4,7 +4,7 @@ slug: "schema-spec"
 description: "The formal data contract. Defines entities, typed properties, containment hierarchies, visibility layers, conditional expressions, effects, behavioural rules, dialogue sections, and sequence phases."
 category: "contract"
 format: "Technical Specification"
-date: "2026-02"
+date: "2026-02-12"
 status: "v0.1 complete"
 order: 1
 tags:

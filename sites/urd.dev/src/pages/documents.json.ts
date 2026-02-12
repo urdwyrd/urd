@@ -45,6 +45,8 @@ export const GET: APIRoute = async () => {
         excerpt,
         colour: categoryColours[entry.data.category] ?? '#888888',
         url: `/documents/${entry.data.slug}`,
+        githubUrl: `https://github.com/urdwyrd/urd/blob/main/docs/${entry.id}.md`,
+        downloadUrl: `https://raw.githubusercontent.com/urdwyrd/urd/main/docs/${entry.id}.md`,
       };
     });
 

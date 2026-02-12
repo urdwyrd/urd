@@ -4,7 +4,7 @@ slug: "pain-points-report"
 description: "Mined Reddit, Hacker News, GDC talks, developer blogs, and postmortems. Found seven pain clusters. Every team builds the same glue code. Writers edit dialogue in spreadsheets. Testing is manual and terrifying."
 category: "research"
 format: "Forum-Sourced Research"
-date: "2026-01"
+date: "2026-01-28"
 status: "v1.0 complete"
 order: 2
 tags:

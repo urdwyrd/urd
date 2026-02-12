@@ -4,7 +4,7 @@ slug: "reference-card-writers"
 description: "Quick reference for writers authoring .urd.md files. Covers the seven-symbol vocabulary, file structure, dialogue mechanics, nesting rules, and common patterns."
 category: "authoring"
 format: "Reference Card"
-date: "2026-02"
+date: "2026-02-12"
 status: "v1.0"
 order: 1
 tags:

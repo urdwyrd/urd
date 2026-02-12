@@ -4,7 +4,7 @@ slug: "world-framework-research"
 description: "Surveyed 12+ frameworks across interactive fiction engines, MUD systems, professional narrative tools, and game engines. Identified seven critical gaps — no standard world format, narrative and simulation data divorced, no graduated complexity."
 category: "research"
 format: "Research Report"
-date: "2026-01"
+date: "2026-01-28"
 status: "v1.0 complete"
 order: 1
 tags:

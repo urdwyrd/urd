@@ -17,6 +17,8 @@
     excerpt: string;
     colour: string;
     url: string;
+    githubUrl: string;
+    downloadUrl: string;
   }
 
   interface Props {
@@ -28,7 +30,7 @@
   const {
     label = 'Artifacts',
     title = 'The work so far',
-    subtitle = 'Every document produced. Click to expand.',
+    subtitle = 'Every document produced.',
   }: Props = $props();
 
   const MONTHS: Record<string, string> = {
@@ -39,6 +41,8 @@
 
   let documents = $state<Document[]>([]);
   let activeFilter = $state<string>('all');
+  let activeFormat = $state<string>('all');
+  let viewMode = $state<'list' | 'grid' | 'compact'>('list');
   let expandedSlugs = $state<Set<string>>(new Set());
   let loaded = $state(false);
   let reducedMotion = $state(false);
@@ -47,19 +51,39 @@
     [...new Set(documents.map((d) => d.category))].sort()
   );
 
-  const filtered = $derived(
+  const categoryFiltered = $derived(
     activeFilter === 'all'
       ? documents
       : documents.filter((d) => d.category === activeFilter)
   );
 
+  const availableFormats = $derived(
+    [...new Set(categoryFiltered.map((d) => d.format))].sort()
+  );
+
+  const filtered = $derived(
+    activeFormat === 'all'
+      ? categoryFiltered
+      : categoryFiltered.filter((d) => d.format === activeFormat)
+  );
+
   function formatDate(date: string): string {
-    const [year, month] = date.split('-');
+    const parts = date.split('-');
+    if (parts.length === 3) {
+      const [year, month, day] = parts;
+      return `${parseInt(day, 10)} ${MONTHS[month] ?? month} ${year}`;
+    }
+    const [year, month] = parts;
     return `${MONTHS[month] ?? month} ${year}`;
   }
 
-  function formatWordCount(count: number): string {
-    return count.toLocaleString('en-GB') + ' words';
+  function formatReadingTime(minutes: number, words: number): string {
+    const time = minutes < 1 ? '< 1' : String(minutes);
+    return `${time} min read (${words.toLocaleString('en-GB')} words)`;
+  }
+
+  function formatReadingTimeShort(minutes: number): string {
+    return minutes < 1 ? '< 1 min' : `${minutes} min`;
   }
 
   function titleCase(str: string): string {
@@ -78,6 +102,11 @@
 
   function setFilter(category: string): void {
     activeFilter = category;
+    activeFormat = 'all';
+  }
+
+  function setFormatFilter(format: string): void {
+    activeFormat = format;
   }
 
   onMount(async () => {
@@ -124,9 +153,58 @@
   </header>
 
   {#if loaded}
+    <div class="doc-explorer-toolbar">
+      {#if availableFormats.length > 1}
+        <nav class="doc-explorer-format-filters" aria-label="Filter documents by format">
+          <button
+            class="doc-format-btn"
+            class:active={activeFormat === 'all'}
+            onclick={() => setFormatFilter('all')}
+          >
+            All formats
+          </button>
+          {#each availableFormats as fmt}
+            <button
+              class="doc-format-btn"
+              class:active={activeFormat === fmt}
+              onclick={() => setFormatFilter(fmt)}
+            >
+              {fmt}
+            </button>
+          {/each}
+        </nav>
+      {/if}
+
+      <div class="doc-view-toggle" role="group" aria-label="View mode">
+        <button
+          class="doc-view-btn"
+          class:active={viewMode === 'compact'}
+          onclick={() => { viewMode = 'compact'; }}
+          aria-label="Compact view"
+          title="Compact view"
+        >—</button>
+        <button
+          class="doc-view-btn"
+          class:active={viewMode === 'list'}
+          onclick={() => { viewMode = 'list'; }}
+          aria-label="List view"
+          title="List view"
+        >≡</button>
+        <button
+          class="doc-view-btn"
+          class:active={viewMode === 'grid'}
+          onclick={() => { viewMode = 'grid'; }}
+          aria-label="Card view"
+          title="Card view"
+        >⊞</button>
+      </div>
+    </div>
+  {/if}
+
+  {#if loaded}
     {#if filtered.length === 0}
-      <p class="doc-explorer-empty">No documents in this category yet.</p>
-    {:else}
+      <p class="doc-explorer-empty">No documents match these filters.</p>
+    {:else if viewMode === 'list'}
       <div class="doc-card-list">
         {#each filtered as doc (doc.slug)}
           {@const isExpanded = expandedSlugs.has(doc.slug)}
@@ -144,7 +222,8 @@
               <div class="doc-card-meta">
                 <span class="doc-card-pill">{doc.format}</span>
                 <span class="doc-card-date">{formatDate(doc.date)}</span>
-                <span class="doc-card-words">{formatWordCount(doc.wordCount)}</span>
+                <span class="doc-card-separator" aria-hidden="true">◷</span>
+                <span class="doc-card-words">{formatReadingTime(doc.readingTime, doc.wordCount)}</span>
                 <span class="doc-card-chevron" class:expanded={isExpanded}>▸</span>
               </div>
 
@@ -167,12 +246,96 @@
                   </p>
                 {/if}
 
-                <a class="doc-card-link" href={doc.url}>
-                  Read full document →
-                </a>
+                <div class="doc-card-actions">
+                  <a class="doc-card-link" href={doc.url}>
+                    Read full document →
+                  </a>
+                  <a class="doc-card-link doc-card-link-secondary" href={doc.githubUrl} target="_blank" rel="noopener noreferrer">
+                    View on GitHub <span aria-hidden="true">↗</span>
+                  </a>
+                  <button
+                    class="doc-card-link doc-card-link-secondary"
+                    onclick={(e) => {
+                      const btn = e.currentTarget;
+                      btn.disabled = true;
+                      fetch(doc.downloadUrl)
+                        .then((r) => r.blob())
+                        .then((blob) => {
+                          const url = URL.createObjectURL(blob);
+                          const a = document.createElement('a');
+                          a.href = url;
+                          a.download = `${doc.slug}.md`;
+                          a.click();
+                          URL.revokeObjectURL(url);
+                        })
+                        .finally(() => { btn.disabled = false; });
+                    }}
+                  >
+                    Download .md
+                  </button>
+                </div>
               </div>
             {/if}
           </article>
+        {/each}
+      </div>
+    {:else if viewMode === 'grid'}
+      <div class="doc-grid">
+        {#each filtered as doc (doc.slug)}
+          <article
+            class="doc-grid-card"
+            style:--card-colour="var(--doc-{doc.category})"
+            style:--card-dim="var(--doc-{doc.category}-dim)"
+          >
+            <div class="doc-grid-card-header">
+              <span class="doc-card-pill">{doc.format}</span>
+              <span class="doc-grid-card-time">{formatReadingTimeShort(doc.readingTime)}</span>
+            </div>
+            <a class="doc-grid-card-title" href={doc.url}>{doc.title}</a>
+            <p class="doc-grid-card-desc">{doc.description}</p>
+            <div class="doc-grid-card-footer">
+              <span class="doc-grid-card-date">{formatDate(doc.date)}</span>
+              <div class="doc-grid-card-actions">
+                <a class="doc-grid-action" href={doc.url} title="Read document">→</a>
+                <a class="doc-grid-action" href={doc.githubUrl} target="_blank" rel="noopener noreferrer" title="View on GitHub">↗</a>
+                <button
+                  class="doc-grid-action"
+                  title="Download .md"
+                  onclick={(e) => {
+                    const btn = e.currentTarget;
+                    btn.disabled = true;
+                    fetch(doc.downloadUrl)
+                      .then((r) => r.blob())
+                      .then((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${doc.slug}.md`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                      })
+                      .finally(() => { btn.disabled = false; });
+                  }}
+                >⤓</button>
+              </div>
+            </div>
+          </article>
+        {/each}
+      </div>
+    {:else}
+      <div class="doc-compact-list">
+        {#each filtered as doc (doc.slug)}
+          <a
+            class="doc-compact-row"
+            href={doc.url}
+            style:--card-colour="var(--doc-{doc.category})"
+          >
+            <span class="doc-compact-indicator"></span>
+            <span class="doc-compact-title">{doc.title}</span>
+            <span class="doc-compact-format">{doc.format}</span>
+            <span class="doc-compact-time">{formatReadingTimeShort(doc.readingTime)}</span>
+            <span class="doc-compact-date">{formatDate(doc.date)}</span>
+          </a>
         {/each}
       </div>
     {/if}
@@ -224,7 +387,16 @@
     line-height: 1.6;
   }
 
-  /* ── Filters ── */
+  /* ── Toolbar (format filters + view toggle) ── */
+  .doc-explorer-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  /* ── Category Filters ── */
   .doc-explorer-filters {
     display: flex;
     gap: 6px;
@@ -257,6 +429,75 @@
     color: var(--filter-colour, var(--gold));
     border-color: var(--filter-colour, var(--gold));
     background: rgba(255, 255, 255, 0.03);
+  }
+
+  /* ── Format Filters ── */
+  .doc-explorer-format-filters {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .doc-format-btn {
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--faint);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 9px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .doc-format-btn:hover {
+    color: var(--dim);
+    border-color: var(--border-light);
+  }
+
+  .doc-format-btn.active {
+    color: var(--text);
+    border-color: var(--border-light);
+  }
+
+  /* ── View Toggle ── */
+  .doc-view-toggle {
+    display: flex;
+    gap: 2px;
+    flex-shrink: 0;
+  }
+
+  .doc-view-btn {
+    font-size: 16px;
+    line-height: 1;
+    color: var(--faint);
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 4px 7px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .doc-view-btn:first-child {
+    border-radius: 3px 0 0 3px;
+  }
+
+  .doc-view-btn:last-child {
+    border-radius: 0 3px 3px 0;
+  }
+
+  .doc-view-btn.active {
+    color: var(--text);
+    border-color: var(--border-light);
+  }
+
+  .doc-view-btn:hover {
+    color: var(--dim);
+    border-color: var(--border-light);
   }
 
   /* ── Card List ── */
@@ -329,6 +570,12 @@
     font-size: 12px;
     color: var(--faint);
     letter-spacing: 0.06em;
+  }
+
+  .doc-card-separator {
+    font-size: 10px;
+    color: var(--border-light);
+    margin: 0 -3px;
   }
 
   .doc-card-chevron {
@@ -419,6 +666,13 @@
     margin-bottom: 14px;
   }
 
+  /* ── Action Links ── */
+  .doc-card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
   .doc-card-link {
     font-family: var(--display);
     font-size: 13px;
@@ -442,6 +696,196 @@
     outline-offset: 2px;
   }
 
+  .doc-card-link-secondary {
+    font-weight: 400;
+    font-size: 12px;
+    color: var(--faint);
+    border-color: var(--border);
+  }
+
+  .doc-card-link-secondary:hover {
+    color: var(--dim);
+    border-color: var(--border-light);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  /* ── Grid View ── */
+  .doc-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .doc-grid-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--raise);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--card-colour);
+    border-radius: 8px;
+    padding: 16px 18px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+
+  .doc-grid-card:hover {
+    background: var(--surface);
+    border-color: var(--border-light);
+    border-top-color: var(--card-colour);
+  }
+
+  .doc-grid-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .doc-grid-card-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .doc-grid-card-title {
+    font-family: var(--display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    text-decoration: none;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+
+  .doc-grid-card-title:hover {
+    color: var(--card-colour);
+  }
+
+  .doc-grid-card-title:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .doc-grid-card-desc {
+    font-family: var(--body);
+    font-size: 14px;
+    color: var(--dim);
+    line-height: 1.5;
+    flex: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .doc-grid-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+  }
+
+  .doc-grid-card-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+  }
+
+  .doc-grid-card-actions {
+    display: flex;
+    gap: 4px;
+  }
+
+  .doc-grid-action {
+    font-size: 13px;
+    line-height: 1;
+    color: var(--faint);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 7px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .doc-grid-action:hover {
+    color: var(--card-colour);
+    border-color: var(--border-light);
+  }
+
+  .doc-grid-action:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+
+  /* ── Compact View ── */
+  .doc-compact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .doc-compact-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: inherit;
+    border-radius: 4px;
+    transition: background 0.1s ease;
+  }
+
+  .doc-compact-row:hover {
+    background: var(--raise);
+  }
+
+  .doc-compact-row:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
+  }
+
+  .doc-compact-indicator {
+    width: 3px;
+    height: 16px;
+    border-radius: 1px;
+    background: var(--card-colour);
+    flex-shrink: 0;
+  }
+
+  .doc-compact-title {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .doc-compact-format {
+    font-family: var(--display);
+    font-size: 10px;
+    color: var(--faint);
+    white-space: nowrap;
+  }
+
+  .doc-compact-time,
+  .doc-compact-date {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
   /* ── Empty State ── */
   .doc-explorer-empty {
     font-family: var(--body);
@@ -456,6 +900,17 @@
     .doc-explorer-header {
       flex-direction: column;
       align-items: flex-start;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .doc-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .doc-compact-format,
+    .doc-compact-date {
+      display: none;
     }
   }
 
@@ -475,6 +930,14 @@
 
     .doc-card-description {
       font-size: 16px;
+    }
+
+    .doc-card-actions {
+      flex-direction: column;
+    }
+
+    .doc-explorer-toolbar {
+      flex-wrap: wrap;
     }
   }
 </style>

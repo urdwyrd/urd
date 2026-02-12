@@ -4,7 +4,7 @@ slug: "urd-test-case-strategy"
 description: "Validating the schema through executable proof. Four progressive test cases — Tavern Scene (dialogue systems), Monty Hall (emergent probability), Two-Room Key Puzzle (spatial + inventory), and Interrogation (dialogue stress test)."
 category: "validation"
 format: "Validation Plan"
-date: "2026-02"
+date: "2026-02-12"
 status: "v1.0 complete"
 order: 1
 tags:

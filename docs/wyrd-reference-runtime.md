@@ -4,7 +4,7 @@ slug: "wyrd-reference-runtime"
 description: "The browser-native engine for executing Urd worlds. Loads compiled JSON, executes the world model, and presents interactive text and choice interfaces. Zero install, zero config."
 category: "runtime"
 format: "Runtime Specification"
-date: "2026-02"
+date: "2026-02-12"
 status: "v0.1 complete"
 order: 1
 tags:

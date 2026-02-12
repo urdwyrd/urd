@@ -4,7 +4,7 @@ slug: "nested-dialogue"
 description: "Design exploration for nested dialogue in Schema Markdown. Analyses five structural patterns (branch, hub-and-spoke, conditional, loop, fallthrough) and how ink, Yarn Spinner, and Ren'Py solve them."
 category: "contract"
 format: "Design Document"
-date: "2026-02"
+date: "2026-02-12"
 status: "v1.0 complete"
 order: 2
 tags:
