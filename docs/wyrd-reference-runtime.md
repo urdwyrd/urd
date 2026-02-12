@@ -86,7 +86,7 @@ The core engine is the single authoritative implementation of the Urd runtime co
 
 - **Loading and validating.** Parse `.urd.json`, check the urd version field, reject unsupported versions with a clear error.
 - **World state management.** Maintain the current value of every entity property, every entity's container, every section's visited/exhausted status, and the current sequence phase.
-- **Condition evaluation.** Given the current world state, evaluate any condition expression to true or false. Includes property comparisons, containment checks, and exhaustion checks (`? <section_name>.exhausted`). Exhaustion is runtime evaluated and not cached: the runtime checks all choices in the named section and returns true if none are currently available.
+- **Condition evaluation.** Given the current world state, evaluate any condition expression to true or false. Includes property comparisons, containment checks, and exhaustion checks (`? <section_name>.exhausted`). Exhaustion is runtime evaluated and not cached: the runtime checks all choices in the named section and returns true if none are currently available. The keyword `here` is reserved and resolves to `player.container` in all condition expressions (e.g., `@entity in here` is equivalent to `entity.container == player.container`).
 - **Effect application.** Apply effects (set, move, reveal, destroy, spawn) atomically and update world state.
 - **Action resolution.** Compute available actions based on entity state, conditions, and rules. Return a list to the presentation layer.
 - **Dialogue management.** Track which section is active, which choices have been consumed (one shot) or visited (sticky), when sections are exhausted, and where jumps lead.

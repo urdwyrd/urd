@@ -5,7 +5,7 @@ description: "Mined Reddit, Hacker News, GDC talks, developer blogs, and postmor
 category: "research"
 format: "Forum-Sourced Research"
 date: "2026-01"
-status: "complete"
+status: "v1.0 complete"
 order: 2
 tags:
   - research

@@ -5,7 +5,7 @@ description: "Surveyed 12+ frameworks across interactive fiction engines, MUD sy
 category: "research"
 format: "Research Report"
 date: "2026-01"
-status: "complete"
+status: "v1.0 complete"
 order: 1
 tags:
   - research

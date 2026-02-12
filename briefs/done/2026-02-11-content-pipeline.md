@@ -4,20 +4,31 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:** Not started
+**Date completed:** 2026-02-11
+**Status:** Complete
 
 ### What was done
-<!-- List every concrete action taken, including files created/modified -->
+
+- Created `sites/urd.dev/src/content.config.ts` — defines a `docs` content collection using Astro's glob loader pointing at `../../docs`, with a Zod schema validating all frontmatter fields (title, slug, description, category enum, format, date, status, order, tags, details)
+- Created `sites/urd.dev/src/pages/documents.json.ts` — static endpoint that reads all docs entries, computes `wordCount`, `readingTime`, `excerpt` (first 300 chars, markdown stripped), and `colour` (mapped from category), then outputs the manifest as `/documents.json`
+- No changes needed to `astro.config.mjs` — the glob loader resolved the external `docs/` directory without additional configuration
+- Build succeeds, `dist/documents.json` contains all 9 documents with correct computed fields
 
 ### Deviations from brief
-<!-- Anything that differed from the plan and why -->
+
+- Used British spelling `colour` for the colour field in the JSON output, consistent with CLAUDE.md conventions
+- The `astro.config.mjs` did not need any modification — the glob loader's relative path `../../docs` resolved correctly from the content config location
 
 ### Issues encountered
-<!-- Problems hit during execution and how they were resolved -->
+
+- None — Astro 5's glob loader handled the external directory cleanly
 
 ### Notes for next brief
-<!-- Context, warnings, or recommendations for future work -->
+
+- The `excerpt` field includes document status headers (e.g. "Document status: NORMATIVE") from the markdown body. A future refinement could strip these boilerplate headers for cleaner excerpts
+- Documents are sorted by `order` field. Multiple documents with the same `order` within a category will sort by whatever order the glob loader returns — consider assigning unique orders if display order matters
+- The `/documents/[slug]` routes are the natural next step — Astro's `getStaticPaths()` with the same content collection
+- The interactive document index (Svelte island) should fetch `/documents.json` and provide category filtering, search, and expandable cards
 
 ---
 
@@ -29,74 +40,34 @@ The documents are being converted from .docx to markdown and placed in `/docs`. 
 
 ### Prerequisites
 
-Before executing this brief, ensure all markdown documents are in `/docs`:
+All markdown documents are in `/docs` with YAML frontmatter already in place:
 
 | Filename | Title | Category |
 |----------|-------|----------|
 | `product-vision.md` | Urd + Wyrd Product Vision v2.0 | strategy |
 | `world-framework-research.md` | Landscape Analysis & Gap Assessment | research |
 | `pain-points-report.md` | Developer Pain Points Report | research |
-| `schema-spec-v01.md` | Urd World Schema Specification v0.1 | contract |
+| `schema-spec.md` | Urd World Schema Specification v0.1 | contract |
 | `nested-dialogue.md` | Nested Dialogue Architecture | contract |
-| `schema-markdown-v01.md` | Schema Markdown Syntax Specification | authoring |
+| `schema-markdown.md` | Schema Markdown Syntax Specification | authoring |
 | `architecture.md` | Architecture & Technical Design | architecture |
-| `system-architecture.md` | System Architecture Diagram | architecture |
-| `wyrd-runtime.md` | Wyrd Reference Runtime | runtime |
-| `test-case-strategy.md` | Test Case Strategy | validation |
+| `wyrd-reference-runtime.md` | Wyrd Reference Runtime | runtime |
+| `urd-test-case-strategy.md` | Test Case Strategy | validation |
 
-If not all documents are ready, the pipeline can still be built — it will generate the manifest for whatever documents are present.
+---
+
+## Already Completed
+
+The following steps from the original brief have already been done:
+
+- **Rename:** `product-vision-master.md` → `product-vision.md`
+- **Frontmatter:** All 9 documents have YAML frontmatter (title, slug, description, category, format, date, status, order, tags, details)
 
 ---
 
 ## Implementation Steps
 
-### Step 1: Rename `product-vision-master.md`
-
-Rename `docs/product-vision-master.md` to `docs/product-vision.md` to match the spec from the scaffold brief.
-
-### Step 2: Add YAML frontmatter to each document
-
-Each markdown file in `/docs` needs frontmatter matching this schema:
-
-```yaml
----
-title: "Urd + Wyrd Product Vision v2.0"
-slug: "product-vision"
-description: "The strategic vision for Urd and Wyrd — market analysis, product architecture, revenue model, and development roadmap."
-category: "strategy"
-format: "Product Strategy"
-date: "2026-02"
-status: "v2.0 complete"
-order: 1
-tags:
-  - vision
-  - strategy
-  - product
-  - roadmap
-details:
-  - "Seven pain points from developer forums and postmortems"
-  - "Four-component pipeline: compiler, runtime, testing, tooling"
-  - "Revenue model: open core with hosted services"
-  - "AI-native design philosophy"
----
-```
-
-**Field reference:**
-
-| Field | Type | Required | Notes |
-|-------|------|----------|-------|
-| `title` | string | yes | Full document title |
-| `slug` | string | yes | URL-safe identifier, used for `/documents/[slug]` |
-| `description` | string | yes | 1–2 sentence summary for cards and OG tags |
-| `category` | enum | yes | `research`, `contract`, `authoring`, `architecture`, `runtime`, `validation`, or `strategy` |
-| `format` | string | yes | Freeform label: "Research Report", "Technical Specification", etc. |
-| `date` | string | yes | Year-month (`2026-02`) |
-| `status` | string | yes | Freeform: "v0.1 complete", "in progress", "draft" |
-| `order` | number | yes | Display order within category |
-| `tags` | string[] | yes | Keyword tags for filtering |
-| `details` | string[] | yes | Key content bullets shown in expanded card view |
-
-### Step 3: Set up Astro content collections
+### Step 1: Set up Astro content collections
 
 Create `sites/urd.dev/src/content.config.ts` defining a `docs` collection.
 
@@ -130,7 +101,7 @@ const docs = defineCollection({
 export const collections = { docs };
 ```
 
-### Step 4: Generate `documents.json` as a static endpoint
+### Step 2: Generate `documents.json` as a static endpoint
 
 Create `sites/urd.dev/src/pages/documents.json.ts` — an Astro static endpoint that at build time:
 
@@ -160,8 +131,6 @@ Create `sites/urd.dev/src/pages/documents.json.ts` — an Astro static endpoint 
 
 | File | Action |
 |------|--------|
-| `docs/product-vision-master.md` | Rename to `docs/product-vision.md` |
-| `docs/*.md` (all documents) | Add YAML frontmatter |
 | `sites/urd.dev/src/content.config.ts` | Create — content collection definition with Zod schema |
 | `sites/urd.dev/src/pages/documents.json.ts` | Create — static endpoint generating the manifest |
 | `sites/urd.dev/astro.config.mjs` | May need adjustment for external content directory |

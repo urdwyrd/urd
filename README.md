@@ -136,4 +136,4 @@ Both sites are coming soon. Their source will live in this repo.
 
 ## License
 
-MIT
+Apache 2.0

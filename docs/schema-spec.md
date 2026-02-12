@@ -541,6 +541,87 @@ sequences:
 | on_condition \<expr\> | Advance when the expression becomes true. |
 | end | The sequence ends. No further phases. |
 
+## The `dialogue` Block
+
+Dialogue sections compile to a flat map of section objects, keyed by globally unique section ID. The runtime uses this block to drive all conversational interaction. Each section represents a single conversational node: an optional prompt, a set of choices, and fallthrough content for exhaustion.
+
+```
+dialogue:
+  "tavern/topics":
+    id: "tavern/topics"
+    prompt:
+      speaker: "arina"
+      text: "What'll it be, stranger?"
+    choices:
+      - id: "tavern/topics/ask-about-the-harbor"
+        label: "Ask about the harbor"
+        sticky: true
+        response:
+          speaker: "arina"
+          text: "Quiet today. Too quiet, if you ask me."
+        effects:
+          - set: arina.trust
+            to: arina.trust + 5
+        goto: "tavern/topics"
+      - id: "tavern/topics/ask-about-the-missing-ship"
+        label: "Ask about the missing ship"
+        sticky: false
+        conditions:
+          - "arina.trust > 50"
+        response:
+          speaker: "arina"
+          text: "The Selene didn't sink. She was taken."
+        goto: "tavern/topics"
+    on_exhausted:
+      text: "Suit yourself. I've got glasses to clean."
+
+  "tavern/bribe":
+    id: "tavern/bribe"
+    conditions:
+      - "coin_purse.container == player"
+    choices:
+      - id: "tavern/bribe/slide-the-purse"
+        label: "Slide the purse across the bar"
+        sticky: false
+        effects:
+          - move: coin_purse
+            to: arina
+          - set: arina.trust
+            to: 100
+        response:
+          speaker: "arina"
+          text: "Well now. That changes things."
+        goto: "tavern/topics"
+```
+
+The dialogue block is a flat map. All sections from all files in the compilation unit are merged into a single namespace. Section IDs use the `file_stem/section_name` convention (e.g., `tavern/topics` for `== topics` in `tavern.urd.md`). Choice IDs use `section_id/slugified_label` (e.g., `tavern/topics/ask-about-the-harbor`).
+
+### Section Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | World-unique section identifier. Format: `file_stem/section_name`. |
+| prompt | object | No | NPC speech that introduces this section. Contains `speaker` (entity ref) and `text` (string). |
+| description | string | No | Prose narration before the prompt. Compiled from plain text at the start of a section, before any `@speaker:` line. |
+| choices | array | No | List of available choices in this section. |
+| conditions | expression list | No | Conditions that must be true for the section to be accessible. Not authored in v1 Schema Markdown; reserved for future use. May appear in hand-authored or tool-generated JSON. |
+| on_exhausted | object | No | Content shown when all choices are consumed or gated. Contains `text` (string) and optionally `speaker` (entity ref). This is a content payload, not a boolean. Whether a section *is* exhausted is a runtime-evaluated predicate. |
+
+### Choice Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| id | string | Yes | World-unique choice ID. Format: `section_id/slugified-label`. |
+| label | string | Yes | Text shown to the player for this choice. |
+| sticky | boolean | Yes | If `true`, choice remains available after selection. If `false`, consumed after one selection. |
+| conditions | expression list | No | Conditions that must be true for this choice to appear. |
+| response | object | No | Dialogue spoken when this choice is selected. Same structure as section `prompt`. |
+| effects | effect list | No | State changes applied when this choice is selected. |
+| goto | string | No | Section ID to jump to after this choice. If omitted, stays in current section. |
+| choices | array | No | Inline sub-choices. Same structure as top-level choices. |
+
+The `sticky` field maps directly to the Schema Markdown choice syntax: `+` (sticky) compiles to `true`, `*` (one-shot) compiles to `false`. The `goto` field compiles from `->` jumps in Schema Markdown and always uses the full section ID.
+
 ## Expressions and Effects
 
 The schema uses a minimal expression language for conditions and a structured effect format for state mutations. Both are deliberately simple: parseable by runtimes, lintable by tools, and interpretable by AI assistants.

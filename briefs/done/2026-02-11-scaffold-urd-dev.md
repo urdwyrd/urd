@@ -333,11 +333,10 @@ Ten design documents exist as .docx files. They will be converted to markdown an
 |----------|-------|----------|--------|
 | `world-framework-research.md` | Landscape Analysis & Gap Assessment | research | Research Report |
 | `pain-points-report.md` | Developer Pain Points Report | research | Forum-Sourced Research |
-| `schema-spec-v01.md` | Urd World Schema Specification v0.1 | contract | Technical Specification |
+| `schema-spec.md` | Urd World Schema Specification v0.1 | contract | Technical Specification |
 | `nested-dialogue.md` | Nested Dialogue Architecture | contract | Design Document |
-| `schema-markdown-v01.md` | Schema Markdown Syntax Specification | authoring | Syntax Specification |
+| `schema-markdown.md` | Schema Markdown Syntax Specification | authoring | Syntax Specification |
 | `architecture.md` | Architecture & Technical Design | architecture | System Blueprint |
-| `system-architecture.md` | System Architecture Diagram | architecture | Interactive Visualisation |
 | `wyrd-runtime.md` | Wyrd Reference Runtime | runtime | Runtime Specification |
 | `test-case-strategy.md` | Test Case Strategy | validation | Validation Plan |
 | `product-vision.md` | Urd + Wyrd Product Vision v2.0 | strategy | Product Strategy |

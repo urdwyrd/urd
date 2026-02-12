@@ -338,7 +338,7 @@ The following rules are normative. Any runtime that executes Urd dialogue **must
 
 **Visited vs consumed.** A sticky choice is considered "visited" after first selection. The visited state can be used to vary the choice's response text on subsequent selections (e.g., shorter acknowledgment on revisit). This is distinct from consumed: visited choices remain available.
 
-**Exhaustion.** A section is exhausted when every choice is either consumed (one shot, already selected) or gated (conditions evaluate to false). On exhaustion, content falls through to the first text block after the choice block in the source file. If there is no fallthrough text, the dialogue ends. The runtime must never present an empty choice menu. The exhaustion condition uses the canonical form `? <section_name>.exhausted` (e.g., `? topics.exhausted`), where `<section_name>` resolves to a declared section identifier in scope. The compiled JSON represents the fallthrough content in an `on_exhausted` field; it does not contain an exhausted boolean. Whether a section is exhausted is always a runtime-evaluated predicate.
+**Exhaustion.** A section is exhausted when every choice is either consumed (one shot, already selected) or gated (conditions evaluate to false). On exhaustion, content falls through to the first text block after the choice block in the source file. If there is no fallthrough text, the dialogue ends. The runtime must never present an empty choice menu. The exhaustion condition uses the canonical form `? <section_name>.exhausted` (e.g., `? topics.exhausted`), where `<section_name>` resolves to a declared section identifier in scope. Section names in exhaustion conditions resolve using the same rules as `->` jumps: they refer to sections declared in the current file only. Cross-file section exhaustion is not supported in v1. The compiled JSON represents the fallthrough content in an `on_exhausted` field; it does not contain an exhausted boolean. Whether a section is exhausted is always a runtime-evaluated predicate.
 
 **Section scope.** Sections are scoped to the file in which they are declared. A section name must be unique within its file. The compiled section ID is namespaced by file stem (e.g., `tavern/topics` for `== topics` in `tavern.urd.md`), making it world-unique in compiled JSON. However, `-> section_name` in writer syntax only targets sections in the current file in v1. Cross file section jumps are not supported in v1 and are listed in Remaining Open Items.
 
@@ -951,7 +951,9 @@ How syntax elements compile to the Urd World Schema JSON.
 | `@entity: text` | Dialogue content attributed to entity. |
 | `@entity text` (no colon) | Narration/stage direction referencing entity. |
 | `== name` | Section in the dialogue block. |
+| Plain text at the start of a section (before any `@speaker:` line) | The section's `description` field. |
 | `-> name` (section) | goto field targeting the named section. |
+| `-> end` | No `goto` emitted; runtime exits dialogue mode. |
 | `-> target` (exit) | Exit in the enclosing location's exits map. |
 | `-> exit:name` | Explicit exit reference. Compiles identically to `-> target` (exit). Used when a section shadows an exit name. |
 | `! text` | blocked_message on the enclosing exit or action. |

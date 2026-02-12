@@ -5,7 +5,7 @@ description: "Validating the schema through executable proof. Four progressive t
 category: "validation"
 format: "Validation Plan"
 date: "2026-02"
-status: "complete"
+status: "v1.0 complete"
 order: 1
 tags:
   - testing

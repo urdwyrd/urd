@@ -5,7 +5,7 @@ description: "Four components connected by one contract. The compiler (5-phase p
 category: "architecture"
 format: "System Blueprint"
 date: "2026-02"
-status: "complete"
+status: "v1.0 complete"
 order: 1
 tags:
   - architecture
@@ -132,7 +132,7 @@ The compiler transforms Schema Markdown source files into a single, validated, s
 **Incremental compilation strategy.** Full recompile on every change is acceptable for the initial implementation, but the architecture must not preclude incremental compilation because the LSP needs it from Phase 3 onward. The following decisions are locked now to avoid costly retrofits:
 
 - **File dependency graph.** The compiler maintains a directed graph of file imports. When a file changes, only that file and its transitive dependents need recompilation. The graph is built during the collection pass and cached between compiles.
-- **Stable entity and section IDs.** Compiled IDs are derived from declared names and file paths, not from declaration order. Specifically: entity IDs are the declared `@name` and must be globally unique; section IDs are `file_stem/section_name` (e.g., `tavern/topics` for `== topics` in `tavern.urd.md`); choice IDs are `section_id/slugified_label` (e.g., `tavern/topics/ask-about-the-harbor`). This means a recompile of one file does not invalidate references from unchanged files, and tooling (LSP, editor, save files) can maintain stable pointers across recompiles.
+- **Stable entity and section IDs.** Compiled IDs are derived from declared names and file paths, not from declaration order. Specifically: entity IDs are the declared `@name` and must be globally unique; section IDs are `file_stem/section_name` (e.g., `tavern/topics` for `== topics` in `tavern.urd.md`); choice IDs are `section_id/slugified_label` (e.g., `tavern/topics/ask-about-the-harbor`). This means a recompile of one file does not invalidate references from unchanged files, and tooling (LSP, editor, save files) can maintain stable pointers across recompiles. The compiler MUST detect duplicate entity IDs across the entire compilation unit (entry file + all imports) and emit a diagnostic listing all declarations of the conflicting ID with their file paths and line numbers.
 - **Cache invalidation.** When a type definition changes, all entities of that type are revalidated. When an entity changes, all references to it are rechecked. The import graph provides the invalidation boundary. The initial compiler may recompile everything, but it must build the graph so that future versions can use it for incremental compilation.
 
 **Source maps.** The compiled JSON should include optional source map data linking each schema element back to its source file and line number. This enables the runtime and testing framework to report errors in terms of the original `.urd.md` source, not the compiled JSON. Not strictly required for v1, but the data model should leave room for it.

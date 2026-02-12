@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>urd.dev — Parchment Design System</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #8a6d18; --gold-light: #dab860; --gold-dim: #c4a84c; --gold-dark: #6a5510;
+  --purple: #6b4fa0; --purple-light: #b090dd; --purple-dim: #f0ecf5;
+  --blue: #3a6a98; --blue-light: #6a9acc; --blue-dim: #ecf2f8;
+  --green: #3a7a4a; --green-light: #70b080; --green-dim: #ecf5ee;
+  --amber: #a05a1a; --amber-light: #cc7a3a; --amber-dim: #f5ede5;
+  --rose: #a05050; --rose-light: #cc8888; --rose-dim: #f5ece8;
+  --bg: #f4ede0; --raise: #faf6ef; --deep: #e8e0d0;
+  --surface: #ede5d6; --hover: #e4dccb;
+  --border: #d4c8b0; --border-light: #c4b89e;
+  --text: #2c2418; --dim: #5c5040; --faint: #8a7e6c;
+  --display: 'Outfit', 'Helvetica Neue', sans-serif;
+  --body: 'Source Serif 4', 'Georgia', serif;
+  --mono: 'JetBrains Mono', 'Consolas', monospace;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { font-size: 16px; scroll-behavior: smooth; }
+body { font-family: var(--body); line-height: 1.7; color: var(--text); background: var(--bg); }
+::selection { background: rgba(138,109,24,0.18); color: var(--text); }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes pulseRing { 0%,100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 0; transform: scale(1.8); } }
+@keyframes wyrdGlow { 0%,100% { box-shadow: 0 0 20px rgba(107,79,160,0.04); } 50% { box-shadow: 0 0 40px rgba(107,79,160,0.1); } }
+
+.page { max-width: 1200px; margin: 0 auto; padding: 40px 32px 80px; }
+
+/* ── TOC ── */
+.toc {
+  position: fixed; left: 0; top: 0; bottom: 0; width: 242px;
+  padding: 0; background: var(--raise);
+  border-right: 1px solid var(--border);
+  overflow-y: auto; z-index: 100;
+  box-shadow:
+    inset -1px 0 0 rgba(0,0,0,0.04),
+    inset 0 1px 3px rgba(0,0,0,0.03),
+    2px 0 6px rgba(0,0,0,0.03);
+}
+.toc-header {
+  padding: 23px 21px 18px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(138,109,24,0.05) 0%, transparent 100%);
+}
+.toc-title { font-family: var(--display); font-size: 14px; font-weight: 600; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin: 0; }
+.toc-subtitle { font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.08em; margin-top: 3px; }
+.toc-body { padding: 14px 0; }
+.toc-section { padding: 0 16px; margin-bottom: 2px; }
+.toc-section-link {
+  display: block; font-family: var(--mono); font-size: 13.5px; font-weight: 500; color: var(--dim);
+  padding: 8px 12px; border-radius: 4px; text-decoration: none; letter-spacing: 0.02em;
+  transition: all 0.15s; border-left: 2px solid transparent;
+  background: var(--deep);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.6);
+}
+.toc-section-link:hover { color: var(--gold); background: rgba(138,109,24,0.06); border-left-color: var(--gold-dim); }
+.toc a { display: block; font-family: var(--mono); font-size: 12.5px; color: var(--faint); padding: 5px 12px 5px 26px; transition: color 0.15s; text-decoration: none; border-radius: 3px; }
+.toc a:hover { color: var(--gold); background: rgba(138,109,24,0.04); }
+.toc .sub { padding-left: 26px; font-size: 12.5px; opacity: 0.75; }
+.toc .sub:hover { opacity: 1; }
+.toc-divider { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 10px 16px; }
+.content { margin-left: 262px; position: relative; z-index: 1; }
+
+/* ── Section ── */
+.section { padding: 52px 0; border-bottom: 1px solid var(--border); }
+.section:last-child { border-bottom: none; }
+.section-id { font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0.12em; margin-bottom: 6px; }
+.section-title { font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: -0.01em; }
+.section-desc { font-size: 19px; color: var(--dim); max-width: 680px; margin-bottom: 36px; }
+.subsection-title { font-family: var(--display); font-size: 13px; font-weight: 600; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase; margin: 36px 0 18px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+
+/* ── Swatches ── */
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.swatch { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.swatch-color { height: 60px; display: flex; align-items: flex-end; padding: 8px 12px; }
+.swatch-label { font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.85); background: rgba(0,0,0,0.3); padding: 2px 7px; border-radius: 3px; }
+.swatch-info { padding: 12px; background: var(--raise); }
+.swatch-name { font-family: var(--mono); font-size: 12px; color: var(--text); margin-bottom: 2px; }
+.swatch-hex { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+.swatch-use { font-family: var(--body); font-size: 14px; color: var(--faint); margin-top: 4px; line-height: 1.4; }
+
+/* ── Showcase ── */
+.showcase { padding: 24px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); margin-bottom: 16px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.showcase-label { position: absolute; top: 10px; right: 12px; font-family: var(--mono); font-size: 10px; color: var(--faint); letter-spacing: 0.08em; background: var(--deep); padding: 3px 8px; border-radius: 3px; border: 1px solid var(--border); }
+.comp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+/* ── Pill ── */
+.pill { font-family: var(--mono); font-size: 11px; padding: 5px 12px; border-radius: 99px; border: 1px solid; white-space: nowrap; display: inline-block; }
+
+/* ── Status Dot ── */
+.dot { position: relative; display: inline-flex; width: 8px; height: 8px; }
+.dot-inner { position: absolute; inset: 0; border-radius: 50%; animation: pulse 2.5s ease-in-out infinite; }
+.dot-ring { position: absolute; inset: -3px; border-radius: 50%; border: 1px solid; opacity: 0.3; animation: pulseRing 2.5s ease-in-out infinite; }
+
+/* ── Gradient Accent Border ── */
+.accent-gold { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--gold), var(--gold-dark)) 1; }
+.accent-purple { border-left: 2px solid transparent; border-image: linear-gradient(135deg, var(--purple), #4a3578) 1; }
+.accent-blue { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--blue), #2a4a6a) 1; }
+.accent-green { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--green), #2a5a38) 1; }
+.accent-amber { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--amber), #7a4010) 1; }
+.accent-rose { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--rose), #7a3838) 1; }
+
+/* ── Type sample ── */
+.type-sample { padding: 20px 24px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+.type-meta { display: flex; gap: 16px; align-items: baseline; flex-wrap: wrap; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.type-meta span { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+
+@media (max-width: 768px) {
+  .toc { display: none; }
+  .content { margin-left: 0; }
+  .comp-grid { grid-template-columns: 1fr; }
+  .swatch-grid { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<canvas id="runeField" style="position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></canvas>
+
+<nav class="toc">
+  <div class="toc-header">
+    <div class="toc-title">Design System</div>
+    <div class="toc-subtitle">urd.dev · parchment</div>
+  </div>
+  <div class="toc-body">
+    <div class="toc-section">
+      <a href="#colours" class="toc-section-link">01 Colours</a>
+      <a href="#colour-surfaces" class="sub">Surfaces</a>
+      <a href="#colour-text" class="sub">Text</a>
+      <a href="#colour-gradients" class="sub">Gradients</a>
+      <a href="#colour-taxonomy" class="sub">Taxonomy</a>
+    </div>
+    <div class="toc-divider"></div>
+    <div class="toc-section">
+      <a href="#typography" class="toc-section-link">02 Typography</a>
+      <a href="#type-display" class="sub">Wordmark</a>
+      <a href="#type-body" class="sub">Body</a>
+      <a href="#type-mono" class="sub">Mono</a>
+      <a href="#type-scale" class="sub">Scale</a>
+    </div>
+    <div class="toc-divider"></div>
+    <div class="toc-section">
+      <a href="#components" class="toc-section-link">03 Components</a>
+      <a href="#comp-cards" class="sub">Cards</a>
+      <a href="#comp-pills" class="sub">Pills &amp; badges</a>
+      <a href="#comp-dots" class="sub">Status dots</a>
+      <a href="#comp-pipeline" class="sub">Pipeline</a>
+      <a href="#comp-proof" class="sub">Proof points</a>
+      <a href="#comp-split" class="sub">Writer / Engineer</a>
+      <a href="#comp-deepdive" class="sub">Deep dives</a>
+      <a href="#comp-nav" class="sub">Navigation</a>
+    </div>
+    <div class="toc-divider"></div>
+    <div class="toc-section">
+      <a href="#layout" class="toc-section-link">04 Layout</a>
+    </div>
+    <div class="toc-section">
+      <a href="#animation" class="toc-section-link">05 Animation</a>
+    </div>
+    <div class="toc-section">
+      <a href="#voice" class="toc-section-link">06 Copy Voice</a>
+    </div>
+  </div>
+</nav>
+
+<div class="content">
+<div class="page">
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- HEADER                                     -->
+<!-- ═══════════════════════════════════════════ -->
+<div style="margin-bottom: 52px; padding-bottom: 36px; border-bottom: 1px solid var(--border);">
+  <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0.08em; margin-bottom: 8px;">URD.DEV · PARCHMENT THEME</div>
+  <h1 style="font-family: var(--display); font-size: 40px; font-weight: 700; color: var(--text); margin-bottom: 12px; letter-spacing: -0.02em;">
+    Visual Design System
+  </h1>
+  <p style="font-size: 20px; color: var(--dim); max-width: 680px; margin-bottom: 16px;">
+    The living reference for every colour, type style, and component pattern.
+    Point at anything on this page to tell an AI what to change.
+  </p>
+  <p style="font-size: 15px; color: var(--faint); font-style: italic;">
+    Companion to <strong style="color: var(--dim);">DESIGN_BRIEF.md</strong> and
+    <strong style="color: var(--dim);">urd-document-taxonomy.md</strong>
+  </p>
+</div>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 01 COLOURS                                 -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="colours">
+  <div class="section-id">01</div>
+  <div class="section-title">Colours</div>
+  <div class="section-desc">
+    Every colour has a semantic meaning tied to a system component. Darkened from the canonical base hues for legibility on the cream surface.
+  </div>
+
+  <div class="subsection-title">Semantic Palette — Six Categories (Parchment)</div>
+  <div class="swatch-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="swatch"><div class="swatch-color" style="background: var(--gold);"><span class="swatch-label">AA</span></div><div class="swatch-info"><div class="swatch-name">gold</div><div class="swatch-hex">#8a6d18</div><div class="swatch-use">Urd. Schema. Contract.</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background: var(--purple);"><span class="swatch-label">AA</span></div><div class="swatch-info"><div class="swatch-name">purple</div><div class="swatch-hex">#6b4fa0</div><div class="swatch-use">Wyrd. Runtime.</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background: var(--blue);"><span class="swatch-label">AA</span></div><div class="swatch-info"><div class="swatch-name">blue</div><div class="swatch-hex">#3a6a98</div><div class="swatch-use">Writer. Authoring.</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background: var(--green);"><span class="swatch-label">AA</span></div><div class="swatch-info"><div class="swatch-name">green</div><div class="swatch-hex">#3a7a4a</div><div class="swatch-use">Testing. Validation.</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background: var(--amber);"><span class="swatch-label">AA</span></div><div class="swatch-info"><div class="swatch-name">amber</div><div class="swatch-hex">#a05a1a</div><div class="swatch-use">Compiler. Architecture.</div></div></div>
+    <div class="swatch"><div class="swatch-color" style="background: var(--rose);"><span class="swatch-label">AA</span></div><div class="swatch-info"><div class="swatch-name">rose</div><div class="swatch-hex">#a05050</div><div class="swatch-use">Research. Discovery.</div></div></div>
+  </div>
+
+  <div class="subsection-title">Brand Utilities — Gold Variants</div>
+  <p style="font-size: 15px; color: var(--faint); margin-bottom: 14px;">Utility tokens. gold-light uses the taxonomy base hue; gold and gold-dark are Parchment-darkened.</p>
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="width: 36px; height: 36px; border-radius: 6px; background: var(--gold-light); flex-shrink: 0;"></div>
+      <div><div style="font-family: var(--mono); font-size: 11px; color: var(--text);">gold-light</div><div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">#dab860 · hover/emph</div></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="width: 36px; height: 36px; border-radius: 6px; background: var(--gold-dim); flex-shrink: 0;"></div>
+      <div><div style="font-family: var(--mono); font-size: 11px; color: var(--text);">gold-dim</div><div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">#c4a84c · labels</div></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="width: 36px; height: 36px; border-radius: 6px; background: var(--gold); flex-shrink: 0;"></div>
+      <div><div style="font-family: var(--mono); font-size: 11px; color: var(--text);">gold</div><div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">#8a6d18 · primary</div></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="width: 36px; height: 36px; border-radius: 6px; background: var(--gold-dark); flex-shrink: 0;"></div>
+      <div><div style="font-family: var(--mono); font-size: 11px; color: var(--text);">gold-dark</div><div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">#6a5510 · borders</div></div>
+    </div>
+  </div>
+
+  <!-- Surfaces -->
+  <div class="subsection-title" id="colour-surfaces">Surfaces</div>
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px;">
+    <div style="height: 88px; border-radius: 10px; background: var(--deep); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;"><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">deep #e8e0d0</span></div>
+    <div style="height: 88px; border-radius: 10px; background: var(--bg); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;"><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">bg #f4ede0</span></div>
+    <div style="height: 88px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;"><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">raise #faf6ef</span></div>
+    <div style="height: 88px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;"><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">surface #ede5d6</span></div>
+    <div style="height: 88px; border-radius: 10px; background: var(--hover); border: 1px solid var(--border); display: flex; flex-direction: column; justify-content: flex-end; padding: 12px;"><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">hover #e4dccb</span></div>
+  </div>
+
+  <!-- Text -->
+  <div class="subsection-title" id="colour-text">Text Hierarchy</div>
+  <div style="padding: 24px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <p style="font-size: 20px; color: var(--text); margin-bottom: 14px;">
+      Primary text <span style="font-family: var(--mono); font-size: 12px; color: var(--faint); margin-left: 10px;">--text · #2c2418 · 13.8:1 · AAA</span>
+    </p>
+    <p style="font-size: 20px; color: var(--dim); margin-bottom: 14px;">
+      Secondary text <span style="font-family: var(--mono); font-size: 12px; color: var(--faint); margin-left: 10px;">--dim · #5c5040 · 6.2:1 · AA</span>
+    </p>
+    <p style="font-size: 20px; color: var(--faint);">
+      Tertiary text <span style="font-family: var(--mono); font-size: 12px; color: var(--faint); margin-left: 10px;">--faint · #8a7e6c · 3.6:1 · AA-large</span>
+    </p>
+  </div>
+
+  <!-- Gradients -->
+  <div class="subsection-title" id="colour-gradients">Accent Gradients</div>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 12px;">
+    <div style="border-radius: 10px; border: 1px solid var(--border); background: var(--raise); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="height: 4px; background: linear-gradient(to bottom, #8a6d18, #6a5510);"></div>
+      <div style="padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 2px;">gold-ink</div>
+          <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">#8a6d18 → #6a5510 · vertical</div>
+        </div>
+        <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(to bottom, #8a6d18, #6a5510);"></div>
+      </div>
+    </div>
+    <div style="border-radius: 10px; border: 1px solid var(--border); background: var(--raise); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="height: 4px; background: linear-gradient(to bottom, var(--gold-dim), var(--gold-dark));"></div>
+      <div style="padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 2px;">gold-wash</div>
+          <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">#c4a84c → #6a5510 · vertical</div>
+        </div>
+        <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(to bottom, #c4a84c, #6a5510);"></div>
+      </div>
+    </div>
+    <div style="border-radius: 10px; border: 1px solid var(--border); background: var(--raise); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="height: 4px; background: linear-gradient(135deg, #6b4fa0, #4a3578);"></div>
+      <div style="padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 2px;">purple-lattice</div>
+          <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">#6b4fa0 → #4a3578 · 135°</div>
+        </div>
+        <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #6b4fa0, #4a3578);"></div>
+      </div>
+    </div>
+    <div style="border-radius: 10px; border: 1px solid var(--border); background: var(--raise); overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="height: 4px; background: linear-gradient(135deg, var(--purple-light), #9070bb);"></div>
+      <div style="padding: 16px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 2px;">purple-glow</div>
+          <div style="font-family: var(--mono); font-size: 10px; color: var(--faint);">#b090dd → #9070bb · 135°</div>
+        </div>
+        <div style="width: 28px; height: 28px; border-radius: 6px; background: linear-gradient(135deg, #b090dd, #9070bb);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Taxonomy mapping -->
+  <div class="subsection-title" id="colour-taxonomy">Taxonomy Mapping</div>
+  <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px;">
+    <div style="text-align: center; padding: 14px 8px; border-radius: 8px; background: var(--rose-dim); border: 1px solid rgba(160,80,80,0.2);"><div style="font-family: var(--mono); font-size: 10px; color: var(--rose); font-weight: 500;">RESEARCH</div><div style="width: 7px; height: 7px; border-radius: 50%; background: var(--rose); margin: 6px auto 0;"></div></div>
+    <div style="text-align: center; padding: 14px 8px; border-radius: 8px; background: rgba(138,109,24,0.06); border: 1px solid rgba(138,109,24,0.2);"><div style="font-family: var(--mono); font-size: 10px; color: var(--gold); font-weight: 500;">CONTRACT</div><div style="width: 7px; height: 7px; border-radius: 50%; background: var(--gold); margin: 6px auto 0;"></div></div>
+    <div style="text-align: center; padding: 14px 8px; border-radius: 8px; background: var(--blue-dim); border: 1px solid rgba(58,106,152,0.2);"><div style="font-family: var(--mono); font-size: 10px; color: var(--blue); font-weight: 500;">AUTHORING</div><div style="width: 7px; height: 7px; border-radius: 50%; background: var(--blue); margin: 6px auto 0;"></div></div>
+    <div style="text-align: center; padding: 14px 8px; border-radius: 8px; background: var(--amber-dim); border: 1px solid rgba(160,90,26,0.2);"><div style="font-family: var(--mono); font-size: 10px; color: var(--amber); font-weight: 500;">ARCHITECTURE</div><div style="width: 7px; height: 7px; border-radius: 50%; background: var(--amber); margin: 6px auto 0;"></div></div>
+    <div style="text-align: center; padding: 14px 8px; border-radius: 8px; background: var(--purple-dim); border: 1px solid rgba(107,79,160,0.2);"><div style="font-family: var(--mono); font-size: 10px; color: var(--purple); font-weight: 500;">RUNTIME</div><div style="width: 7px; height: 7px; border-radius: 50%; background: var(--purple); margin: 6px auto 0;"></div></div>
+    <div style="text-align: center; padding: 14px 8px; border-radius: 8px; background: var(--green-dim); border: 1px solid rgba(58,122,74,0.2);"><div style="font-family: var(--mono); font-size: 10px; color: var(--green); font-weight: 500;">VALIDATION</div><div style="width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin: 6px auto 0;"></div></div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 02 TYPOGRAPHY                              -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="typography">
+  <div class="section-id">02</div>
+  <div class="section-title">Typography</div>
+  <div class="section-desc">
+    Four fonts, four roles. Georgia for the brand wordmark. Outfit for structure. Source Serif 4 for reading. JetBrains Mono for precision.
+  </div>
+
+  <div class="subsection-title" id="type-display">Brand Wordmark — Georgia</div>
+  <div class="type-sample">
+    <div style="display: flex; gap: 32px; align-items: baseline;">
+      <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 52px; font-weight: 400; letter-spacing: 0.08em; background: linear-gradient(135deg, #8a6d18, #6a5510); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">URD</span>
+      <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 18px; color: var(--faint); letter-spacing: 0.08em;">·</span>
+      <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 52px; font-weight: 400; letter-spacing: 0.08em; background: linear-gradient(135deg, #6b4fa0, #4a3578); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">WYRD</span>
+    </div>
+    <div class="type-meta">
+      <span>Georgia 400</span><span>Uppercase only</span><span>letter-spacing: 0.08em</span><span>Gradient text fill</span>
+    </div>
+    <div style="margin-top: 10px; padding: 8px 12px; background: rgba(160,80,80,0.06); border: 1px solid rgba(160,80,80,0.15); border-radius: 4px; font-family: var(--mono); font-size: 10px; color: var(--rose);">
+      ⚠ Georgia is used exclusively for the brand wordmark. All other display text uses Outfit.
+    </div>
+  </div>
+
+  <div class="subsection-title">Outfit — Display &amp; Headings</div>
+  <div class="type-sample">
+    <div style="font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; margin-bottom: 4px;">If it can't be reproduced,</div>
+    <div style="font-family: var(--display); font-size: 28px; font-weight: 300; color: var(--faint); letter-spacing: -0.01em;">it doesn't go on the front page.</div>
+    <div class="type-meta">
+      <span>Outfit 600 / 300</span><span>Section headings</span><span>26–28px</span>
+    </div>
+  </div>
+  <div class="type-sample">
+    <div style="display: flex; gap: 20px; align-items: baseline; flex-wrap: wrap;">
+      <span style="font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--purple);">Wyrd</span>
+      <span style="font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber);">Compiler</span>
+      <span style="font-family: var(--display); font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold);">Deep Dives</span>
+    </div>
+    <div class="type-meta">
+      <span>Outfit 600</span><span>Component names, labels</span><span>13–18px uppercase</span>
+    </div>
+  </div>
+
+  <div class="subsection-title" id="type-body">Source Serif 4 — Body</div>
+  <div class="type-sample">
+    <p style="font-size: 20px; color: var(--dim); max-width: 580px;">Writers author in Schema Markdown — a prose-friendly format where narrative reads naturally and annotations sit in the margins of intention.</p>
+    <div class="type-meta">
+      <span>Source Serif 4 · 400</span><span>Body text</span><span>20px · line-height 1.7</span>
+    </div>
+  </div>
+
+  <div class="subsection-title" id="type-mono">JetBrains Mono — Technical</div>
+  <div class="type-sample">
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: baseline;">
+      <span style="font-family: var(--mono); font-size: 13px; color: var(--faint); letter-spacing: 0.06em;">Feb 9, 2026</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--green); letter-spacing: 0.06em;">Building in public</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); padding: 4px 8px; background: var(--deep); border: 1px solid var(--border); border-radius: 3px;">Parse</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint); letter-spacing: 0.1em;">.urd.json</span>
+    </div>
+    <div class="type-meta">
+      <span>JetBrains Mono 400</span><span>Metadata, status, paths</span><span>11–13px</span>
+    </div>
+  </div>
+
+  <div class="subsection-title" id="type-scale">Full Type Scale</div>
+  <div style="padding: 24px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <div style="display: grid; grid-template-columns: 140px 1fr 160px; gap: 0; font-family: var(--mono); font-size: 11px; color: var(--faint); border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 12px;">
+      <span>ELEMENT</span><span>SAMPLE</span><span>SPECS</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 140px 1fr 160px; gap: 14px 0; align-items: baseline;">
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Brand mark</span>
+      <span style="font-family: Georgia, 'Times New Roman', serif; font-size: 52px; font-weight: 400; color: var(--gold); line-height: 1; letter-spacing: 0.08em;">URD</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Georgia 400 42–72</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Section head</span>
+      <span style="font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--text); letter-spacing: -0.01em;">The Pipeline</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Outfit 600 26–28</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Component name</span>
+      <span style="font-family: var(--display); font-size: 16px; font-weight: 600; color: var(--purple); letter-spacing: 1.5px; text-transform: uppercase;">Wyrd</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Outfit 600 15–18</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Section label</span>
+      <span style="font-family: var(--display); font-size: 13px; font-weight: 600; color: var(--gold); letter-spacing: 1.5px; text-transform: uppercase;">Deep Dives</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Outfit 600 12–13</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Body</span>
+      <span style="font-family: var(--body); font-size: 20px; color: var(--dim);">Writers author in Schema Markdown.</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Source Serif 4 · 400 · 20–21</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Card desc</span>
+      <span style="font-family: var(--body); font-size: 17px; color: var(--faint);">Transforms .urd.md source into compiled JSON.</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Source Serif 4 · 400 · 17–18</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Badge</span>
+      <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(107,79,160,0.2); text-transform: uppercase;">Runtime</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Outfit 500 10–11</span>
+
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Metadata</span>
+      <span style="font-family: var(--mono); font-size: 12px; color: var(--faint); letter-spacing: 0.06em;">Updated today · 12,000+ words</span>
+      <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">Mono 400 12–13</span>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 03 COMPONENTS                              -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="components">
+  <div class="section-id">03</div>
+  <div class="section-title">Components</div>
+  <div class="section-desc">
+    Every recurring pattern on the site. Point at any component to reference it in a change request.
+  </div>
+
+  <div class="subsection-title" id="comp-cards">Cards — Default and Component</div>
+  <div class="comp-grid">
+    <div class="showcase">
+      <span class="showcase-label">DEFAULT CARD</span>
+      <div style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="font-family: var(--display); font-size: 18px; font-weight: 600; color: var(--text); margin-bottom: 8px;">Card Title</div>
+        <p style="font-family: var(--body); font-size: 17px; color: var(--dim); line-height: 1.6;">
+          Default card with raise background, warm border, and subtle drop shadow.
+        </p>
+      </div>
+    </div>
+    <div class="showcase">
+      <span class="showcase-label">WYRD CARD (EXCLUSIVE GLOW)</span>
+      <div class="accent-purple" style="padding: 22px; border-radius: 10px; border: 1px solid rgba(107,79,160,0.25); background: var(--purple-dim); animation: wyrdGlow 4s infinite;">
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+          <span style="font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--purple);">Wyrd</span>
+          <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: rgba(107,79,160,0.08); color: var(--purple); border: 1px solid rgba(107,79,160,0.2); text-transform: uppercase;">Runtime</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 17px; color: var(--dim); line-height: 1.6;">
+          Only the Wyrd card gets the glow animation. This is a hard rule.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="comp-grid" style="margin-top: 12px;">
+    <div class="showcase">
+      <span class="showcase-label">COMPILER CARD</span>
+      <div class="accent-amber" style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid rgba(160,90,26,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+          <span style="font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--amber);">Compiler</span>
+          <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(160,90,26,0.2); text-transform: uppercase;">CLI</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 3px; flex-wrap: wrap;">
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); padding: 4px 8px; background: var(--deep); border-radius: 3px; border: 1px solid var(--border);">Parse</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--faint);">→</span>
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); padding: 4px 8px; background: var(--deep); border-radius: 3px; border: 1px solid var(--border);">Import</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--faint);">→</span>
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); padding: 4px 8px; background: var(--deep); border-radius: 3px; border: 1px solid var(--border);">Link</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--faint);">→</span>
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); padding: 4px 8px; background: var(--deep); border-radius: 3px; border: 1px solid var(--border);">Validate</span>
+          <span style="font-family: var(--mono); font-size: 9px; color: var(--faint);">→</span>
+          <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); padding: 4px 8px; background: var(--deep); border-radius: 3px; border: 1px solid var(--border);">Emit</span>
+        </div>
+      </div>
+    </div>
+    <div class="showcase">
+      <span class="showcase-label">TESTING CARD</span>
+      <div class="accent-green" style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid rgba(58,122,74,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px;">
+          <span style="font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green);">Testing</span>
+          <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--green-dim); color: var(--green); border: 1px solid rgba(58,122,74,0.2); text-transform: uppercase;">CLI</span>
+        </div>
+        <div style="font-family: var(--mono); font-size: 13px; color: var(--green); line-height: 1.9;">
+          Monte Carlo simulation<br>Reachability analysis<br>Coverage reporting
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pills & Status -->
+  <div class="subsection-title" id="comp-pills">Pills, Badges &amp; Status</div>
+  <div class="showcase">
+    <span class="showcase-label">TAXONOMY PILLS</span>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+      <span class="pill" style="color: var(--rose); border-color: rgba(160,80,80,0.3); background: var(--rose-dim);">Research</span>
+      <span class="pill" style="color: var(--gold); border-color: rgba(138,109,24,0.3); background: rgba(138,109,24,0.06);">Contract</span>
+      <span class="pill" style="color: var(--blue); border-color: rgba(58,106,152,0.3); background: var(--blue-dim);">Authoring</span>
+      <span class="pill" style="color: var(--amber); border-color: rgba(160,90,26,0.3); background: var(--amber-dim);">Architecture</span>
+      <span class="pill" style="color: var(--purple); border-color: rgba(107,79,160,0.3); background: var(--purple-dim);">Runtime</span>
+      <span class="pill" style="color: var(--green); border-color: rgba(58,122,74,0.3); background: var(--green-dim);">Validation</span>
+    </div>
+
+    <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 10px;">COMPONENT BADGES</div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+      <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(160,90,26,0.2); text-transform: uppercase;">CLI</span>
+      <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--purple-dim); color: var(--purple); border: 1px solid rgba(107,79,160,0.2); text-transform: uppercase;">Runtime</span>
+      <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(58,106,152,0.2); text-transform: uppercase;">Writer Mode</span>
+      <span style="font-family: var(--display); font-size: 10px; font-weight: 500; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; background: var(--green-dim); color: var(--green); border: 1px solid rgba(58,122,74,0.2); text-transform: uppercase;">Engineer Mode</span>
+    </div>
+
+    <div class="subsection-title" id="comp-dots" style="margin-top: 0;">Status Dots</div>
+    <div style="display: flex; gap: 36px; align-items: center; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="dot"><span class="dot-inner" style="background: var(--green);"></span><span class="dot-ring" style="border-color: var(--green);"></span></span>
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--green);">Building in public</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="dot"><span class="dot-inner" style="background: var(--amber);"></span><span class="dot-ring" style="border-color: var(--amber);"></span></span>
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--amber);">In progress</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--purple); opacity: 0.7;"></span>
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--faint);">Static (timeline)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="subsection-title" id="comp-pipeline">Pipeline</div>
+  <div class="showcase">
+    <span class="showcase-label">HORIZONTAL PIPELINE</span>
+    <div style="display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 4px 0;">
+      <div style="padding: 14px 20px; border-radius: 10px; min-width: 140px; text-align: center; background: var(--blue-dim); border: 1px solid rgba(58,106,152,0.25);">
+        <div style="font-family: var(--mono); font-size: 13px; color: var(--blue);">.urd.md</div>
+        <div style="font-family: var(--body); font-size: 13px; color: var(--faint); margin-top: 3px;">Writer's source</div>
+      </div>
+      <span style="font-family: var(--display); font-size: 16px; color: var(--faint); padding: 0 12px; font-weight: 300;">→</span>
+      <div style="padding: 14px 20px; border-radius: 10px; min-width: 200px; text-align: center; background: var(--amber-dim); border: 1px solid rgba(160,90,26,0.25);">
+        <div style="font-family: var(--mono); font-size: 13px; color: var(--amber);">Compiler</div>
+        <div style="font-family: var(--body); font-size: 12px; color: var(--faint); margin-top: 3px;">Parse → Import → Link → Validate → Emit</div>
+      </div>
+      <span style="font-family: var(--display); font-size: 16px; color: var(--faint); padding: 0 12px; font-weight: 300;">→</span>
+      <div style="padding: 14px 20px; border-radius: 10px; min-width: 140px; text-align: center; background: rgba(138,109,24,0.05); border: 1px solid rgba(138,109,24,0.25);">
+        <div style="font-family: var(--mono); font-size: 13px; color: var(--gold);">.urd.json</div>
+        <div style="font-family: var(--body); font-size: 13px; color: var(--faint); margin-top: 3px;">The contract</div>
+      </div>
+      <span style="font-family: var(--display); font-size: 16px; color: var(--faint); padding: 0 12px; font-weight: 300;">→</span>
+      <div style="padding: 14px 20px; border-radius: 10px; min-width: 140px; text-align: center; background: var(--purple-dim); border: 1px solid rgba(107,79,160,0.25);">
+        <div style="font-family: var(--mono); font-size: 13px; color: var(--purple);">Wyrd</div>
+        <div style="font-family: var(--body); font-size: 13px; color: var(--faint); margin-top: 3px;">Runtime</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Proof points -->
+  <div class="subsection-title" id="comp-proof">Proof Points</div>
+  <div class="showcase">
+    <span class="showcase-label">PROOF POINT CARD</span>
+    <div style="padding: 24px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+        <span style="font-family: var(--mono); font-size: 12px; color: var(--faint);">#01</span>
+        <span style="font-family: var(--display); font-size: 20px; font-weight: 600; color: var(--text);">Monty Hall Problem</span>
+        <span class="dot"><span class="dot-inner" style="background: var(--amber);"></span><span class="dot-ring" style="border-color: var(--amber);"></span></span>
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--amber); margin-left: auto;">In progress</span>
+      </div>
+      <p style="font-family: var(--body); font-size: 18px; color: var(--dim); line-height: 1.6; margin-bottom: 16px;">
+        Three doors, one car, two goats. The correct 2/3 switching advantage must emerge from structure alone.
+      </p>
+      <div style="display: flex; gap: 10px;">
+        <span style="font-family: var(--body); font-size: 15px; padding: 8px 18px; border-radius: 99px; border: 1px solid rgba(138,109,24,0.3); background: rgba(138,109,24,0.05); color: var(--gold);">Play in browser</span>
+        <span style="font-family: var(--body); font-size: 15px; padding: 8px 18px; border-radius: 99px; border: 1px solid var(--border); background: var(--raise); color: var(--dim);">Read the model</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Writer / Engineer -->
+  <div class="subsection-title" id="comp-split">Writer / Engineer</div>
+  <div class="comp-grid">
+    <div class="showcase">
+      <span class="showcase-label">WRITER MODE</span>
+      <div class="accent-blue" style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid rgba(58,106,152,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+          <span style="font-family: var(--display); font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue);">Writer</span>
+          <span style="font-family: var(--body); font-size: 17px; color: var(--faint);">narrative designers</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 17px; color: var(--dim);">
+          Prose with light annotations. <span style="font-family: var(--mono); font-size: 14px; color: var(--blue);">@ ? &gt; * + → ==</span>
+        </p>
+        <p style="font-family: var(--body); font-size: 15px; color: var(--faint); margin-top: 8px; font-style: italic;">
+          Sees: completions, conversation graph, scene preview. Never JSON.
+        </p>
+      </div>
+    </div>
+    <div class="showcase">
+      <span class="showcase-label">ENGINEER MODE</span>
+      <div class="accent-green" style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid rgba(58,122,74,0.25); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+          <span style="font-family: var(--display); font-size: 15px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green);">Engineer</span>
+          <span style="font-family: var(--body); font-size: 17px; color: var(--faint);">schema designers</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 17px; color: var(--dim);">
+          Types, properties, enums, rules, conditions, effects, sequences.
+        </p>
+        <p style="font-family: var(--body); font-size: 15px; color: var(--faint); margin-top: 8px; font-style: italic;">
+          Sees: type browser, compiled JSON, test runner, import graph.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deep Dives -->
+  <div class="subsection-title" id="comp-deepdive">Deep Dive Cards</div>
+  <div class="showcase">
+    <span class="showcase-label">4-COLUMN GRID</span>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+      <div style="padding: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); min-height: 130px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+          <span style="font-family: var(--body); font-size: 16px; font-weight: 600; color: var(--text);">System Architecture</span>
+          <span class="pill" style="font-size: 10px; color: var(--purple); border-color: rgba(107,79,160,0.3); background: var(--purple-dim);">Runtime</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 15px; color: var(--faint); line-height: 1.5;">Components, boundaries, data flow.</p>
+      </div>
+      <div style="padding: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); min-height: 130px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+          <span style="font-family: var(--body); font-size: 16px; font-weight: 600; color: var(--text);">Schema Markdown</span>
+          <span class="pill" style="font-size: 10px; color: var(--blue); border-color: rgba(58,106,152,0.3); background: var(--blue-dim);">Authoring</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 15px; color: var(--faint); line-height: 1.5;">Writer-facing format. Deterministic nesting.</p>
+      </div>
+      <div style="padding: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); min-height: 130px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+          <span style="font-family: var(--body); font-size: 16px; font-weight: 600; color: var(--text);">Pain Points</span>
+          <span class="pill" style="font-size: 10px; color: var(--rose); border-color: rgba(160,80,80,0.3); background: var(--rose-dim);">Research</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 15px; color: var(--faint); line-height: 1.5;">Forum-sourced. Seven pain clusters.</p>
+      </div>
+      <div style="padding: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); min-height: 130px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px;">
+          <span style="font-family: var(--body); font-size: 16px; font-weight: 600; color: var(--text);">Test Strategy</span>
+          <span class="pill" style="font-size: 10px; color: var(--green); border-color: rgba(58,122,74,0.3); background: var(--green-dim);">Validation</span>
+        </div>
+        <p style="font-family: var(--body); font-size: 15px; color: var(--faint); line-height: 1.5;">Why Monty Hall first. Progressive proofs.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nav + Section Header -->
+  <div class="subsection-title" id="comp-nav">Navigation &amp; Panels</div>
+
+  <div class="showcase" style="margin-bottom: 16px;">
+    <span class="showcase-label">SIDEBAR PANEL</span>
+    <div style="display: grid; grid-template-columns: 210px 1fr; gap: 20px; align-items: start;">
+      <div style="background: var(--raise); border-radius: 6px; border: 1px solid var(--border); box-shadow: inset 0 1px 3px rgba(0,0,0,0.03), 0 1px 0 rgba(255,255,255,0.6), 2px 0 6px rgba(0,0,0,0.03); overflow: hidden;">
+        <div style="padding: 14px 16px 12px; border-bottom: 1px solid var(--border); background: linear-gradient(180deg, rgba(138,109,24,0.05) 0%, transparent 100%);">
+          <div style="font-family: var(--display); font-size: 12px; font-weight: 600; color: var(--gold); letter-spacing: 2px; text-transform: uppercase;">Panel Title</div>
+          <div style="font-family: var(--mono); font-size: 9px; color: var(--faint); margin-top: 2px;">subtitle</div>
+        </div>
+        <div style="padding: 12px 12px;">
+          <div style="font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--dim); padding: 6px 10px; border-radius: 4px; margin-bottom: 4px; background: var(--deep); box-shadow: inset 0 1px 2px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.6); border-left: 2px solid transparent;">Section One</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); padding: 4px 10px 4px 20px; opacity: 0.75;">Sub-item</div>
+          <div style="font-family: var(--mono); font-size: 11px; color: var(--gold); padding: 4px 10px 4px 20px; background: rgba(138,109,24,0.05); border-radius: 3px;">Active item</div>
+          <div style="height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 8px 12px;"></div>
+          <div style="font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--dim); padding: 6px 10px; border-radius: 4px; background: var(--deep); box-shadow: inset 0 1px 2px rgba(0,0,0,0.04), 0 1px 0 rgba(255,255,255,0.6); border-left: 2px solid transparent;">Section Two</div>
+        </div>
+      </div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); line-height: 2;">
+        <div><span style="color: var(--dim);">Panel bg:</span> --raise (#faf6ef)</div>
+        <div><span style="color: var(--dim);">Depth:</span> inset shadow top, light edge bottom</div>
+        <div><span style="color: var(--dim);">Header:</span> gold gradient wash + border separator</div>
+        <div><span style="color: var(--dim);">Section links:</span> recessed micro-buttons (inset shadow)</div>
+        <div><span style="color: var(--dim);">Dividers:</span> center-faded gradient lines</div>
+        <div><span style="color: var(--dim);">Hover:</span> gold tint + left border accent</div>
+        <div style="margin-top: 8px; padding: 8px 12px; background: rgba(138,109,24,0.04); border: 1px solid rgba(138,109,24,0.15); border-radius: 4px; color: var(--gold); font-size: 10px; line-height: 1.5;">
+          Inverted Zachtronics technique — controls are recessed into the light surface rather than raised from a dark one. Letterpress on paper instead of embossed metal.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top nav bar -->
+  <div class="showcase" style="margin-bottom: 16px;">
+    <span class="showcase-label">NAV BAR</span>
+    <div style="padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; background: rgba(250,246,239,0.95); backdrop-filter: blur(16px); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="display: flex; align-items: baseline; gap: 4px;">
+        <span style="font-family: var(--display); font-size: 19px; font-weight: 700; color: var(--gold); letter-spacing: -0.02em;">urd</span>
+        <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">.dev</span>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <span style="font-family: var(--body); font-size: 15px; color: var(--dim); background: var(--deep); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px;">Proof points</span>
+        <span style="font-family: var(--body); font-size: 15px; color: var(--dim); background: var(--deep); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px;">Pipeline</span>
+        <span style="font-family: var(--body); font-size: 15px; color: var(--dim); background: var(--deep); border: 1px solid var(--border); border-radius: 99px; padding: 7px 16px;">Deep dives</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section header -->
+  <div class="showcase">
+    <span class="showcase-label">SECTION HEADER</span>
+    <div style="padding: 8px 0;">
+      <span style="font-family: var(--display); font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gold); display: block; margin-bottom: 14px;">Proof Points</span>
+      <div style="font-family: var(--display); font-size: 28px; font-weight: 600; color: var(--text); margin-bottom: 10px; letter-spacing: -0.01em;">
+        If it can't be reproduced, <span style="color: var(--faint); font-weight: 300;">it doesn't go on the front page.</span>
+      </div>
+      <p style="font-family: var(--body); font-size: 19px; color: var(--dim); max-width: 640px;">
+        Each proof point has a runnable demo and a traceable artifact chain.
+      </p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 04 LAYOUT                                  -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="layout">
+  <div class="section-id">04</div>
+  <div class="section-title">Layout</div>
+  <div class="section-desc">Grid patterns and spacing scale.</div>
+
+  <div style="display: flex; flex-direction: column; gap: 16px; margin-bottom: 24px;">
+    <div style="padding: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 10px;">PROOF POINTS + SIDEBAR — 1.2fr / 0.8fr</div>
+      <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 12px; height: 56px;">
+        <div style="background: var(--blue-dim); border: 1px solid rgba(58,106,152,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--blue);">Proof points</div>
+        <div style="background: var(--amber-dim); border: 1px solid rgba(160,90,26,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--amber);">Latest build</div>
+      </div>
+    </div>
+    <div style="padding: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 10px;">WRITER / ENGINEER — 1fr / 1fr</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; height: 48px;">
+        <div style="background: var(--blue-dim); border: 1px solid rgba(58,106,152,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--blue);">Writer</div>
+        <div style="background: var(--green-dim); border: 1px solid rgba(58,122,74,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; color: var(--green);">Engineer</div>
+      </div>
+    </div>
+    <div style="padding: 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); margin-bottom: 10px;">DEEP DIVES — repeat(4, 1fr)</div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; height: 48px;">
+        <div style="background: var(--purple-dim); border: 1px solid rgba(107,79,160,0.15); border-radius: 8px;"></div>
+        <div style="background: var(--purple-dim); border: 1px solid rgba(107,79,160,0.15); border-radius: 8px;"></div>
+        <div style="background: var(--purple-dim); border: 1px solid rgba(107,79,160,0.15); border-radius: 8px;"></div>
+        <div style="background: var(--purple-dim); border: 1px solid rgba(107,79,160,0.15); border-radius: 8px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="subsection-title">Spacing Scale</div>
+  <div style="display: flex; flex-direction: column; gap: 5px;">
+    <div style="display: flex; align-items: center; gap: 12px;" title="4px"><div style="width: 4px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">4px — inline</span></div>
+    <div style="display: flex; align-items: center; gap: 12px;" title="8px"><div style="width: 8px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">8px — related items</span></div>
+    <div style="display: flex; align-items: center; gap: 12px;" title="12px"><div style="width: 12px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">12px — card gap</span></div>
+    <div style="display: flex; align-items: center; gap: 12px;" title="18px"><div style="width: 18px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">18px — card padding</span></div>
+    <div style="display: flex; align-items: center; gap: 12px;" title="24px"><div style="width: 24px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">24px — panel padding</span></div>
+    <div style="display: flex; align-items: center; gap: 12px;" title="32px"><div style="width: 32px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">32px — side padding</span></div>
+    <div style="display: flex; align-items: center; gap: 12px;" title="48px"><div style="width: 48px; height: 18px; background: var(--gold); border-radius: 2px;"></div><span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">48px — section gap</span></div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 05 ANIMATION                               -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="animation">
+  <div class="section-id">05</div>
+  <div class="section-title">Animation</div>
+  <div class="section-desc">Atmospheric, not performative. Ink doesn't shimmer — motion is even more restrained than Gloaming.</div>
+
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+    <div style="padding: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--green); margin: 0 auto 12px; animation: pulse 2.5s ease-in-out infinite;"></div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--dim);">pulse · 2.5s</div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 4px;">Status dots only</div>
+    </div>
+    <div style="padding: 20px; border-radius: 10px; border: 1px solid rgba(107,79,160,0.25); background: var(--purple-dim); text-align: center; animation: wyrdGlow 4s infinite;">
+      <div style="font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--purple); margin-bottom: 12px;">Wyrd</div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--dim);">wyrdGlow · 4s</div>
+      <div style="font-family: var(--mono); font-size: 11px; margin-top: 8px;"><span style="color: var(--rose);">EXCLUSIVE — only Wyrd</span></div>
+    </div>
+    <div style="padding: 20px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-family: serif; font-size: 28px; color: rgba(60,48,30,0.06); margin-bottom: 8px;">ᚠ ᛁ ᛏ ᛟ</div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--dim);">runeCanvas · continuous</div>
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 4px;">Dark sepia · opacity ≤ 0.03</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- 06 COPY VOICE                              -->
+<!-- ═══════════════════════════════════════════ -->
+<section class="section" id="voice">
+  <div class="section-id">06</div>
+  <div class="section-title">Copy Voice</div>
+  <div class="section-desc">Precise, understated, confident. Every sentence either informs or provokes curiosity.</div>
+
+  <div class="comp-grid">
+    <div class="accent-green" style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--green); margin-bottom: 16px;">✓ On-brand</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <p style="font-size: 17px; color: var(--dim); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(58,122,74,0.3); background: var(--green-dim); border-radius: 0 6px 6px 0;">If it can't be reproduced, it doesn't go on the front page.</p>
+        <p style="font-size: 17px; color: var(--dim); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(58,122,74,0.3); background: var(--green-dim); border-radius: 0 6px 6px 0;">Not "no code." A compiler, a runtime, and a contract between them.</p>
+        <p style="font-size: 17px; color: var(--dim); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(58,122,74,0.3); background: var(--green-dim); border-radius: 0 6px 6px 0;">The judgment is human. The throughput is superhuman.</p>
+        <p style="font-size: 17px; color: var(--dim); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(58,122,74,0.3); background: var(--green-dim); border-radius: 0 6px 6px 0;">No trailers. Runnable worlds.</p>
+      </div>
+    </div>
+    <div class="accent-rose" style="padding: 22px; border-radius: 10px; background: var(--raise); border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+      <div style="font-family: var(--display); font-size: 12px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--rose); margin-bottom: 16px;">✗ Off-brand</div>
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <p style="font-size: 17px; color: var(--faint); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(160,80,80,0.3); background: var(--rose-dim); border-radius: 0 6px 6px 0; text-decoration: line-through; opacity: 0.6;">Unleash the power of declarative world-building!</p>
+        <p style="font-size: 17px; color: var(--faint); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(160,80,80,0.3); background: var(--rose-dim); border-radius: 0 6px 6px 0; text-decoration: line-through; opacity: 0.6;">Getting started is easy — just three simple steps!</p>
+        <p style="font-size: 17px; color: var(--faint); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(160,80,80,0.3); background: var(--rose-dim); border-radius: 0 6px 6px 0; text-decoration: line-through; opacity: 0.6;">Join thousands of developers who trust Urd.</p>
+        <p style="font-size: 17px; color: var(--faint); line-height: 1.55; padding: 12px 16px; border-left: 2px solid rgba(160,80,80,0.3); background: var(--rose-dim); border-radius: 0 6px 6px 0; text-decoration: line-through; opacity: 0.6;">The future of storytelling is here.</p>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top: 16px; padding: 18px 22px; border-radius: 10px; border: 1px solid var(--border); background: var(--raise); box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+    <div style="font-family: var(--mono); font-size: 11px; color: var(--gold); letter-spacing: 0.08em; margin-bottom: 12px;">RULES</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+      <div style="font-family: var(--body); font-size: 15px; color: var(--dim); line-height: 1.55;">No superlatives. State what it does. Let the reader judge.</div>
+      <div style="font-family: var(--body); font-size: 15px; color: var(--dim); line-height: 1.55;">Technical precision over marketing abstraction. "5-phase compiler pipeline" not "advanced processing."</div>
+      <div style="font-family: var(--body); font-size: 15px; color: var(--dim); line-height: 1.55;">British English. Active voice. Present tense. Short sentences for impact.</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- Footer -->
+<footer style="margin-top: 44px; padding-top: 24px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+  <div style="display: flex; align-items: baseline; gap: 6px;">
+    <span style="font-family: var(--display); font-size: 16px; font-weight: 700; color: var(--gold); letter-spacing: -0.02em;">urd</span>
+    <span style="font-family: var(--mono); font-size: 11px; color: var(--faint);">.dev design system · parchment</span>
+  </div>
+  <div style="font-family: var(--mono); font-size: 11px; color: var(--faint);">
+    Georgia · Outfit · Source Serif 4 · JetBrains Mono
+  </div>
+</footer>
+
+</div><!-- .page -->
+</div><!-- .content -->
+
+<script>
+(function() {
+  const canvas = document.getElementById('runeField');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let animId, time = 0;
+  const runes = "\u16A0\u16A2\u16A6\u16A8\u16B1\u16B2\u16B7\u16B9\u16BA\u16BE\u16C1\u16C3\u16C7\u16C8\u16C9\u16CA\u16CF\u16D2\u16D6\u16D7\u16DA\u16DC\u16DD\u16DF\u16DE";
+  const particles = Array.from({ length: 30 }, () => ({
+    x: Math.random(), y: Math.random(),
+    char: runes[Math.floor(Math.random() * runes.length)],
+    speed: 0.00008 + Math.random() * 0.0002,
+    phase: Math.random() * Math.PI * 2,
+    size: 14 + Math.random() * 18,
+    targetOpacity: 0.015 + Math.random() * 0.03,
+  }));
+  function resize() {
+    canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+    canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  }
+  resize();
+  const ro = new ResizeObserver(resize);
+  ro.observe(canvas);
+  function draw() {
+    time += 0.008;
+    ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+    particles.forEach(p => {
+      p.y -= p.speed;
+      if (p.y < -0.05) { p.y = 1.05; p.x = Math.random(); p.char = runes[Math.floor(Math.random() * runes.length)]; }
+      const op = p.targetOpacity * (0.5 + 0.5 * Math.sin(time + p.phase));
+      ctx.font = p.size + 'px serif';
+      ctx.fillStyle = 'rgba(60,48,30,' + op + ')';
+      ctx.fillText(p.char, p.x * canvas.offsetWidth, p.y * canvas.offsetHeight);
+    });
+    animId = requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+</body>
+</html>

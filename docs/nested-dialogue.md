@@ -5,7 +5,7 @@ description: "Design exploration for nested dialogue in Schema Markdown. Analyse
 category: "contract"
 format: "Design Document"
 date: "2026-02"
-status: "complete"
+status: "v1.0 complete"
 order: 2
 tags:
   - dialogue
