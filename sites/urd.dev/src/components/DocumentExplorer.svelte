@@ -348,9 +348,7 @@
 <style>
   /* ── Container ── */
   .doc-explorer {
-    max-width: 860px;
-    margin: 0 auto;
-    padding: 0 32px;
+    width: 100%;
   }
 
   /* ── Header ── */
@@ -921,9 +919,6 @@
   }
 
   @media (max-width: 520px) {
-    .doc-explorer {
-      padding: 0 18px;
-    }
 
     .doc-card-toggle {
       padding: 16px;

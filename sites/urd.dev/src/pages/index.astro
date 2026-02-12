@@ -4,6 +4,7 @@ import Nav from "../components/Nav.astro";
 import urdLogo from "../assets/logos/urd-logo-dark.svg?raw";
 import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
 import DocumentExplorer from "../components/DocumentExplorer.svelte";
+import PeerReview from "../components/PeerReview.svelte";
 ---
 
 <Base title="Urd · Define Worlds">
@@ -43,6 +44,10 @@ import DocumentExplorer from "../components/DocumentExplorer.svelte";
       </a>
     </div>
   </main>
+
+  <section id="reviews" class="reviews-section">
+    <PeerReview client:visible />
+  </section>
 
   <section id="documents" class="documents-section">
     <DocumentExplorer client:visible />
@@ -259,10 +264,25 @@ import DocumentExplorer from "../components/DocumentExplorer.svelte";
     outline-offset: 2px;
   }
 
+  .reviews-section,
   .documents-section {
     position: relative;
     z-index: 1;
-    padding: 48px 0 96px;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 48px 32px;
     border-top: 1px solid var(--border);
+  }
+
+  .documents-section {
+    padding-bottom: 96px;
+  }
+
+  @media (max-width: 520px) {
+    .reviews-section,
+    .documents-section {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
   }
 </style>
