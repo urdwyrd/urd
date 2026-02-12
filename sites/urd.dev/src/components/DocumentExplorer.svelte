@@ -126,7 +126,34 @@
     <div class="doc-explorer-header-text">
       <p class="doc-explorer-label">{label}</p>
       <h2 class="doc-explorer-title">{title}</h2>
-      <p class="doc-explorer-subtitle">{subtitle}</p>
+      <div class="doc-explorer-subtitle-row">
+        <p class="doc-explorer-subtitle">{subtitle}</p>
+        {#if loaded}
+          <div class="doc-view-toggle" role="group" aria-label="View mode">
+            <button
+              class="doc-view-btn"
+              class:active={viewMode === 'compact'}
+              onclick={() => { viewMode = 'compact'; }}
+              aria-label="Compact view"
+              title="Compact view"
+            >—</button>
+            <button
+              class="doc-view-btn"
+              class:active={viewMode === 'list'}
+              onclick={() => { viewMode = 'list'; }}
+              aria-label="List view"
+              title="List view"
+            >≡</button>
+            <button
+              class="doc-view-btn"
+              class:active={viewMode === 'grid'}
+              onclick={() => { viewMode = 'grid'; }}
+              aria-label="Card view"
+              title="Card view"
+            >⊞</button>
+          </div>
+        {/if}
+      </div>
     </div>
 
     {#if loaded && categories.length > 0}
@@ -152,53 +179,29 @@
     {/if}
   </header>
 
-  {#if loaded}
-    <div class="doc-explorer-toolbar">
-      {#if availableFormats.length > 1}
-        <nav class="doc-explorer-format-filters" aria-label="Filter documents by format">
-          <button
-            class="doc-format-btn"
-            class:active={activeFormat === 'all'}
-            onclick={() => setFormatFilter('all')}
-          >
-            All formats
-          </button>
-          {#each availableFormats as fmt}
-            <button
-              class="doc-format-btn"
-              class:active={activeFormat === fmt}
-              onclick={() => setFormatFilter(fmt)}
-            >
-              {fmt}
-            </button>
-          {/each}
-        </nav>
-      {/if}
-
-      <div class="doc-view-toggle" role="group" aria-label="View mode">
+  {#if loaded && availableFormats.length > 1}
+    <nav
+      class="doc-explorer-format-filters"
+      aria-label="Filter documents by format"
+      style={activeFilter !== 'all' ? `--format-accent: var(--doc-${activeFilter})` : ''}
+    >
+      <button
+        class="doc-format-btn"
+        class:active={activeFormat === 'all'}
+        onclick={() => setFormatFilter('all')}
+      >
+        All formats
+      </button>
+      {#each availableFormats as fmt}
         <button
-          class="doc-view-btn"
-          class:active={viewMode === 'compact'}
-          onclick={() => { viewMode = 'compact'; }}
-          aria-label="Compact view"
-          title="Compact view"
-        >—</button>
-        <button
-          class="doc-view-btn"
-          class:active={viewMode === 'list'}
-          onclick={() => { viewMode = 'list'; }}
-          aria-label="List view"
-          title="List view"
-        >≡</button>
-        <button
-          class="doc-view-btn"
-          class:active={viewMode === 'grid'}
-          onclick={() => { viewMode = 'grid'; }}
-          aria-label="Card view"
-          title="Card view"
-        >⊞</button>
-      </div>
-    </div>
+          class="doc-format-btn"
+          class:active={activeFormat === fmt}
+          onclick={() => setFormatFilter(fmt)}
+        >
+          {fmt}
+        </button>
+      {/each}
+    </nav>
   {/if}
 
   {#if loaded}
@@ -353,11 +356,9 @@
   /* ── Header ── */
   .doc-explorer-header {
     display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 24px;
-    margin-bottom: 28px;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 6px;
   }
 
   .doc-explorer-label {
@@ -380,20 +381,17 @@
     margin-bottom: 6px;
   }
 
+  .doc-explorer-subtitle-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
   .doc-explorer-subtitle {
     font-family: var(--body);
     font-size: 17px;
     color: var(--faint);
     line-height: 1.6;
-  }
-
-  /* ── Toolbar (format filters + view toggle) ── */
-  .doc-explorer-toolbar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 12px;
   }
 
   /* ── Category Filters ── */
@@ -437,6 +435,7 @@
     gap: 5px;
     flex-wrap: wrap;
     align-items: center;
+    margin-bottom: 8px;
   }
 
   .doc-format-btn {
@@ -460,8 +459,8 @@
   }
 
   .doc-format-btn.active {
-    color: var(--text);
-    border-color: var(--border-light);
+    color: var(--format-accent, var(--text));
+    border-color: var(--format-accent, var(--border-light));
   }
 
   /* ── View Toggle ── */
@@ -469,6 +468,7 @@
     display: flex;
     gap: 2px;
     flex-shrink: 0;
+    margin-left: auto;
   }
 
   .doc-view-btn {
@@ -875,15 +875,28 @@
     font-size: 10px;
     color: var(--faint);
     white-space: nowrap;
+    width: 150px;
+    text-align: right;
   }
 
-  .doc-compact-time,
+  .doc-compact-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    width: 52px;
+    text-align: right;
+  }
+
   .doc-compact-date {
     font-family: var(--mono);
     font-size: 11px;
     color: var(--faint);
     letter-spacing: 0.06em;
     white-space: nowrap;
+    width: 100px;
+    text-align: right;
   }
 
   /* ── Empty State ── */
@@ -896,13 +909,6 @@
   }
 
   /* ── Responsive ── */
-  @media (max-width: 980px) {
-    .doc-explorer-header {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-  }
-
   @media (max-width: 640px) {
     .doc-grid {
       grid-template-columns: 1fr;
@@ -934,10 +940,6 @@
 
     .doc-card-actions {
       flex-direction: column;
-    }
-
-    .doc-explorer-toolbar {
-      flex-wrap: wrap;
     }
   }
 </style>
