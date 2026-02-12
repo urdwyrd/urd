@@ -125,7 +125,7 @@ entities:
 ---
 ```
 
-*Note: the urd version field does not appear in source files. The compiler sets it automatically in the compiled output.*
+*Note: the `urd` version field does not appear in source files. The compiler sets it automatically in the compiled JSON output. All examples in this document show source format (`.urd.md`), where `urd` is absent. For compiled JSON examples showing the required `urd: "1"` field, see the Schema Specification.*
 
 ### Project Directory
 
@@ -172,7 +172,7 @@ This table clarifies what is available in v1 at each layer.
 | Sticky/one shot choices | Allowed | sticky field in dialogue choices | Yes |
 | Exhaustion condition | Allowed | Runtime evaluated; no JSON field | Yes |
 | Cross file section jumps | Deferred to future version | N/A | N/A |
-| OR conditions (`any:`) | Writer syntax deferred; JSON schema supports `any:` | Runtime must evaluate `any:` in compiled JSON | Yes (runtime) |
+| OR conditions (`any:`) | Allowed (`? any:` block) | `any:` condition block in compiled JSON | Yes |
 | Lambda functions | Deferred to future version | N/A | N/A |
 
 > **v1 is the complete foundation.** A compliant v1 runtime must support the full schema including dialogue. There is no partial v1 that excludes dialogue. A runtime that has not yet implemented dialogue is an incomplete v1 runtime, not a different version.
@@ -212,29 +212,31 @@ This page lists what a writer can rely on without learning the schema, understan
 
 ## The Complete Syntax
 
-The full vocabulary of Schema Markdown. Writers need the first twelve; the last two are engineer authored.
+The full vocabulary of Schema Markdown. The Author column indicates who uses each syntax element in production.
 
-| Syntax | Meaning | Example |
-|--------|---------|---------|
-| `---`...`---` | Urd frontmatter. Metadata, imports, types, entities. | `import: ./world.urd.md` |
-| `import: path` | Import types and entities from another file. | `import: ./world.urd.md` |
-| `# Heading` | Location. A spatial container. | `# The Rusty Anchor` |
-| `## Heading` | Scene or sequence within a location. | `## The Game` |
-| `### Heading` | Phase within a sequence. | `### Choose a Door` |
-| `@id` | Entity reference. | `@guard`, `@door_1` |
-| `@id: text` | Entity speech (dialogue). | `@arina: What'll it be?` |
-| `@id text` | Stage direction referencing entity. | `@arina leans in close.` |
-| `* choice` | One shot choice. Disappears after selection. | `* Ask about the ship` |
-| `+ choice` | Sticky choice. Remains available after selection. | `+ Ask about the harbor` |
-| `? expr` | Condition. Must be true for what follows. | `? @guard.mood == neutral` |
-| `> effect` | State mutation. | `> @guard.mood = neutral` |
-| `~prop` | Hidden property (in type definitions). | `~prize: enum(goat, car)` |
-| `== name` | Labeled section (dialogue structure). | `== topics` |
-| `-> target` | Jump to section, location, or exit. | `-> topics`, `-> harbor` |
-| `-> exit:name` | Explicitly target an exit (when shadowed by a section). | `-> exit:topics` |
-| `! text` | Blocked message (when a condition fails). | `! The door is locked.` |
-| `// text` | Comment. Stripped during compilation. | `// hub prompt` |
-| `rule name:` | NPC behavioral rule (engineer authored). | `rule monty_reveals:` |
+| Syntax | Meaning | Example | Author |
+|--------|---------|---------|--------|
+| `---`...`---` | Urd frontmatter. Metadata, imports, types, entities. | `import: ./world.urd.md` | Engineer |
+| `import: path` | Import types and entities from another file. | `import: ./world.urd.md` | Writer |
+| `# Heading` | Location. A spatial container. | `# The Rusty Anchor` | Writer |
+| `## Heading` | Scene or sequence within a location. | `## The Game` | Designer |
+| `### Heading` | Phase within a sequence. | `### Choose a Door` | Designer |
+| `(auto)` | Auto-advancing phase (no player action required). | `### Reveal (auto)` | Designer |
+| `@id` | Entity reference. | `@guard`, `@door_1` | Writer |
+| `@id: text` | Entity speech (dialogue). | `@arina: What'll it be?` | Writer |
+| `@id text` | Stage direction referencing entity. | `@arina leans in close.` | Writer |
+| `* choice` | One shot choice. Disappears after selection. | `* Ask about the ship` | Writer |
+| `+ choice` | Sticky choice. Remains available after selection. | `+ Ask about the harbor` | Writer |
+| `? expr` | Condition. Must be true for what follows. | `? @guard.mood == neutral` | Writer |
+| `? any:` | OR condition block. Any sub-condition being true validates. | `? any:` + indented conditions | Writer |
+| `> effect` | State mutation. | `> @guard.mood = neutral` | Writer |
+| `~prop` | Hidden property (in type definitions). | `~prize: enum(goat, car)` | Engineer |
+| `== name` | Labeled section (dialogue structure). | `== topics` | Writer |
+| `-> target` | Jump to section, location, or exit. | `-> topics`, `-> harbor` | Writer |
+| `-> exit:name` | Explicitly target an exit (when shadowed by a section). | `-> exit:topics` | Writer |
+| `! text` | Blocked message (when a condition fails). | `! The door is locked.` | Writer |
+| `// text` | Comment. Stripped during compilation. | `// hub prompt` | Writer |
+| `rule name:` | NPC behavioral rule. | `rule monty_reveals:` | Engineer |
 
 Plain text outside any marker is narrative prose: descriptions, stage directions, flavour text. It compiles to description fields in the schema.
 
@@ -419,7 +421,7 @@ When branching exceeds two levels, or when a conversation needs hubs and loops, 
 - **Two space indent per level.** Tabs are not permitted.
 - **Content under a choice is indented one level.** This includes dialogue, conditions, effects, sub choices, and jumps.
 - **Maximum depth: two levels.** The compiler emits a warning at three levels of indentation and an error at four. At three levels, the message is: *"Nesting depth 3 at line 47. Consider breaking into a labeled section with == for readability."* At four levels, the file does not compile. This is a maintainability constraint, not a style preference. Deeply nested dialogue is unreadable, untestable, and unmergeable in version control. The LSP and editor tooling surface these warnings in real time.
-- `== name` **declares a section.** Names follow entity ID rules: lowercase, digits, underscores. Must be unique within the file.
+- `== name` **declares a section.** Names follow entity ID rules: lowercase, digits, underscores. Must be unique within the file. **Section resolution is strictly file-local in v1.** A `-> name` jump can only target sections declared in the same file. The `-> exit:` prefix is only needed when a section shadows an exit in the same file.
 - `-> name` **jumps to a section.** Can appear at any indentation level. Ends the current branch.
 - **Disambiguation: sections take priority over exits.** If a file contains `== topics` and the enclosing location has an exit named `topics`, then `-> topics` inside that file resolves to the section, not the exit. To target the exit explicitly, use `-> exit:topics`. The `exit:` prefix is reserved for this purpose and is only needed when a section shadows an exit. The compiler emits a warning when a section name shadows an exit name: *"Section 'topics' shadows exit 'topics' in this location. Use -> exit:topics to target the exit."*
 
@@ -763,9 +765,22 @@ A long corridor. Daylight leaks from the far end.
 
 ## Example 4: A Complex Interrogation
 
-A multi topic interrogation demonstrating the hybrid nesting model at production complexity: hub and spoke with state mutation, a bribe using containment, conditional sub branches, and a state dependent farewell.
+A multi topic interrogation demonstrating the hybrid nesting model at production complexity: hub and spoke with state mutation, a bribe using containment, conditional sub branches, OR conditions (`? any:`), and a state dependent farewell.
 
 ```
+---
+import: ./world.urd.md
+
+types:
+  Guard [interactable, mobile, container]:
+    name: string
+    mood: enum(hostile, suspicious, neutral, nervous) = hostile
+
+entities:
+  @halvard: Guard { name: "Halvard" }
+  @coin_purse: Item { name: "Coin Purse" }
+---
+
 == interrogation
 
 @halvard: You've got questions. Make them quick.
@@ -815,6 +830,24 @@ A multi topic interrogation demonstrating the hybrid nesting model at production
   -> interrogation
 
 * Try to bribe him -> bribe
+
+* Ask about the escape route
+
+  ? any:
+    @halvard.mood == hostile
+    @halvard.mood == suspicious
+
+  @halvard: I don't talk to your kind.
+
+  -> interrogation
+
+  ? @halvard.mood == neutral
+
+  @halvard: There's a passage behind the chapel.
+
+  > player.knows_escape = true
+
+  -> interrogation
 
 * I'm done here -> farewell
 
@@ -869,7 +902,7 @@ He won't meet your eyes.
 He says it without conviction.
 ```
 
-This scene uses one shot choices throughout (each question is asked once). The hub loops via `-> interrogation`.
+This scene uses one shot choices throughout (each question is asked once). The hub loops via `-> interrogation`. The escape route choice demonstrates OR conditions (`? any:`) where multiple mood states produce the same gated response.
 
 ## Design Rationale
 
@@ -877,7 +910,7 @@ The syntax is built on deliberate choices, each with tradeoffs. The decisions be
 
 ### @ for Entity References
 
-`@` borrows from social media's @mention convention. It's recognisable, unambiguous to a parser, and works in both frontmatter and prose. The colon distinguishes speech (`@arina: text`) from stage direction (`@arina does something`).
+`@` borrows from social media's @mention convention. It's recognisable, unambiguous to a parser, and works in both frontmatter and prose. In frontmatter, `@` declares an entity (`@arina: Barkeep { name: "Arina" }`). In prose, `@` references an existing entity (`@arina: What'll it be?`). The meaning is consistent: `@` always means "this is an entity." The grammatical role (declaration vs. reference) is determined by context, just as variable names work in programming languages. The colon distinguishes speech (`@arina: text`) from stage direction (`@arina does something`).
 
 ### ? for Conditions, > for Effects
 
@@ -893,11 +926,13 @@ Pure indentation breaks at depth. Pure labels fragment the conversation. The hyb
 
 ### Heading Hierarchy as Spatial and Temporal Structure
 
-`# Heading` = location. `## Heading` = sequence. `### Heading` = phase. Standard markdown hierarchy, repurposed. Writers already have muscle memory for heading levels.
+`# Heading` = location. `## Heading` = sequence. `### Heading` = phase. Standard markdown hierarchy, repurposed. Writers already have muscle memory for heading levels. The `(auto)` suffix on a phase heading (e.g., `### Reveal (auto)`) is syntactic sugar that compiles to `auto: true` on the corresponding phase object in JSON, indicating the phase advances without player action.
 
 ### The `in` Keyword and `here` Alias
 
 `@key in player` and `@key in here` are sugar over `entity.container == X`. `not in` is the negation. These read naturally in English and unify all spatial checks.
+
+`here` resolves to `player.container` at evaluation time. It is valid in both conditions and effects. In conditions, `? @key in here` checks whether the key is in the player's current location. In effects, `> move @key -> here` drops the key in the player's current location (equivalent to `> move @key -> player.container`).
 
 ### Urd Frontmatter with Imports
 
@@ -943,6 +978,7 @@ How syntax elements compile to the Urd World Schema JSON.
 | `* label -> @target` | Action with `target: entity_ref`. |
 | `* label -> any Type` | Action with `target_type: TypeName`. |
 | `? expression` | Entry in conditions list (AND ed). |
+| `? any:` + indented conditions | `any:` block in conditions. Any single sub-condition being true validates the block. |
 | `> entity.prop = value` | set effect. |
 | `> entity.prop + N` | Arithmetic set: current value plus N. |
 | `> move @entity -> container` | move effect. |
@@ -961,6 +997,7 @@ How syntax elements compile to the Urd World Schema JSON.
 | `@entity in other` | Condition: `entity.container == other`. |
 | `@entity not in other` | Condition: `entity.container != other`. |
 | `@entity in here` | Condition: `entity.container == player.container`. |
+| `> move @entity -> here` | Effect: `move: entity, to: player.container`. |
 | `? <section_name>.exhausted` | Runtime evaluated condition. No generated boolean in JSON. The runtime checks all choices in the named section and returns true if none are currently available (consumed or gated). `<section_name>` must resolve to a declared section identifier in scope. This is the canonical form; always use the concrete section name (e.g., `? topics.exhausted`), not the generic `? section.exhausted`. |
 | `// text` | Stripped during compilation. Does not appear in JSON. |
 
@@ -970,14 +1007,37 @@ The following decisions are locked now to prevent ambiguity during compiler impl
 
 ### Import Resolution Rules
 
+> **Status: NORMATIVE.** These rules are the authoritative specification for import behaviour. Compiler and runtime implementations MUST conform to these rules. The architecture document's description of import handling is derived from and consistent with these rules.
+
 - **Imports are explicit and non transitive.** If `tavern.urd.md` imports `world.urd.md`, and `world.urd.md` imports `types.urd.md`, the tavern file does **not** automatically see the types from `types.urd.md`. It must import them directly or import `world.urd.md` which re exports them.
-- **Circular imports are a compile error.** If file A imports file B and file B imports file A, the compiler rejects both with a clear diagnostic: *"Circular import detected: tavern.urd.md → harbor.urd.md → tavern.urd.md."*
+- **Circular imports are a compile error.** If file A imports file B and file B imports file A, the compiler rejects both with a clear diagnostic: *"Circular import detected: tavern.urd.md → harbor.urd.md → tavern.urd.md."* The compiler MUST detect cycles of any length and report the full cycle path.
 - **Duplicate entity IDs are a compile error.** If two imported files both declare `@guard`, the compiler rejects the build: *"Duplicate entity ID '@guard' declared in both world.urd.md (line 12) and npcs.urd.md (line 5)."* No silent merging, no last write wins.
 - **Duplicate type names are a compile error.** Same rule. Two files cannot define a type with the same name.
+- **Import paths are relative to the importing file.** The path in `import: ./world.urd.md` is resolved relative to the directory containing the file with the import declaration. Absolute paths are not supported.
+- **Scope rules.** An imported file's types and entities are merged into the importing file's compilation scope. Sections (dialogue) are file scoped and are NOT made available to the importing file. Cross file section access is not supported in v1.
 
 ### OR Conditions
 
-- **OR conditions are not available in v1 writer syntax.** The v1 JSON schema supports `any:` for OR logic (runtimes must evaluate it), but no writer-facing syntax is defined in this version. In v1, `any:` blocks only appear in compiled JSON when generated by engineer-authored rules or by tools that emit JSON directly. Writers must use De Morgan patterns: instead of `? any: @guard.mood == hostile, @guard.mood == suspicious`, write two separate branches that handle each case. A writer-facing OR syntax (likely `? any:` followed by indented conditions) will be defined in a future version of Schema Markdown.
+- **OR conditions use `? any:` followed by indented conditions.** Multiple `?` lines are AND-ed by default. To express OR logic, use the `? any:` block: any single indented condition returning true validates the entire block. Indented conditions under `? any:` follow the same two-space indent rule as choice content.
+
+```
+? any:
+  @guard.mood == hostile
+  @guard.mood == suspicious
+@guard: Get out of here.
+```
+
+This compiles to the `any:` construct in the JSON schema. `? any:` blocks can appear anywhere a `?` condition can appear: before choices, inside choice content, or at the start of a section. A `? any:` block counts as a single condition for AND-ing purposes: it can be combined with other `?` lines, and all must be true.
+
+```
+? any:
+  @guard.mood == hostile
+  @guard.mood == suspicious
+? @guard.container == player.container
+@guard: Get out of here.
+// Both conditions must be true:
+// (mood is hostile OR suspicious) AND (guard is in the same room)
+```
 
 ### Comments
 
@@ -1004,11 +1064,10 @@ The following items are deferred to future versions:
 - **Cross file section jumps.** Can a conversation in the tavern jump to a section in the harbor file? Currently sections are file scoped. Cross file jumps may use a path syntax like `-> harbor.urd.md/dockside_argument` in a future version. **v1 workaround:** use location exits (`-> harbor`) for cross file movement, sequence phase boundaries for narrative continuity across locations, and small duplicated bridge sections if two files need shared dialogue context. These patterns are documented in the Multi File Authoring Pattern section.
 - **Cross file state and exhaustion carry over.** When a writer duplicates a bridge section for cross file continuity, exhaustion state from the original section does not automatically transfer to the duplicate. In v1, each file's sections track their own state independently. A future cross file jump mechanism would need to specify whether exhaustion state is shared or file local.
 - **NPC initiated topic shifts.** All current examples are player driven. NPC initiated redirection (`@arina: Actually, there's something I need to ask you. -> arina_question`) works syntactically but deserves explicit design.
-- **OR condition writer syntax.** The `? any:` form is the likely writer-facing syntax for a future version. The `any:` construct exists in the v1 JSON schema and runtimes must evaluate it, but writers cannot author it directly in Schema Markdown yet. See Decisions Locked for v1 for the current restriction.
 - **Owner visibility semantics.** The `~~` token is reserved. Full semantics depend on the ownership model.
 - **Compiler error quality.** Good error messages are a feature of the syntax. Line level conditions and effects make errors pinpointable; the compiler should produce messages like: `"Line 47: @guard.trust is not a property on type Guard. Did you mean @guard.mood?"`
 - **Editor tooling.** Section navigation, graph visualization, rename support, and depth warnings are all critical for production use. Depth warnings in particular must surface the compiler's nesting constraint in real time. The writer should see the warning as they type, not after they save. These are editor features, not syntax decisions, but they determine whether the syntax succeeds in practice.
 
-**This document closes the syntax design phase.** The vocabulary is locked: `@` for entities, `?` / `>` for conditions and effects, `*` / `+` for choices, `==` / `->` for sections and jumps, `#` headings for structure, `~` for hidden, `~~` reserved for owner visibility, `//` for comments, `in` / `not in` for containment. Import merge rules, stable ID derivation, and jump disambiguation are locked for v1. Remaining items are implementation decisions, not language design questions.
+**This document closes the syntax design phase.** The vocabulary is locked: `@` for entities, `?` / `>` for conditions and effects, `? any:` for OR conditions, `*` / `+` for choices, `==` / `->` for sections and jumps, `#` headings for structure, `~` for hidden, `~~` reserved for owner visibility, `//` for comments, `in` / `not in` for containment. Import merge rules, stable ID derivation, and jump disambiguation are locked for v1. Remaining items are implementation decisions, not language design questions.
 
 *End of Specification*

@@ -213,7 +213,7 @@ One shared schema file (engineer owned), one file per location or scene (writer 
 
 ## What Urd Proves: The Test Strategy
 
-Three progressive tests, each proving capabilities the previous couldn't.
+Four progressive tests, each proving capabilities the previous couldn't.
 ### Test 1: Dialogue Systems
 
 **Proves**: sticky and one shot choices, exhaustion, hub and spoke conversation, conditional branches, NPC mood mutations.
@@ -232,11 +232,17 @@ Switching wins 2/3 of the time, but that probability is never specified. It emer
 
 Everything Monty Hall doesn't test. Two rooms, a guard, a key, a locked door. Containment transfers, condition checks, persistent state changes.
 
-### Test 4: Connected Variant
+### Test 4: The Interrogation
 
-**Proves:** cross system composability. Can independently designed mechanics compose within a single world?
+**Proves:** dialogue at production scale — multi-topic hub, conditional sub-branches, containment in dialogue, state-dependent farewell.
 
-This progression moves from "the schame can describe a conversation" to "the schema can describe a game" to "the schema can describe a world" to "the schema can compose independent systems into a coherent world."
+This is the stress test that validates the hybrid nesting model under real-world complexity.
+
+### Future: Connected Variant
+
+A forthcoming test case will demonstrate **cross-system composability** — proving that independently designed mechanics (e.g., the key puzzle and Monty Hall) can coexist and interact within a single world file.
+
+This progression moves from "the schema can describe a conversation" to "the schema can describe a game" to "the schema can describe a world" to "the schema can handle production-scale dialogue." The future Connected Variant will complete the arc: "the schema can compose independent systems into a coherent world."
 
 ## The AI Multiplier Effect
 

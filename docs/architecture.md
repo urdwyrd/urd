@@ -117,6 +117,10 @@ The compiler transforms Schema Markdown source files into a single, validated, s
   3. LINK        Merge scopes, resolve cross-file references
      │
   4. VALIDATE    Type-check properties, conditions, effects
+     │           - For each action: exactly zero or one of {target, target_type}
+     │             must be present. Neither = self-targeted. Both = compile error.
+     │           - Validate that condition expressions reference existing properties.
+     │           - Validate that effect targets are valid entities or containers.
      │
   5. EMIT        AST → .urd.json
      │
@@ -425,6 +429,53 @@ The LSP server wraps the compiler in watch mode. This is the phase where the aut
 ### Phase 4: Engine Integration + Visual Editor
 
 Not scoped in this document. These are product phases that depend on the core components being stable. The product vision describes the visual editor and engine integrations in detail.
+
+### v1 Acceptance Checklist
+
+This checklist defines what a v1-compliant implementation must satisfy. Every item references its normative source. Use this to verify completeness at the end of each build phase.
+
+**Compiler**
+
+| # | Requirement | Source |
+|---|-------------|--------|
+| C1 | Parse Urd frontmatter without a general-purpose YAML parser. Reject anchors, aliases, merge keys, custom tags, block-style lists, and implicit type coercion. | Schema Specification §Frontmatter Grammar |
+| C2 | Resolve `import:` declarations. Imports are explicit and non-transitive. | Schema Markdown Specification §Import Resolution Rules |
+| C3 | Detect circular imports of any cycle length. Report full cycle path. | Schema Markdown Specification §Import Resolution Rules |
+| C4 | Reject duplicate entity IDs across the full compilation unit with diagnostics showing all declaration sites. | Schema Markdown Specification §Import Resolution Rules |
+| C5 | Reject duplicate type names across the compilation unit. | Schema Markdown Specification §Import Resolution Rules |
+| C6 | Validate that every `@entity` reference, `->` jump, and property access resolves to a declared target. | §Compiler Responsibilities |
+| C7 | Validate property values against declared types, enum sets, and ref constraints. | Schema Specification §Property Schema |
+| C8 | Emit `.urd.json` conforming to the Schema Specification. Set `urd: "1"` automatically. Warn and override if author sets it. | Schema Specification §world block |
+| C9 | Enforce nesting depth: warn at 3 levels, error at 4+. | Schema Markdown Specification §Nesting Rules |
+
+**Runtime**
+
+| # | Requirement | Source |
+|---|-------------|--------|
+| R1 | Load and validate `.urd.json`. Reject unknown `urd` version. | Schema Specification §Evaluation Order |
+| R2 | Implement all five effect types: `set`, `move`, `reveal`, `destroy`, `spawn`. | Schema Specification §Effect Declarations |
+| R3 | Implement the containment model. `move` is the sole spatial operation. | Schema Specification §Containment Model |
+| R4 | Implement all four visibility levels: `visible`, `hidden`, `owner`, `conditional`. | Schema Specification §Visibility Model |
+| R5 | Implement `select` with uniform random selection from matching candidates. | Schema Specification §The select Block |
+| R6 | **Determinism contract.** Identical JSON + identical seed + identical actions = identical event stream. | Schema Specification §Determinism Contract |
+| R7 | Consume random values in rule declaration order. One value per multi-match select. Zero for single or zero matches. | Schema Specification §Determinism Contract |
+| R8 | Support `world.seed` from compiled JSON and `world.seed(n)` API. Generate and record seed if not provided. | Schema Specification §Determinism Contract |
+| R9 | Implement sequences with all four advance modes: `on_action`, `on_rule`, `on_condition`, `end`. | Schema Specification §Advance Modes |
+| R10 | Implement dialogue: sections, sticky/one-shot choices, `goto`, `on_exhausted`. | Schema Specification §dialogue block |
+| R11 | Compute exhaustion as a runtime predicate. Never store it. Never present an empty choice menu. | Schema Specification §dialogue block |
+| R12 | Implement `any:` OR conditions. | Schema Specification §Condition Expressions |
+| R13 | Implement all five trigger types. | Schema Specification §Trigger Types |
+| R14 | Produce typed events for every state mutation. | Wyrd Reference Runtime §Event Types |
+| R15 | Implicit `player` entity: create as mobile container at `start` if not declared. If declared, replace entirely (no merging). | Schema Specification §Player Entity Resolution Rules |
+
+**Testing**
+
+| # | Requirement | Source |
+|---|-------------|--------|
+| T1 | Test definitions are JSON only. YAML is not accepted. | Test Case Strategy §Test Definition Format |
+| T2 | Tests run against compiled `.urd.json`, not source. | Test Case Strategy §Testing Layers |
+| T3 | Seeded runs produce identical results on every run, every platform. | Schema Specification §Determinism Contract |
+| T4 | Monte Carlo: Monty Hall switching advantage between 63%–70% over 10,000 runs. | Test Case Strategy §Test Case 2 |
 
 ## Technology Considerations
 

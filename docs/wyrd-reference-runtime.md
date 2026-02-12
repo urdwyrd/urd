@@ -36,8 +36,6 @@ urd.dev
 
 February 2026
 
----
-
 ## What Wyrd Is
 
 **Wyrd** is the reference runtime for the Urd world schema. It loads a compiled `.urd.json` file, executes the world model, and presents it as an interactive text and choice interface in the browser. No install, no game engine, no configuration.
@@ -86,7 +84,7 @@ The core engine is the single authoritative implementation of the Urd runtime co
 
 - **Loading and validating.** Parse `.urd.json`, check the urd version field, reject unsupported versions with a clear error.
 - **World state management.** Maintain the current value of every entity property, every entity's container, every section's visited/exhausted status, and the current sequence phase.
-- **Condition evaluation.** Given the current world state, evaluate any condition expression to true or false. Includes property comparisons, containment checks, and exhaustion checks (`? <section_name>.exhausted`). Exhaustion is runtime evaluated and not cached: the runtime checks all choices in the named section and returns true if none are currently available. The keyword `here` is reserved and resolves to `player.container` in all condition expressions (e.g., `@entity in here` is equivalent to `entity.container == player.container`).
+- **Condition evaluation.** Given the current world state, evaluate any condition expression to true or false. Includes property comparisons, containment checks, and exhaustion checks (`? <section_name>.exhausted`). Exhaustion is runtime evaluated and not cached: the runtime checks all choices in the named section and returns true if none are currently available. The keyword `here` is reserved and resolves to `player.container` in both condition expressions and effect declarations (e.g., `@entity in here` is equivalent to `entity.container == player.container`; `move: entity, to: here` is equivalent to `move: entity, to: player.container`).
 - **Effect application.** Apply effects (set, move, reveal, destroy, spawn) atomically and update world state.
 - **Action resolution.** Compute available actions based on entity state, conditions, and rules. Return a list to the presentation layer.
 - **Dialogue management.** Track which section is active, which choices have been consumed (one shot) or visited (sticky), when sections are exhausted, and where jumps lead.
@@ -108,39 +106,15 @@ The presentation layer is intentionally plain. It is not trying to be a finished
 
 ### Extension Host: Lambda Functions
 
-**Future schema capability.** Lambda functions are not part of the v1 schema. They are described here because Wyrd's architecture must accommodate them from the start. Retrofitting an extension host into a runtime that wasn't designed for one is expensive. The contracts and sandboxing rules below are design constraints for a future schema version, not current implementation targets.
+Lambda functions are a planned extension for future schema versions. v1 runtimes MUST NOT implement lambda support. v1 worlds MUST NOT contain lambda declarations. This section documents forward-compatibility constraints only.
 
-Some game logic is awkward to express declaratively. Pathfinding, economic calculations, weighted random selection, procedural generation: these are naturally imperative. Lambda functions provide an escape hatch without breaking the declarative model.
+Wyrd's architecture accommodates lambda functions from the start so that retrofitting an extension host is not required later. The design constraints are:
 
-#### The Contract
+- **Lambdas receive read-only world state and return effects.** They cannot mutate state directly.
+- **Lambdas are sandboxed.** No DOM, network, filesystem, or global state access.
+- **Lambdas are deterministic when possible.** Randomness requires a seed parameter.
 
-A lambda function is declared in the schema and executed by the extension host. The contract is strict:
-
-- **Input:** A read only snapshot of world state. The lambda receives entity properties, containment, and any parameters declared in the schema. It cannot access the DOM, the network, or anything outside the world model.
-- **Output:** A list of effects in the same format as authored `>` lines: set, move, reveal, destroy, spawn. The runtime applies them exactly as it would apply any other effects.
-- **No side effects.** A lambda cannot mutate world state directly. It returns effects; the engine applies them. This preserves the event sourcing model and keeps the world inspectable and testable.
-- **Deterministic when possible.** Lambdas that use randomness must accept a seed parameter so that tests can reproduce results. The engine provides the seed; the lambda uses it.
-
-#### How They're Declared
-
-```
----
-import: ./world.urd.md
-
-lambda calculate_trade_value:
-  receives: [@merchant, @player, @offered_item]
-  returns: effects
-  source: ./lambdas/trade.js
----
-```
-
-The lambda block declares the function's name, the entities it receives, and its source file. The writer never sees this. Rules or actions can invoke the lambda: `> apply calculate_trade_value(@merchant, @player, @sword)`. The runtime passes the entity snapshots to the function and applies the returned effects.
-
-#### Sandboxing
-
-Lambdas run in a sandboxed JavaScript environment with no access to the DOM, network, filesystem, or global state. In the browser, this is a Web Worker. In Node.js (CI/testing), this is a vm context. The sandbox enforces a time limit: a lambda that runs for more than 100ms is terminated with an error event.
-
-**Lambdas are optional and future.** Every Urd world must work with purely authored content and declarative rules. Lambdas extend what's expressible; they don't replace the core model. The extension host is designed now so that when a future schema version introduces lambda support, Wyrd's architecture is ready without a rewrite.
+The full lambda contract, sandboxing rules, and declaration syntax are documented in `future-proposals.md`. When a future schema version introduces lambda support, Wyrd's architecture will be ready without a rewrite.
 
 ## The Public API
 

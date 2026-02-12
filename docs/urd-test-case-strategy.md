@@ -1,7 +1,7 @@
 ---
 title: "Test Case Strategy"
 slug: "urd-test-case-strategy"
-description: "Validating the schema through executable proof. Four progressive test cases — Monty Hall (emergent probability), Two-Room Key Puzzle (spatial + inventory), Connected Variant (composability), and Interrogation (dialogue stress test)."
+description: "Validating the schema through executable proof. Four progressive test cases — Tavern Scene (dialogue systems), Monty Hall (emergent probability), Two-Room Key Puzzle (spatial + inventory), and Interrogation (dialogue stress test)."
 category: "validation"
 format: "Validation Plan"
 date: "2026-02"
@@ -307,6 +307,7 @@ The critical validation: **the hybrid nesting model works at scale.** Shallow br
 - Containment transfer as dialogue effect (`> move @coin_purse -> @halvard`)
 - State dependent farewell (three conditional variants in `== farewell`)
 - Cross topic state dependencies (`player.knows_cell` gates the warden topic)
+- OR conditions (`? any:` block gating guard refusal on hostile or suspicious mood)
 
 ### Test Definitions
 
@@ -372,6 +373,30 @@ test "farewell varies by mood" {
       - choose: "I'm done here"
       - assert: events contain dialogue "Don't come back."
 }
+
+test "OR condition gates guard refusal" {
+  comment: validates ? any: OR condition evaluation
+  comment: the guard refuses to talk when mood is hostile OR suspicious
+  world: interrogation.urd.json
+
+  variant hostile:
+    precondition: halvard.mood == hostile
+    steps:
+      - choose: "Ask about the escape route"
+      - assert: events contain dialogue "I don't talk to your kind."
+
+  variant suspicious:
+    precondition: halvard.mood == suspicious
+    steps:
+      - choose: "Ask about the escape route"
+      - assert: events contain dialogue "I don't talk to your kind."
+
+  variant neutral_allows:
+    precondition: halvard.mood == neutral
+    steps:
+      - choose: "Ask about the escape route"
+      - assert: events contain dialogue "There's a passage behind the chapel."
+}
 ```
 
 ### Wyrd Build Pass
@@ -417,15 +442,20 @@ The combined test suite exercises every v1 schema primitive. The Schema Specific
 | containment transfer in dialogue | — | — | — | ✓ |
 | stage direction vs speech | ✓ | — | — | ✓ |
 | section breakout (hybrid nesting) | — | — | — | ✓ |
+| OR conditions (`any:`) | — | — | — | ✓ |
 
 ### What Remains Uncovered
 
 Two v1 primitives are specified in the schema but not exercised by any test case:
 
-- **Conditional visibility.** A property whose visibility changes based on a condition (e.g., a clue visible only when the player holds a magnifying glass). A future test case should exercise this.
-- **Spawn effects.** Creating a new entity at runtime. No current test case uses this. A crafting or transformation scenario would exercise it naturally.
+- **Conditional visibility.** A property whose visibility changes based on a condition (e.g., a clue visible only when the player holds a magnifying glass). The condition evaluation engine is tested elsewhere; the risk is in the visibility layer's integration with it. A future test case should exercise this.
+- **Spawn effects.** Creating a new entity at runtime. Structurally similar to entity instantiation at load time. A crafting or transformation scenario would exercise it naturally.
 
-These gaps are acknowledged in the Schema Specification and are deferred to future validation test cases.
+Additionally, the **`on_condition` advance mode** is specified (Schema Specification §Advance Modes) but not directly exercised. The Monty Hall test uses `on_action` and `on_rule`; `on_condition` should be tested when a sequence uses condition-based phase advancement.
+
+These gaps are acknowledged in the Schema Specification §v1 Boundaries and Feature Deferrals.
+
+**Guidance for implementing teams:** If your first content does not use conditional visibility, spawn effects, or `on_condition` advancement, you may defer their implementation to a later increment without blocking your initial delivery. However, claiming full v1 runtime compliance requires all three to work correctly. Adding test cases for these primitives before that claim is made is required.
 
 ## Static Analysis Tests
 
@@ -502,7 +532,7 @@ Each pass produces a working, testable increment. No pass depends on features fr
 
 The test definitions in this document use a conceptual notation. The actual format will be determined during implementation, but the following design constraints are fixed:
 
-- **Tests are data, not code.** A test definition is a structured document (JSON or YAML), not a JavaScript file. This keeps tests writable by non engineers and introspectable by tools.
+- **Tests are data, not code.** A test definition is a structured JSON document, not a JavaScript file. This keeps tests writable by non engineers and introspectable by tools. Consistent with the rest of the Urd toolchain, YAML is not accepted as a test definition format.
 - **Steps are player actions.** Each step in a scripted test is an action the player could perform: choose a door, pick up a key, select a dialogue choice. Tests simulate players, not internal engine operations.
 - **Assertions are state queries.** Assertions check the current world state or the most recent event list. They use the same expression syntax as conditions in the schema: `entity.property == value`, `entity.container == other`.
 - **Preconditions set up state.** For tests that need specific starting conditions (the bribe test needs a coin purse in the player's inventory), preconditions modify the initial state before the test begins.

@@ -141,6 +141,7 @@ world:
   author: "Urd Examples"
   start: stage       # Starting location
   entry: game        # Starting sequence
+  seed: 42           # Optional. Deterministic replay seed.
 ```
 
 | Field | Type | Required | Description |
@@ -152,6 +153,19 @@ world:
 | author | string | No | Author or team name. |
 | start | location ref | No | The location where the player begins. |
 | entry | sequence ref | No | The sequence that begins on world load. |
+| seed | integer | No | Random seed for deterministic replay. If omitted, the runtime generates one. |
+
+### Determinism Contract
+
+Any element of the schema that involves non deterministic choice (the `select` block in rules, any future randomness source) is governed by the following normative requirements:
+
+1. **Seed source.** The `world.seed` field in compiled JSON provides the initial seed. If absent, the runtime generates a seed and records it in the first event. The runtime API exposes `world.seed(n)` to set the seed before execution begins.
+
+2. **Deterministic replay guarantee.** Given identical compiled JSON, identical seed, and identical player actions in identical order, the resulting event stream MUST be identical across runs and across conforming runtime implementations. This is the fundamental testability contract.
+
+3. **Selection algorithm.** When a `select` block matches multiple candidates, selection is **uniform random** from the matching set. Declaration order in the `from` list MUST NOT influence selection probability. Declaration order MAY be used only as a tiebreaker when the random algorithm requires one (e.g., when two candidates hash identically under the seeded generator), but this is an implementation detail, not a semantic guarantee.
+
+4. **Seed propagation.** Each random selection consumes one value from the seeded sequence. The runtime MUST consume random values in a deterministic order: rules are evaluated in declaration order within the `rules` block, and each rule's `select` consumes exactly one random value if and only if multiple candidates match. If exactly one candidate matches, no random value is consumed. If zero match, the rule does not fire and no random value is consumed.
 
 ## The `types` Block
 
@@ -224,8 +238,6 @@ secret_message:
     type: conditional
     condition: "magnifying_glass.container == player"
 ```
-
----
 
 ## The Containment Model
 
@@ -310,6 +322,12 @@ entities:
       reputation: 0
 ```
 
+**Player entity resolution rules:**
+
+1. If no explicit `@player` entity is declared, the runtime creates one with an implied type `Player` and default spatial properties (mobile container). Its starting container is the `start` location declared in the `world` block.
+2. If an explicit `@player` entity is declared, it **replaces** the implicit one entirely. No merging. The declared type must have the mobile and container traits.
+3. Duplicate `@player` declarations across imported files are a compile error, following the same rule as any duplicate entity ID.
+
 ### Why This Matters
 
 The unified containment model has three practical benefits:
@@ -317,8 +335,6 @@ The unified containment model has three practical benefits:
 - **Fewer concepts to learn.** Instead of separate systems for rooms, inventory, and storage, there is one mechanism. A writer who understands "move X into Y" understands all spatial operations.
 - **Emergent interactions.** Because everything uses the same primitive, combinations that weren't explicitly designed just work. An NPC can carry a locked chest that contains a map. The player can steal the chest. The map is still inside it. No special case needed.
 - **Simpler conditions and effects.** The expression language needs one containment check (`X.container == Y`) and one spatial operation (`move: X, to: Y`) instead of separate verbs for pick up, drop, store, equip, give, loot, and transfer.
-
----
 
 ## The `entities` Block
 
@@ -490,7 +506,7 @@ Notice how containment unifies the language. "Pick up" is `move: key, to: player
 
 ## The `sequences` Block
 
-Sequences define ordered flows of phases. They give structure to experiences that have a defined progression: a game show with rounds, a tutorial with steps, a ritual with stages. Worlds without sequences are freeform: the player can perform any available action at any time.
+Sequences define ordered flows of phases. They give structure to experiences that have a defined progression: a game show with rounds, a tutorial with steps, a ritual with stages. Worlds without sequences are **freeform**: the player can perform any available action at any time, with progression emerging from action conditions and the containment model rather than from an imposed phase order. The Two Room Key Puzzle test case is a freeform world.
 
 ```
 sequences:
@@ -622,6 +638,8 @@ The dialogue block is a flat map. All sections from all files in the compilation
 
 The `sticky` field maps directly to the Schema Markdown choice syntax: `+` (sticky) compiles to `true`, `*` (one-shot) compiles to `false`. The `goto` field compiles from `->` jumps in Schema Markdown and always uses the full section ID.
 
+**Normative rule: exhaustion is never stored.** A section's exhausted state is never persisted in world state or compiled JSON. It is recomputed on every evaluation by checking all choices in the named section: if every choice is either consumed (one-shot, already selected) or gated (conditions evaluate to false), the section is exhausted. The compiled JSON contains no `exhausted` field. The `on_exhausted` field contains fallthrough content, not a boolean. Runtimes MUST compute exhaustion as a predicate, not read it from state.
+
 ## Expressions and Effects
 
 The schema uses a minimal expression language for conditions and a structured effect format for state mutations. Both are deliberately simple: parseable by runtimes, lintable by tools, and interpretable by AI assistants.
@@ -658,7 +676,7 @@ conditions:
     - "bribe_gold.container == player"
 ```
 
-> **Note on v1 scope.** The `any:` construct is part of the v1 JSON schema: a compliant runtime must evaluate it correctly. However, the Schema Markdown writer syntax does not yet define a way to author `any:` conditions. In v1, `any:` blocks only appear in compiled JSON when generated by engineer-authored rules or by tools that emit JSON directly. A writer-facing syntax for OR conditions (likely `? any:` followed by indented conditions) will be defined in a future version of Schema Markdown. See the Decisions Locked section of the Schema Markdown Syntax Specification for the current restriction.
+> **v1 scope.** The `any:` construct is part of the v1 JSON schema and the v1 Schema Markdown syntax. Writers author OR conditions using `? any:` followed by indented conditions. Runtimes must evaluate `any:` blocks correctly. See the Schema Markdown Syntax Specification for the writer-facing syntax.
 
 ### Effect Declarations
 
@@ -673,6 +691,8 @@ Effects are structured state mutations:
 | spawn | `spawn: { id: new_id, type: TypeName, in: container }` | Create a new entity at runtime. |
 
 **Note:** There are no separate add/remove effects for inventory. `move: key, to: player` is "pick up." `move: key, to: cell` is "drop." The containment model eliminates the need for list manipulation verbs.
+
+**The `here` alias.** The keyword `here` resolves to `player.container` at evaluation time. It is valid in both condition expressions and effect declarations. In conditions, `entity.container == player.container` can be written as `entity in here` in Schema Markdown. In effects, `move: entity, to: player.container` can be written as `> move @entity -> here` in Schema Markdown. The compiled JSON always uses the expanded form (`player.container`).
 
 ## Complete Example: The Monty Hall Problem
 
@@ -923,6 +943,49 @@ The two validation test cases exercise complementary schema capabilities:
 
 Together, the two examples cover every v1 primitive except conditional visibility and spawn effects, which are specified but deferred to future validation test cases.
 
+## v1 Boundaries and Feature Deferrals
+
+v1 is the complete foundation. This section defines what "v1 compliant" means and what is explicitly deferred.
+
+### What v1 Includes
+
+A v1 runtime MUST implement all of the following:
+
+- All eight top-level blocks: `world`, `types`, `entities`, `locations`, `rules`, `actions`, `sequences`, `dialogue`.
+- All property types: `boolean`, `integer`, `number`, `string`, `enum`, `ref`, `list`.
+- All four visibility levels: `visible`, `hidden`, `owner`, `conditional`.
+- All entity traits: `container`, `portable`, `mobile`, `interactable`.
+- The containment model: one spatial primitive, `move` as the sole spatial operation, implicit `player` entity with resolution rules.
+- All five effect types: `set`, `move`, `reveal`, `destroy`, `spawn`.
+- All five trigger types: `phase_is`, `action`, `enter`, `state_change`, `always`.
+- The `select` block with uniform random selection and the determinism contract (§Determinism Contract).
+- All four advance modes: `on_action`, `on_rule`, `on_condition`, `end`.
+- Dialogue: sections, sticky and one-shot choices, `goto` jumps, `on_exhausted` fallthrough, exhaustion as a runtime predicate.
+- `any:` OR conditions.
+- Event sourcing: every state mutation produces a typed event.
+
+### What v1 Does NOT Include
+
+The following capabilities are explicitly deferred. v1 runtimes MUST NOT implement them. v1 worlds MUST NOT use them. They are documented in the Future Proposals document for forward-compatible architectural planning only.
+
+| Feature | Status | v1 Workaround |
+|---------|--------|---------------|
+| Cross-file section jumps | Deferred. `->` jumps are file-scoped. | Use location exits for cross-file movement. Use bridge sections for shared dialogue context. Entity state communicates across files; section exhaustion does not. |
+| Lambda functions | Deferred. Extension host slot exists in architecture but is empty. | Express logic declaratively using rules, conditions, and effects. |
+| Owner visibility full semantics | Partially specified. `owner` level works. Ownership transfer is not specified. | Use `owner` for static ownership (NPC private knowledge). Do not design content requiring ownership transfer. |
+| Cross-file exhaustion sharing | Not specified. Each file tracks exhaustion independently. | Accept independent exhaustion counters in duplicated bridge sections. |
+
+**Content workflow implication:** Do not design content workflows around cross-file dialogue jumps. The v1 content model assumes one file per location or scene, with `import:` for shared types and entities and exits for navigation between locations.
+
+### Test Coverage Notes
+
+Two v1 primitives are specified above but not yet exercised by the current test suite:
+
+- **Conditional visibility.** Specified in §Visibility Model. The condition evaluation engine is tested elsewhere; the integration risk is in the visibility layer.
+- **Spawn effects.** Specified in §Effect Declarations. Structurally similar to entity instantiation at load time.
+
+Implementing teams whose first content does not use these may defer their implementation to a later increment. Full v1 compliance requires both to work. The `on_condition` advance mode is also specified (§Advance Modes) but not yet covered by a test case.
+
 ## Schema Roadmap: Beyond v1
 
 v1 is the complete foundation: entities, types, properties, containment, visibility, locations, exits, sequences, conditions, effects, rules, and dialogue. Future capabilities are addable as new blocks or extensions without breaking existing world files.
@@ -931,7 +994,6 @@ v1 is the complete foundation: entities, types, properties, containment, visibil
 
 - **Relationships.** Typed connections between entities (ally_of, hostile_to, employed_by) that rules and conditions can reference.
 - **Knowledge model.** What each entity knows. An NPC who witnessed an event can report it; one who didn't, cannot.
-- **OR condition writer syntax.** The `any:` construct exists in the v1 JSON schema, but no writer-facing syntax is defined yet. A future Schema Markdown version will add `? any:` or equivalent to let writers author OR conditions directly.
 - **Cross file section jumps.** Dialogue sections reachable across file boundaries, with shared state semantics.
 - **Lambda functions.** An extension host for imperative logic (pathfinding, economic calculations, procedural generation) sandboxed within the world model.
 
