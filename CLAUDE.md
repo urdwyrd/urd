@@ -64,7 +64,7 @@ The design brief is the specification. It is the single source of truth.
 ## Known gotchas
 
 - `@tailwindcss/vite` is the correct Tailwind v4 integration for Astro, not `@astrojs/tailwind`
-- Google Fonts must be loaded via `<link>` tags in HTML, not CSS `@import` (violates spec when placed after `@import "tailwindcss"`)
+- Fonts are self-hosted in `sites/urd.dev/public/fonts/` with `@font-face` in `global.css` — do not add Google Fonts `<link>` tags
 
 ## Secrets and security
 
