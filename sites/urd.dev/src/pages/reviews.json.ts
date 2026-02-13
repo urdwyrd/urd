@@ -11,6 +11,7 @@ export const GET: APIRoute = async () => {
     rating: entry.data.rating,
     initial: entry.data.initial,
     colour: entry.data.colour,
+    icon: `/images/reviews/${entry.id}.png`,
     quote: (entry.body ?? '').trim(),
   }));
 

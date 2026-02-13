@@ -13,8 +13,39 @@
     >
       GitHub <span aria-hidden="true">↗</span>
     </a>
+    <button
+      id="theme-toggle"
+      class="theme-toggle"
+      type="button"
+      aria-label="Switch to light theme"
+      title="Switch to light theme"
+    >
+      <span class="theme-toggle-dark">Light</span>
+      <span class="theme-toggle-light">Dark</span>
+    </button>
   </div>
 </nav>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const html = document.documentElement;
+      const isParchment = html.getAttribute('data-theme') === 'parchment';
+      if (isParchment) {
+        html.removeAttribute('data-theme');
+        localStorage.setItem('urd-theme', 'gloaming');
+        btn.setAttribute('aria-label', 'Switch to light theme');
+        btn.setAttribute('title', 'Switch to light theme');
+      } else {
+        html.setAttribute('data-theme', 'parchment');
+        localStorage.setItem('urd-theme', 'parchment');
+        btn.setAttribute('aria-label', 'Switch to dark theme');
+        btn.setAttribute('title', 'Switch to dark theme');
+      }
+    });
+  }
+</script>
 
 <style>
   .site-nav {
@@ -66,6 +97,41 @@
     outline: 2px solid var(--gold);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  .theme-toggle {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    color: var(--faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease;
+  }
+
+  .theme-toggle:hover {
+    color: var(--text);
+  }
+
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .theme-toggle-light {
+    display: none;
+  }
+
+  :global([data-theme="parchment"]) .theme-toggle-dark {
+    display: none;
+  }
+
+  :global([data-theme="parchment"]) .theme-toggle-light {
+    display: inline;
   }
 
   @media (max-width: 520px) {

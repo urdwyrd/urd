@@ -8,6 +8,7 @@
     rating: number;
     initial: string;
     colour: string;
+    icon: string;
     quote: string;
   }
 
@@ -62,9 +63,13 @@
             {review.quote}
           </blockquote>
           <div class="review-attribution">
-            <div class="review-avatar" style="background-color: {review.colour}">
-              {review.initial}
-            </div>
+            <img
+              class="review-avatar"
+              src={review.icon}
+              alt={review.model}
+              width="32"
+              height="32"
+            />
             <div class="review-meta">
               <span class="review-model">{review.model}</span>
               <span class="review-company">{review.company} · {review.date}</span>
@@ -135,6 +140,7 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+    box-shadow: var(--card-shadow);
     transition: background 0.2s ease;
   }
 
@@ -183,13 +189,7 @@
     width: 32px;
     height: 32px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--display);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--bg);
+    object-fit: cover;
     flex-shrink: 0;
   }
 

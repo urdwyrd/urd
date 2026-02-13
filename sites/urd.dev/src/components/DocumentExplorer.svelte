@@ -424,7 +424,7 @@
   .doc-filter-btn.active {
     color: var(--filter-colour, var(--gold));
     border-color: var(--filter-colour, var(--gold));
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--card-overlay);
   }
 
   /* ── Format Filters ── */
@@ -511,6 +511,7 @@
     border: 1px solid var(--border);
     border-left: 2px solid var(--card-colour);
     border-radius: 8px;
+    box-shadow: var(--card-shadow);
     transition: background 0.15s ease, border-color 0.15s ease;
   }
 
@@ -686,7 +687,7 @@
 
   .doc-card-link:hover {
     border-color: var(--card-colour);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--card-overlay);
   }
 
   .doc-card-link:focus-visible {
@@ -704,7 +705,7 @@
   .doc-card-link-secondary:hover {
     color: var(--dim);
     border-color: var(--border-light);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--card-overlay);
   }
 
   /* ── Grid View ── */
@@ -722,6 +723,7 @@
     border-top: 2px solid var(--card-colour);
     border-radius: 8px;
     padding: 16px 18px;
+    box-shadow: var(--card-shadow);
     transition: background 0.15s ease, border-color 0.15s ease;
   }
 

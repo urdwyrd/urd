@@ -1,8 +1,10 @@
 ---
 import Base from "../layouts/base.astro";
 import Nav from "../components/Nav.astro";
-import urdLogo from "../assets/logos/urd-logo-dark.svg?raw";
-import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
+import urdLogoDark from "../assets/logos/urd-logo-dark.svg?raw";
+import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
+import wyrdLogoDark from "../assets/logos/wyrd-logo-dark.svg?raw";
+import wyrdLogoLight from "../assets/logos/wyrd-logo-light.svg?raw";
 import DocumentExplorer from "../components/DocumentExplorer.svelte";
 import PeerReview from "../components/PeerReview.svelte";
 import ProjectLog from "../components/ProjectLog.svelte";
@@ -16,12 +18,14 @@ import ProjectLog from "../components/ProjectLog.svelte";
     <div class="hero-content">
       <h1 class="wordmark">
         <span class="wordmark-half">
-          <span class="logo logo-urd" aria-hidden="true" set:html={urdLogo} />
+          <span class="logo logo-dark" aria-hidden="true" set:html={urdLogoDark} />
+          <span class="logo logo-light" aria-hidden="true" set:html={urdLogoLight} />
           <span class="wordmark-urd">URD</span>
         </span>
 
         <span class="wordmark-half">
-          <span class="logo logo-wyrd" aria-hidden="true" set:html={wyrdLogo} />
+          <span class="logo logo-dark" aria-hidden="true" set:html={wyrdLogoDark} />
+          <span class="logo logo-light" aria-hidden="true" set:html={wyrdLogoLight} />
           <span class="wordmark-wyrd">WYRD</span>
         </span>
       </h1>
@@ -61,7 +65,14 @@ import ProjectLog from "../components/ProjectLog.svelte";
   <script>
     const RUNES = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛝᛟᛞ";
     const RUNE_COUNT = 25;
-    const MAX_OPACITY = 0.05;
+
+    function getThemeValues() {
+      const style = getComputedStyle(document.documentElement);
+      return {
+        colour: style.getPropertyValue('--rune-colour').trim() || '218, 184, 96',
+        maxOpacity: parseFloat(style.getPropertyValue('--rune-max-opacity')) || 0.05,
+      };
+    }
 
     interface Rune {
       char: string;
@@ -98,6 +109,7 @@ import ProjectLog from "../components/ProjectLog.svelte";
 
       let width = window.innerWidth;
       let height = window.innerHeight;
+      let theme = getThemeValues();
 
       function resize(): void {
         width = window.innerWidth;
@@ -109,18 +121,31 @@ import ProjectLog from "../components/ProjectLog.svelte";
       resize();
       window.addEventListener("resize", resize);
 
+      // Re-read theme tokens when data-theme changes
+      const observer = new MutationObserver(() => {
+        theme = getThemeValues();
+        if (prefersReducedMotion) renderStatic();
+      });
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
+      });
+
       const runes: Rune[] = Array.from({ length: RUNE_COUNT }, () =>
         createRune(height, width)
       );
 
-      if (prefersReducedMotion) {
-        // Static render — no animation
-        ctx.font = "16px Georgia, serif";
-        ctx.fillStyle = `rgba(218, 184, 96, ${MAX_OPACITY})`;
+      function renderStatic(): void {
+        ctx!.clearRect(0, 0, width, height);
         for (const rune of runes) {
-          ctx.font = `${rune.size}px Georgia, serif`;
-          ctx.fillText(rune.char, rune.x, rune.y);
+          ctx!.font = `${rune.size}px Georgia, serif`;
+          ctx!.fillStyle = `rgba(${theme.colour}, ${theme.maxOpacity})`;
+          ctx!.fillText(rune.char, rune.x, rune.y);
         }
+      }
+
+      if (prefersReducedMotion) {
+        renderStatic();
         return;
       }
 
@@ -141,10 +166,10 @@ import ProjectLog from "../components/ProjectLog.svelte";
 
           // Breathing opacity via sine wave
           const breath = (Math.sin(time * rune.breathSpeed + rune.phase) + 1) / 2;
-          const opacity = breath * MAX_OPACITY;
+          const opacity = breath * theme.maxOpacity;
 
           ctx!.font = `${rune.size}px Georgia, serif`;
-          ctx!.fillStyle = `rgba(218, 184, 96, ${opacity})`;
+          ctx!.fillStyle = `rgba(${theme.colour}, ${opacity})`;
           ctx!.fillText(rune.char, rune.x, rune.y);
         }
 
@@ -208,6 +233,18 @@ import ProjectLog from "../components/ProjectLog.svelte";
     width: clamp(80px, 16vw, 160px);
     height: clamp(80px, 16vw, 160px);
     opacity: 0.85;
+  }
+
+  .logo-light {
+    display: none;
+  }
+
+  :global([data-theme="parchment"]) .logo-dark {
+    display: none;
+  }
+
+  :global([data-theme="parchment"]) .logo-light {
+    display: block;
   }
 
   .logo :global(svg) {

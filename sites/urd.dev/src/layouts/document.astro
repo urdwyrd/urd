@@ -115,10 +115,7 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
     padding: 20px;
     max-height: calc(100vh - 48px);
     overflow-y: auto;
-    box-shadow:
-      inset 1px 1px 0 rgba(255, 255, 255, 0.03),
-      inset -1px 0 0 rgba(0, 0, 0, 0.3),
-      2px 0 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--toc-shadow);
     scrollbar-width: thin;
     scrollbar-color: var(--border-light) transparent;
   }

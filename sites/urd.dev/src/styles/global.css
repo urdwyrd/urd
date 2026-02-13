@@ -133,6 +133,81 @@
   --display: "Outfit", "Helvetica Neue", sans-serif;
   --body: "Source Serif 4", "Georgia", serif;
   --mono: "JetBrains Mono", "Consolas", monospace;
+
+  /* Theme-dependent depth tokens */
+  --card-shadow: none;
+  --card-overlay: rgba(255, 255, 255, 0.03);
+  --toc-shadow: inset 1px 1px 0 rgba(255, 255, 255, 0.03),
+                inset -1px 0 0 rgba(0, 0, 0, 0.3),
+                2px 0 8px rgba(0, 0, 0, 0.3);
+  --rune-colour: 218, 184, 96;
+  --rune-max-opacity: 0.05;
+}
+
+/* ── Parchment Theme ── */
+[data-theme="parchment"] {
+  /* Surface */
+  --bg: #f4ede0;
+  --raise: #faf6ef;
+  --deep: #e8e0d0;
+  --surface: #ede5d6;
+  --border: #d4c8b0;
+  --border-light: #c4b89e;
+
+  /* Text */
+  --text: #2c2418;
+  --dim: #5c5040;
+  --faint: #8a7e6c;
+
+  /* Category colours (darkened for light surface) */
+  --gold: #8a6d18;
+  --gold-light: #dab860;
+  --gold-dim: #c4a84c;
+  --gold-dark: #6a5510;
+
+  --purple: #6b4fa0;
+  --purple-light: #b090dd;
+  --purple-dim: #f0ecf5;
+
+  --blue: #3a6a98;
+  --blue-light: #6a9acc;
+  --blue-dim: #ecf2f8;
+
+  --green: #3a7a4a;
+  --green-light: #70b080;
+  --green-dim: #ecf5ee;
+
+  --amber: #a05a1a;
+  --amber-light: #cc7a3a;
+  --amber-dim: #f5ede5;
+
+  --rose: #a05050;
+  --rose-light: #cc8888;
+  --rose-dim: #f5ece8;
+
+  /* Document taxonomy */
+  --doc-research: var(--rose);
+  --doc-research-dim: var(--rose-dim);
+  --doc-contract: var(--gold);
+  --doc-contract-dim: #f5f0e0;
+  --doc-authoring: var(--blue);
+  --doc-authoring-dim: var(--blue-dim);
+  --doc-architecture: var(--amber);
+  --doc-architecture-dim: var(--amber-dim);
+  --doc-runtime: var(--purple);
+  --doc-runtime-dim: var(--purple-dim);
+  --doc-validation: var(--green);
+  --doc-validation-dim: var(--green-dim);
+  --doc-strategy: var(--gold);
+  --doc-strategy-dim: var(--doc-contract-dim);
+
+  /* Theme-dependent depth tokens */
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --card-overlay: transparent;
+  --toc-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06),
+                0 1px 0 rgba(255, 255, 255, 0.8);
+  --rune-colour: 60, 48, 30;
+  --rune-max-opacity: 0.03;
 }
 
 /* ── Base Reset ── */
@@ -146,6 +221,10 @@
 
 html {
   color-scheme: dark;
+}
+
+html[data-theme="parchment"] {
+  color-scheme: light;
 }
 
 body {
