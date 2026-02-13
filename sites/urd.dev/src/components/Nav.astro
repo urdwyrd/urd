@@ -1,32 +1,43 @@
 ---
+import urdLogoDark from "../assets/logos/urd-logo-dark.svg?raw";
+import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
 ---
 
-<nav class="site-nav" aria-label="Site navigation">
-  <a href="/" class="nav-wordmark">URD.DEV</a>
-  <div class="nav-links">
-    <a href="/#documents" class="nav-link">Documents</a>
-    <a
-      href="https://github.com/urdwyrd/urd"
-      class="nav-link"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      GitHub <span aria-hidden="true">↗</span>
+<div class="nav-bar" id="nav-bar">
+  <nav class="site-nav" aria-label="Site navigation">
+    <a href="/" class="nav-wordmark">
+      <span class="nav-logo nav-logo-dark" aria-hidden="true" set:html={urdLogoDark} />
+      <span class="nav-logo nav-logo-light" aria-hidden="true" set:html={urdLogoLight} />
+      URD.DEV
     </a>
-    <button
-      id="theme-toggle"
-      class="theme-toggle"
-      type="button"
-      aria-label="Switch to light theme"
-      title="Switch to light theme"
-    >
-      <span class="theme-toggle-dark">Light</span>
-      <span class="theme-toggle-light">Dark</span>
-    </button>
-  </div>
-</nav>
+    <div class="nav-links">
+      <a href="/#documents" class="nav-link">Documents</a>
+      <a href="/#updates" class="nav-link">Updates</a>
+      <a href="/#architecture" class="nav-link">Architecture</a>
+      <a
+        href="https://github.com/urdwyrd/urd"
+        class="nav-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        GitHub <span aria-hidden="true">↗</span>
+      </a>
+      <button
+        id="theme-toggle"
+        class="theme-toggle"
+        type="button"
+        aria-label="Switch to light theme"
+        title="Switch to light theme"
+      >
+        <span class="theme-toggle-dark">Light</span>
+        <span class="theme-toggle-light">Dark</span>
+      </button>
+    </div>
+  </nav>
+</div>
 
 <script>
+  // Theme toggle
   const btn = document.getElementById('theme-toggle');
   if (btn) {
     btn.addEventListener('click', () => {
@@ -45,9 +56,28 @@
       }
     });
   }
+
+  // Sticky compact nav on scroll
+  const bar = document.getElementById('nav-bar');
+  if (bar) {
+    const onScroll = () => {
+      bar.classList.toggle('scrolled', window.scrollY > 60);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
 </script>
 
 <style>
+  .nav-bar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    transition: padding 0.25s ease, border-color 0.25s ease;
+  }
+
   .site-nav {
     display: flex;
     align-items: center;
@@ -55,12 +85,40 @@
     max-width: 1160px;
     margin: 0 auto;
     padding: 16px 32px;
-    border-bottom: 1px solid var(--border);
-    position: relative;
-    z-index: 2;
+    transition: padding 0.25s ease;
   }
 
+  /* ── Logo ── */
+  .nav-logo {
+    width: 24px;
+    height: 24px;
+    opacity: 0.85;
+    vertical-align: middle;
+    transition: width 0.25s ease, height 0.25s ease;
+  }
+
+  .nav-logo :global(svg) {
+    width: 100%;
+    height: 100%;
+  }
+
+  .nav-logo-light {
+    display: none;
+  }
+
+  :global([data-theme="parchment"]) .nav-logo-dark {
+    display: none;
+  }
+
+  :global([data-theme="parchment"]) .nav-logo-light {
+    display: inline;
+  }
+
+  /* ── Wordmark ── */
   .nav-wordmark {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     font-family: var(--wordmark);
     font-size: 1rem;
     font-weight: 400;
@@ -68,16 +126,19 @@
     letter-spacing: 0.08em;
     color: var(--gold);
     text-decoration: none;
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, font-size 0.25s ease, gap 0.25s ease;
   }
 
   .nav-wordmark:hover {
     color: var(--gold-light);
   }
 
+  /* ── Links ── */
   .nav-links {
     display: flex;
+    align-items: center;
     gap: 24px;
+    transition: gap 0.25s ease;
   }
 
   .nav-link {
@@ -86,7 +147,7 @@
     font-weight: 500;
     color: var(--dim);
     text-decoration: none;
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, font-size 0.25s ease;
   }
 
   .nav-link:hover {
@@ -99,6 +160,7 @@
     border-radius: 2px;
   }
 
+  /* ── Theme toggle ── */
   .theme-toggle {
     font-family: var(--mono);
     font-size: 12px;
@@ -109,7 +171,7 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    transition: color 0.15s ease;
+    transition: color 0.15s ease, font-size 0.25s ease;
   }
 
   .theme-toggle:hover {
@@ -134,6 +196,34 @@
     display: inline;
   }
 
+  /* ── Scrolled (compact) state ── */
+  .nav-bar.scrolled .site-nav {
+    padding: 8px 32px;
+  }
+
+  .nav-bar.scrolled .nav-wordmark {
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .nav-bar.scrolled .nav-logo {
+    width: 18px;
+    height: 18px;
+  }
+
+  .nav-bar.scrolled .nav-link {
+    font-size: 0.78rem;
+  }
+
+  .nav-bar.scrolled .nav-links {
+    gap: 18px;
+  }
+
+  .nav-bar.scrolled .theme-toggle {
+    font-size: 11px;
+  }
+
+  /* ── Responsive ── */
   @media (max-width: 520px) {
     .site-nav {
       padding: 14px 18px;
@@ -141,6 +231,14 @@
 
     .nav-links {
       gap: 16px;
+    }
+
+    .nav-bar.scrolled .site-nav {
+      padding: 8px 18px;
+    }
+
+    .nav-bar.scrolled .nav-links {
+      gap: 12px;
     }
   }
 </style>
