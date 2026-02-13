@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   interface Document {
     title: string;
@@ -42,7 +42,7 @@
   let documents = $state<Document[]>([]);
   let activeFilter = $state<string>('all');
   let activeFormat = $state<string>('all');
-  let viewMode = $state<'list' | 'grid' | 'compact'>('list');
+  let viewMode = $state<'list' | 'grid' | 'compact'>('compact');
   let expandedSlugs = $state<Set<string>>(new Set());
   let loaded = $state(false);
   let reducedMotion = $state(false);
@@ -103,11 +103,63 @@
   function setFilter(category: string): void {
     activeFilter = category;
     activeFormat = 'all';
+    if (fmtScrollEl) fmtScrollEl.scrollLeft = 0;
   }
 
   function setFormatFilter(format: string): void {
     activeFormat = format;
   }
+
+  // Scroll arrow state
+  let catScrollEl = $state<HTMLElement | null>(null);
+  let fmtScrollEl = $state<HTMLElement | null>(null);
+  let catCanScrollLeft = $state(false);
+  let catCanScrollRight = $state(false);
+  let fmtCanScrollLeft = $state(false);
+  let fmtCanScrollRight = $state(false);
+
+  function updateScrollState(el: HTMLElement | null, setLeft: (v: boolean) => void, setRight: (v: boolean) => void): void {
+    if (!el) return;
+    setLeft(el.scrollLeft > 2);
+    setRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  }
+
+  function scrollBy(el: HTMLElement | null, delta: number): void {
+    el?.scrollBy({ left: delta, behavior: 'smooth' });
+  }
+
+  $effect(() => {
+    if (catScrollEl) {
+      const update = () => updateScrollState(catScrollEl, (v) => catCanScrollLeft = v, (v) => catCanScrollRight = v);
+      catScrollEl.addEventListener('scroll', update, { passive: true });
+      const ro = new ResizeObserver(update);
+      ro.observe(catScrollEl);
+      update();
+      return () => { catScrollEl?.removeEventListener('scroll', update); ro.disconnect(); };
+    }
+  });
+
+  $effect(() => {
+    if (fmtScrollEl) {
+      const update = () => updateScrollState(fmtScrollEl, (v) => fmtCanScrollLeft = v, (v) => fmtCanScrollRight = v);
+      fmtScrollEl.addEventListener('scroll', update, { passive: true });
+      const ro = new ResizeObserver(update);
+      ro.observe(fmtScrollEl);
+      update();
+      return () => { fmtScrollEl?.removeEventListener('scroll', update); ro.disconnect(); };
+    }
+  });
+
+  // Re-check scroll arrows when filter content changes (buttons added/removed)
+  $effect(() => {
+    activeFilter;
+    availableFormats;
+    categories;
+    tick().then(() => {
+      updateScrollState(catScrollEl, (v) => catCanScrollLeft = v, (v) => catCanScrollRight = v);
+      updateScrollState(fmtScrollEl, (v) => fmtCanScrollLeft = v, (v) => fmtCanScrollRight = v);
+    });
+  });
 
   onMount(async () => {
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -135,73 +187,87 @@
               class:active={viewMode === 'compact'}
               onclick={() => { viewMode = 'compact'; }}
               aria-label="Compact view"
-              title="Compact view"
-            >—</button>
+            ><span class="doc-view-icon">—</span> Compact</button>
             <button
               class="doc-view-btn"
               class:active={viewMode === 'list'}
               onclick={() => { viewMode = 'list'; }}
               aria-label="List view"
-              title="List view"
-            >≡</button>
+            ><span class="doc-view-icon">≡</span> List</button>
             <button
               class="doc-view-btn"
               class:active={viewMode === 'grid'}
               onclick={() => { viewMode = 'grid'; }}
               aria-label="Card view"
-              title="Card view"
-            >⊞</button>
+            ><span class="doc-view-icon">⊞</span> Cards</button>
           </div>
         {/if}
       </div>
     </div>
 
     {#if loaded && categories.length > 0}
-      <nav class="doc-explorer-filters" aria-label="Filter documents by category">
-        <button
-          class="doc-filter-btn"
-          class:active={activeFilter === 'all'}
-          onclick={() => setFilter('all')}
-        >
-          All
-        </button>
-        {#each categories as cat}
+      <div class="scroll-row">
+        {#if catCanScrollLeft}
+          <button class="scroll-arrow scroll-arrow-left" aria-label="Scroll left" onclick={() => scrollBy(catScrollEl, -120)}>‹ more</button>
+        {/if}
+        <nav class="doc-explorer-filters" bind:this={catScrollEl} aria-label="Filter documents by category">
           <button
             class="doc-filter-btn"
-            class:active={activeFilter === cat}
-            style:--filter-colour="var(--doc-{cat})"
-            onclick={() => setFilter(cat)}
+            class:active={activeFilter === 'all'}
+            onclick={() => setFilter('all')}
           >
-            {titleCase(cat)}
+            All
           </button>
-        {/each}
-      </nav>
+          {#each categories as cat}
+            <button
+              class="doc-filter-btn"
+              class:active={activeFilter === cat}
+              style:--filter-colour="var(--doc-{cat})"
+              onclick={() => setFilter(cat)}
+            >
+              {titleCase(cat)}
+            </button>
+          {/each}
+        </nav>
+        {#if catCanScrollRight}
+          <button class="scroll-arrow scroll-arrow-right" aria-label="Scroll right" onclick={() => scrollBy(catScrollEl, 120)}>more ›</button>
+        {/if}
+      </div>
     {/if}
   </header>
 
-  {#if loaded && availableFormats.length > 1}
-    <nav
-      class="doc-explorer-format-filters"
-      aria-label="Filter documents by format"
-      style={activeFilter !== 'all' ? `--format-accent: var(--doc-${activeFilter})` : ''}
-    >
-      <button
-        class="doc-format-btn"
-        class:active={activeFormat === 'all'}
-        onclick={() => setFormatFilter('all')}
+  {#if loaded}
+    <div class="scroll-row">
+      {#if fmtCanScrollLeft}
+        <button class="scroll-arrow scroll-arrow-left" aria-label="Scroll left" onclick={() => scrollBy(fmtScrollEl, -120)}>‹ more</button>
+      {/if}
+      <nav
+        class="doc-explorer-format-filters"
+        bind:this={fmtScrollEl}
+        aria-label="Filter documents by format"
+        style={activeFilter !== 'all' ? `--format-accent: var(--doc-${activeFilter})` : ''}
       >
-        All formats
-      </button>
-      {#each availableFormats as fmt}
         <button
           class="doc-format-btn"
-          class:active={activeFormat === fmt}
-          onclick={() => setFormatFilter(fmt)}
+          class:active={activeFormat === 'all'}
+          onclick={() => setFormatFilter('all')}
         >
-          {fmt}
+          All formats
         </button>
-      {/each}
-    </nav>
+        {#each availableFormats as fmt}
+          <button
+            class="doc-format-btn"
+            class:active={activeFormat === fmt}
+            onclick={() => setFormatFilter(fmt)}
+          >
+            {fmt}
+          </button>
+        {/each}
+      </nav>
+      {#if fmtCanScrollRight}
+        <button class="scroll-arrow scroll-arrow-right" aria-label="Scroll right" onclick={() => scrollBy(fmtScrollEl, 120)}>more ›</button>
+      {/if}
+    </div>
   {/if}
 
   {#if loaded}
@@ -392,12 +458,60 @@
     line-height: 1.6;
   }
 
+  /* ── Scroll Row ── */
+  .scroll-row {
+    position: relative;
+  }
+
+  .scroll-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--dim);
+    background: var(--raise);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 3px 8px;
+    cursor: pointer;
+    z-index: 2;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .scroll-arrow:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    background: var(--surface);
+  }
+
+  .scroll-arrow-left {
+    left: 0;
+  }
+
+  .scroll-arrow-right {
+    right: 0;
+  }
+
   /* ── Category Filters ── */
   .doc-explorer-filters {
     display: flex;
     gap: 6px;
-    flex-wrap: wrap;
     align-items: center;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .doc-explorer-filters::-webkit-scrollbar {
+    display: none;
   }
 
   .doc-filter-btn {
@@ -431,9 +545,15 @@
   .doc-explorer-format-filters {
     display: flex;
     gap: 5px;
-    flex-wrap: wrap;
     align-items: center;
     margin-bottom: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .doc-explorer-format-filters::-webkit-scrollbar {
+    display: none;
   }
 
   .doc-format-btn {
@@ -464,38 +584,47 @@
   /* ── View Toggle ── */
   .doc-view-toggle {
     display: flex;
-    gap: 2px;
+    gap: 3px;
     flex-shrink: 0;
     margin-left: auto;
+    background: var(--raise);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 3px;
   }
 
   .doc-view-btn {
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
     line-height: 1;
     color: var(--faint);
     background: transparent;
-    border: 1px solid var(--border);
-    padding: 4px 7px;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 10px;
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   }
 
-  .doc-view-btn:first-child {
-    border-radius: 3px 0 0 3px;
-  }
-
-  .doc-view-btn:last-child {
-    border-radius: 0 3px 3px 0;
+  .doc-view-icon {
+    font-size: 14px;
+    line-height: 1;
   }
 
   .doc-view-btn.active {
-    color: var(--text);
-    border-color: var(--border-light);
+    color: var(--gold);
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
-  .doc-view-btn:hover {
+  .doc-view-btn:hover:not(.active) {
     color: var(--dim);
-    border-color: var(--border-light);
+    background: var(--surface);
   }
 
   /* ── Card List ── */

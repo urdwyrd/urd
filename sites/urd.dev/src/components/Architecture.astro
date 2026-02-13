@@ -1,0 +1,657 @@
+---
+interface Props {
+  label?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+const {
+  label = 'Architecture',
+  title = 'System Architecture',
+  subtitle = 'How the pieces fit together — from authoring to execution.',
+} = Astro.props;
+---
+
+<div class="arch">
+  <header class="arch-header">
+    <span class="arch-label">{label}</span>
+    <h2 class="arch-title">{title}</h2>
+    <p class="arch-subtitle">{subtitle}</p>
+  </header>
+
+  <!-- Row 1: Authoring -->
+  <div class="section-label">Who Writes What</div>
+
+  <div class="authoring-row">
+    <div class="zone zone-writer">
+      <div class="zone-header">
+        <span class="zone-title">Writer</span>
+        <span class="zone-subtitle">narrative designers</span>
+        <span class="zone-badge">Writer Mode</span>
+      </div>
+      <div class="zone-body">
+        <div class="zone-card">
+          <div class="zone-card-title">.urd.md files</div>
+          <div class="zone-card-desc">Prose with seven symbols</div>
+          <code>@ &nbsp;? &nbsp;&gt; &nbsp;* &nbsp;+ &nbsp;-&gt; &nbsp;// &nbsp;==</code>
+        </div>
+        <div class="zone-card">
+          <div class="zone-card-title">Frontmatter</div>
+          <div class="zone-card-desc">Not YAML — strict grammar</div>
+          <code>import: ./world.urd.md</code>
+        </div>
+      </div>
+      <div class="zone-footer">
+        <strong>SEES: </strong> completions &middot; conversation graph &middot; scene preview &middot; never JSON
+      </div>
+    </div>
+
+    <div class="zone zone-engineer">
+      <div class="zone-header">
+        <span class="zone-title">Engineer</span>
+        <span class="zone-subtitle">schema designers</span>
+        <span class="zone-badge">Engineer Mode</span>
+      </div>
+      <div class="zone-body">
+        <div class="zone-card">
+          <div class="zone-card-title">World Schema</div>
+          <div class="zone-card-desc">Types, entities, traits, visibility</div>
+          <code>world.urd.md</code>
+        </div>
+        <div class="zone-card">
+          <div class="zone-card-title">Rules &amp; Logic</div>
+          <div class="zone-card-desc">Conditions, effects, sequences, select</div>
+          <code>rules.urd.md</code>
+        </div>
+      </div>
+      <div class="zone-footer">
+        <strong>SEES: </strong> type browser &middot; compiled JSON &middot; test runner &middot; import graph
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&#9660; &#9660; &#9660;</div>
+
+  <!-- Row 2: Core Tools -->
+  <div class="section-label">Core Tools — CLI or Embedded</div>
+
+  <div class="tools-row">
+    <div class="tool-card tool-compiler">
+      <div class="tool-header">
+        <span class="tool-name">Compiler</span>
+        <span class="tool-badge">CLI + Library</span>
+      </div>
+      <div class="tool-desc">Transforms .urd.md source into compiled .urd.json. Five-phase pipeline.</div>
+      <div class="pipeline">
+        <div class="pipeline-stage"><div class="pipeline-stage-name">Parse</div></div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-stage"><div class="pipeline-stage-name">Import</div></div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-stage"><div class="pipeline-stage-name">Link</div></div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-stage"><div class="pipeline-stage-name">Validate</div></div>
+        <span class="pipeline-arrow">&rarr;</span>
+        <div class="pipeline-stage"><div class="pipeline-stage-name">Emit</div></div>
+      </div>
+      <ul class="tool-features">
+        <li>Non-transitive imports, cycle detection</li>
+        <li>Depth enforcement — warn at 3, error at 4+</li>
+        <li>Stable ID generation (file_stem/section_name)</li>
+        <li>Structured diagnostics with suggestions</li>
+        <li>Sets <code>urd: "1"</code> automatically</li>
+      </ul>
+    </div>
+
+    <div class="tool-card tool-wyrd">
+      <div class="tool-header">
+        <span class="tool-name">Wyrd</span>
+        <span class="tool-badge">Reference Runtime</span>
+      </div>
+      <div class="tool-desc">Loads .urd.json, executes the world, produces events. Spec ambiguities resolved by what Wyrd does.</div>
+      <ul class="tool-features">
+        <li>Immutable state transitions, event sourcing</li>
+        <li>All 5 effects: set, move, reveal, destroy, spawn</li>
+        <li>4 visibility levels &middot; containment model</li>
+        <li>Dialogue: sticky/one-shot, exhaustion, jumps</li>
+        <li>Seeded randomness — deterministic replay</li>
+      </ul>
+      <div class="tool-contexts">
+        <span class="ctx-tag">urd.world</span>
+        <span class="ctx-tag">IDE panel</span>
+        <span class="ctx-tag">CI / Headless</span>
+      </div>
+      <div class="tool-note">3 layers: Core Engine &middot; Presentation &middot; Extension Host (v2)</div>
+    </div>
+
+    <div class="tool-card tool-testing">
+      <div class="tool-header">
+        <span class="tool-name">Testing</span>
+        <span class="tool-badge">CLI + Library</span>
+      </div>
+      <div class="tool-desc">Validates schemas and simulates playthroughs. Embeds the real Wyrd engine — no mocking.</div>
+      <ul class="tool-features">
+        <li>Monte Carlo playthrough simulation</li>
+        <li>Reachability analysis, dead-end detection</li>
+        <li>Coverage reporting per schema primitive</li>
+        <li>Visibility auditing — hidden state never leaked</li>
+        <li>JSON-only test definitions, seeded runs</li>
+        <li>AI-assisted narrative QA (optional)</li>
+      </ul>
+      <div class="tool-note">Tests run against .urd.json, not source</div>
+    </div>
+  </div>
+
+  <!-- JSON Contract -->
+  <div class="flow-arrow">&#9660; &#9660; &#9660;</div>
+
+  <div class="json-contract">
+    <div class="json-top">
+      <div class="json-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--gold);">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+        </svg>
+      </div>
+      <div>
+        <div class="json-title">.urd.json</div>
+        <div class="json-subtitle">The single contract between authoring and execution</div>
+      </div>
+      <div class="json-props">
+        <span class="json-prop"><strong>Self-contained</strong></span>
+        <span class="json-prop"><strong>Deterministic</strong></span>
+        <span class="json-prop"><strong>Versioned</strong></span>
+        <span class="json-prop"><strong>Human-inspectable</strong></span>
+      </div>
+    </div>
+    <div class="blocks-row">
+      <span class="block-chip required">world*</span>
+      <span class="block-chip">types</span>
+      <span class="block-chip">entities</span>
+      <span class="block-chip">locations</span>
+      <span class="block-chip">rules</span>
+      <span class="block-chip">actions</span>
+      <span class="block-chip">sequences</span>
+      <span class="block-chip">dialogue</span>
+    </div>
+  </div>
+
+  <div class="flow-arrow">&#9660; &#9660; &#9660;</div>
+
+  <!-- Row 3: Product Surfaces -->
+  <div class="section-label">Product Surfaces</div>
+
+  <div class="surfaces-row">
+    <div class="surface surface-ide">
+      <span class="surface-badge">Product</span>
+      <div class="surface-title">Urd IDE</div>
+      <div class="surface-desc">
+        Integrated authoring environment. Writer mode and engineer mode in the same tool.
+        Play panel embeds Wyrd. Diagnostics embed the compiler.
+      </div>
+      <div class="surface-embeds">
+        <span class="embed-tag">Compiler</span>
+        <span class="embed-tag">Wyrd</span>
+        <span class="embed-tag">Testing</span>
+        <span class="embed-tag">LSP Server</span>
+        <span class="embed-tag">Syntax highlighting</span>
+      </div>
+    </div>
+
+    <div class="surface surface-web">
+      <span class="surface-badge">Product</span>
+      <div class="surface-title">urd.world</div>
+      <div class="surface-desc">
+        Product website with live demos. Click Play &rarr; Wyrd loads a .urd.json from a URL &rarr; world runs in the browser. Zero install.
+      </div>
+      <div class="surface-embeds">
+        <span class="embed-tag">Wyrd</span>
+        <span class="embed-tag">Monty Hall</span>
+        <span class="embed-tag">Key Puzzle</span>
+        <span class="embed-tag">Tavern</span>
+        <span class="embed-tag">Interrogation</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Consumers -->
+  <div class="section-label">Downstream Consumers</div>
+
+  <div class="consumers-row">
+    <div class="consumer consumer-engines">
+      <div class="consumer-name">Game Engines</div>
+      <div class="consumer-desc">Unity and Godot plugins. Dialogue UI, save/load, schema runtime in native code.</div>
+      <div class="consumer-note">Alternative runtimes — test against Wyrd for parity</div>
+    </div>
+    <div class="consumer consumer-web">
+      <div class="consumer-name">Web Games</div>
+      <div class="consumer-desc">Browser games, prototyping, interactive fiction, embedded worlds.</div>
+      <div class="consumer-note">Wyrd is the web runtime — zero install</div>
+    </div>
+    <div class="consumer consumer-ai">
+      <div class="consumer-name">AI Integration</div>
+      <div class="consumer-desc">Schema-constrained generation. Intelligent NPCs. Narrative QA.</div>
+      <div class="consumer-note">Optional — every world works without AI</div>
+    </div>
+    <div class="consumer consumer-api">
+      <div class="consumer-name">Wyrd API</div>
+      <div class="consumer-desc">Minimal public surface shared by all consumers.</div>
+      <code>load() &middot; getAvailableActions()<br/>performAction() &middot; on('event')<br/>seed() &middot; reset()</code>
+    </div>
+  </div>
+
+  <!-- Footer: Docs bar -->
+  <div class="docs-bar">
+    <div class="docs-row">
+      <span class="docs-label">Specifications</span>
+      <span class="doc-tag">Schema Spec</span>
+      <span class="doc-tag">Schema Markdown</span>
+      <span class="doc-tag">Architecture</span>
+      <span class="doc-tag">Nested Dialogue</span>
+      <span class="doc-tag">Test Strategy</span>
+      <span class="doc-tag doc-tag-wyrd">Wyrd Runtime</span>
+      <span class="doc-tag">Future Proposals</span>
+    </div>
+    <div class="docs-row">
+      <span class="docs-label">Domains</span>
+      <span class="domain-tag">urd.dev</span>
+      <span class="domain-desc">build diary &middot; technical specs</span>
+      <span class="docs-sep"></span>
+      <span class="domain-tag">urd.world</span>
+      <span class="domain-desc">product face &middot; live demos powered by Wyrd</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  @keyframes wyrdGlow {
+    0%, 100% { box-shadow: 0 0 24px rgba(154, 122, 204, 0.06); }
+    50% { box-shadow: 0 0 48px rgba(154, 122, 204, 0.16); }
+  }
+
+  .arch { width: 100%; }
+
+  /* ── Header ── */
+  .arch-header { margin-bottom: 24px; }
+
+  .arch-label {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .arch-title {
+    font-family: var(--display);
+    font-size: clamp(22px, 3.5vw, 28px);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .arch-subtitle {
+    font-family: var(--body);
+    font-size: 17px;
+    color: var(--faint);
+    line-height: 1.6;
+  }
+
+  /* ── Section labels ── */
+  .section-label {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 18px;
+    margin-top: 44px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .section-label:first-of-type { margin-top: 0; }
+
+  /* ── Flow arrows ── */
+  .flow-arrow {
+    display: flex;
+    justify-content: center;
+    padding: 14px 0;
+    color: var(--gold-dark);
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 300;
+    letter-spacing: 6px;
+  }
+
+  /* ── Authoring row ── */
+  .authoring-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+  .zone {
+    border-radius: 10px; padding: 22px 24px;
+    border: 1px solid var(--border); background: var(--raise);
+  }
+
+  .zone-header {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .zone-title {
+    font-family: var(--display); font-size: 15px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  .zone-subtitle { font-family: var(--body); font-size: 16px; color: var(--faint); }
+
+  .zone-badge {
+    margin-left: auto; font-family: var(--display); font-size: 10px; font-weight: 500;
+    letter-spacing: 1px; padding: 4px 12px; border-radius: 4px; text-transform: uppercase;
+  }
+
+  .zone-writer .zone-title { color: var(--blue-light); }
+  .zone-writer .zone-badge { background: var(--blue-dim); color: var(--blue-light); border: 1px solid #1e3558; }
+  .zone-writer { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--blue-light), var(--blue-dim)) 1; }
+
+  .zone-engineer .zone-title { color: var(--green-light); }
+  .zone-engineer .zone-badge { background: var(--green-dim); color: var(--green-light); border: 1px solid #1e3e2a; }
+  .zone-engineer { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--green-light), var(--green-dim)) 1; }
+
+  .zone-body { display: flex; gap: 12px; margin-bottom: 12px; }
+
+  .zone-card {
+    flex: 1; background: var(--deep); border-radius: 6px;
+    padding: 14px 16px; border: 1px solid var(--border);
+  }
+
+  .zone-card-title {
+    font-family: var(--display); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.5px; color: var(--gold); margin-bottom: 3px;
+  }
+
+  .zone-card-desc { font-family: var(--body); font-size: 15px; color: var(--faint); }
+
+  .zone-card code {
+    display: block; font-family: var(--mono); font-size: 12px;
+    color: var(--faint); margin-top: 6px; letter-spacing: 0.3px;
+  }
+
+  .zone-footer {
+    font-family: var(--body); font-size: 14px; color: var(--faint);
+    padding: 8px 14px; background: var(--deep); border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .zone-footer strong {
+    font-family: var(--display); font-size: 10px; font-weight: 600;
+    letter-spacing: 1.5px; color: var(--gold-dim);
+  }
+
+  /* ── Core Tools ── */
+  .tools-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+
+  .tool-card {
+    border-radius: 10px; padding: 22px 24px;
+    border: 1px solid var(--border); background: var(--raise);
+  }
+
+  .tool-header {
+    display: flex; align-items: baseline; gap: 10px;
+    margin-bottom: 12px; padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  .tool-name {
+    font-family: var(--display); font-size: 16px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  .tool-badge {
+    font-family: var(--display); font-size: 10px; font-weight: 500;
+    letter-spacing: 1px; padding: 4px 12px; border-radius: 4px; text-transform: uppercase;
+  }
+
+  .tool-desc {
+    font-family: var(--body); font-size: 16px; color: var(--dim);
+    margin-bottom: 14px; line-height: 1.55;
+  }
+
+  .tool-compiler { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--amber-light), var(--amber-dim)) 1; }
+  .tool-compiler .tool-name { color: var(--amber-light); }
+  .tool-compiler .tool-badge { background: var(--amber-dim); color: var(--amber-light); border: 1px solid #3a2518; }
+
+  .tool-wyrd {
+    border: 1px solid #302548;
+    background: linear-gradient(180deg, #12101e 0%, var(--raise) 100%);
+    animation: wyrdGlow 4s infinite;
+    border-left: 2px solid transparent;
+    border-image: linear-gradient(135deg, var(--purple-light), #6050a0) 1;
+  }
+
+  .tool-wyrd .tool-name { color: var(--purple-light); letter-spacing: 2px; }
+  .tool-wyrd .tool-badge { background: var(--purple-dim); color: var(--purple-light); border: 1px solid #302548; }
+
+  .tool-testing { border-left: 2px solid transparent; border-image: linear-gradient(to bottom, var(--green-light), var(--green-dim)) 1; }
+  .tool-testing .tool-name { color: var(--green-light); }
+  .tool-testing .tool-badge { background: var(--green-dim); color: var(--green-light); border: 1px solid #1e3e2a; }
+
+  /* Pipeline */
+  .pipeline { display: flex; align-items: center; gap: 3px; margin-bottom: 14px; }
+
+  .pipeline-stage {
+    flex: 1; text-align: center; padding: 7px 6px;
+    background: var(--deep); border: 1px solid var(--border); border-radius: 4px;
+  }
+
+  .pipeline-stage-name {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    color: var(--amber-light); letter-spacing: 0.03em;
+  }
+
+  .pipeline-arrow { font-family: var(--mono); font-size: 10px; color: var(--gold-dark); }
+
+  /* Feature lists */
+  .tool-features { list-style: none; }
+
+  .tool-features li {
+    font-family: var(--body); font-size: 15px; color: var(--dim);
+    padding: 3px 0 3px 18px; position: relative; line-height: 1.55;
+  }
+
+  .tool-features li::before {
+    content: '\00B7'; position: absolute; left: 4px;
+    font-size: 20px; line-height: 1; font-weight: 700;
+  }
+
+  .tool-compiler .tool-features li::before { color: var(--amber); }
+  .tool-wyrd .tool-features li::before { color: var(--purple); }
+  .tool-testing .tool-features li::before { color: var(--green); }
+
+  .tool-features li code { font-family: var(--mono); font-size: 12px; color: var(--gold); }
+
+  .tool-contexts { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+
+  .ctx-tag {
+    font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px;
+    background: var(--purple-dim); color: var(--purple-light); border: 1px solid #302548;
+  }
+
+  .tool-note {
+    margin-top: 10px; font-family: var(--mono); font-size: 12px;
+    color: var(--faint); font-style: italic;
+  }
+
+  /* ── JSON contract ── */
+  .json-contract {
+    background: var(--raise); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px 28px;
+  }
+
+  .json-top { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+
+  .json-icon {
+    width: 42px; height: 42px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(218, 184, 96, 0.06); border: 1px solid rgba(218, 184, 96, 0.2);
+    border-radius: 8px;
+  }
+
+  .json-icon svg { width: 20px; height: 20px; }
+
+  .json-title {
+    font-family: var(--display); font-size: 16px; font-weight: 600;
+    letter-spacing: 2px; color: var(--gold); text-transform: uppercase;
+  }
+
+  .json-subtitle {
+    font-family: var(--body); font-size: 17px; color: var(--dim);
+    font-style: italic; margin-top: 2px;
+  }
+
+  .json-props { display: flex; gap: 20px; margin-left: auto; flex-wrap: wrap; }
+  .json-prop { font-family: var(--mono); font-size: 12px; color: var(--faint); }
+  .json-prop strong { color: var(--dim); font-weight: 500; }
+
+  .blocks-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .block-chip {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.03em;
+    padding: 5px 10px; border-radius: 4px;
+    background: var(--deep); color: var(--faint); border: 1px solid var(--border);
+  }
+
+  .block-chip.required {
+    color: var(--gold); border-color: rgba(218, 184, 96, 0.25);
+    background: rgba(218, 184, 96, 0.04);
+  }
+
+  /* ── Product surfaces ── */
+  .surfaces-row { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+
+  .surface {
+    border-radius: 10px; padding: 22px 24px; position: relative;
+    border: 1px dashed var(--border-light); background: var(--raise);
+  }
+
+  .surface-badge {
+    position: absolute; top: -10px; left: 18px;
+    font-family: var(--display); font-size: 9px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 3px 12px; border-radius: 4px;
+  }
+
+  .surface-ide .surface-badge { background: var(--blue-dim); color: var(--blue-light); border: 1px solid #1e3558; }
+  .surface-web .surface-badge { background: var(--purple-dim); color: var(--purple-light); border: 1px solid #302548; }
+  .surface-ide { border-color: #1e2a3a; }
+  .surface-web { border-color: #221838; }
+
+  .surface-title {
+    font-family: var(--display); font-size: 15px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;
+  }
+
+  .surface-ide .surface-title { color: var(--blue-light); }
+  .surface-web .surface-title { color: var(--purple-light); }
+
+  .surface-desc {
+    font-family: var(--body); font-size: 16px; color: var(--faint);
+    margin-top: 8px; line-height: 1.55;
+  }
+
+  .surface-embeds { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+  .embed-tag {
+    font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 4px;
+    background: var(--deep); color: var(--faint); border: 1px solid var(--border);
+  }
+
+  /* ── Consumers ── */
+  .consumers-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  .consumer {
+    border-radius: 10px; padding: 20px;
+    border: 1px solid var(--border); background: var(--raise);
+  }
+
+  .consumer-name {
+    font-family: var(--display); font-size: 13px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px;
+  }
+
+  .consumer-engines .consumer-name { color: var(--rose); }
+  .consumer-web .consumer-name { color: var(--amber-light); }
+  .consumer-ai .consumer-name { color: var(--purple); }
+  .consumer-api .consumer-name { color: var(--gold); }
+
+  .consumer-desc { font-family: var(--body); font-size: 15px; color: var(--faint); line-height: 1.5; }
+
+  .consumer-note {
+    font-family: var(--mono); font-size: 11px; color: var(--faint);
+    font-style: italic; margin-top: 8px;
+  }
+
+  .consumer-api code {
+    font-family: var(--mono); font-size: 12px; color: var(--faint);
+    display: block; margin-top: 8px; line-height: 1.9; letter-spacing: 0.3px;
+  }
+
+  /* ── Docs bar ── */
+  .docs-bar {
+    background: var(--deep); border: 1px solid var(--border);
+    border-radius: 10px; padding: 24px 28px; margin-top: 44px;
+  }
+
+  .docs-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .docs-row + .docs-row {
+    margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .docs-label {
+    font-family: var(--display); font-size: 11px; font-weight: 600;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--gold-dim);
+    width: 110px; flex-shrink: 0;
+  }
+
+  .doc-tag {
+    font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 4px;
+    background: var(--surface); color: var(--faint); border: 1px solid var(--border);
+  }
+
+  .doc-tag-wyrd {
+    background: var(--purple-dim); color: var(--purple-light);
+    border-color: #302548; font-weight: 500;
+  }
+
+  .docs-sep { width: 1px; height: 20px; background: var(--border-light); margin: 0 8px; }
+
+  .domain-tag {
+    font-family: var(--display); font-size: 13px; font-weight: 600;
+    letter-spacing: 0.5px; padding: 5px 16px; border-radius: 4px;
+    background: var(--surface); color: var(--gold); border: 1px solid var(--gold-dark);
+  }
+
+  .domain-desc { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-left: 6px; }
+
+  /* ── Responsive ── */
+  @media (max-width: 980px) {
+    .tools-row { grid-template-columns: 1fr; }
+    .consumers-row { grid-template-columns: 1fr 1fr; }
+    .json-top { flex-direction: column; align-items: flex-start; }
+    .json-props { margin-left: 0; }
+  }
+
+  @media (max-width: 640px) {
+    .authoring-row { grid-template-columns: 1fr; }
+    .surfaces-row { grid-template-columns: 1fr; }
+    .consumers-row { grid-template-columns: 1fr; }
+    .zone-body { flex-direction: column; }
+    .docs-label { width: auto; }
+  }
+</style>

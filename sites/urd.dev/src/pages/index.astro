@@ -8,6 +8,7 @@ import wyrdLogoLight from "../assets/logos/wyrd-logo-light.svg?raw";
 import DocumentExplorer from "../components/DocumentExplorer.svelte";
 import PeerReview from "../components/PeerReview.svelte";
 import ProjectLog from "../components/ProjectLog.svelte";
+import Architecture from "../components/Architecture.astro";
 ---
 
 <Base title="Urd · Define Worlds">
@@ -50,17 +51,23 @@ import ProjectLog from "../components/ProjectLog.svelte";
     </div>
   </main>
 
-  <section id="reviews" class="reviews-section">
-    <PeerReview client:visible />
-  </section>
+  <div class="content">
+    <section id="reviews">
+      <PeerReview client:visible />
+    </section>
 
-  <section id="documents" class="documents-section">
-    <DocumentExplorer client:visible />
-  </section>
+    <section id="documents">
+      <DocumentExplorer client:visible />
+    </section>
 
-  <section id="updates" class="updates-section">
-    <ProjectLog client:visible />
-  </section>
+    <section id="updates">
+      <ProjectLog client:visible />
+    </section>
+
+    <section id="architecture">
+      <Architecture />
+    </section>
+  </div>
 
   <script>
     const RUNES = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛝᛟᛞ";
@@ -306,25 +313,21 @@ import ProjectLog from "../components/ProjectLog.svelte";
     outline-offset: 2px;
   }
 
-  .reviews-section,
-  .documents-section,
-  .updates-section {
+  .content {
     position: relative;
     z-index: 1;
-    max-width: 980px;
+    max-width: 1160px;
     margin: 0 auto;
-    padding: 48px 32px;
+    padding: 0 32px 96px;
+  }
+
+  .content > section {
+    padding: 48px 0;
     border-top: 1px solid var(--border);
   }
 
-  .updates-section {
-    padding-bottom: 96px;
-  }
-
   @media (max-width: 520px) {
-    .reviews-section,
-    .documents-section,
-    .updates-section {
+    .content {
       padding-left: 18px;
       padding-right: 18px;
     }
