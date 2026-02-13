@@ -62,6 +62,9 @@ const colour = categoryColours[entry.data.category] ?? "#888888";
   format={entry.data.format}
   date={entry.data.date}
   status={entry.data.status}
+  slug={entry.data.slug}
+  tags={entry.data.tags ?? []}
+  details={entry.data.details ?? []}
   toc={toc}
   colour={colour}
 >

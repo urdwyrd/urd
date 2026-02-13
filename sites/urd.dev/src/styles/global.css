@@ -277,6 +277,24 @@ body {
   max-width: 720px;
 }
 
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  scroll-margin-top: 80px;
+  position: relative;
+}
+
+/* Heading anchor links */
+.prose h2[id]:hover::after,
+.prose h3[id]:hover::after {
+  content: " #";
+  color: var(--faint);
+  opacity: 0.4;
+  font-weight: 400;
+  font-size: 0.75em;
+}
+
 .prose h1 {
   font-family: var(--display);
   font-size: 14px;
@@ -295,9 +313,9 @@ body {
   color: var(--text);
   letter-spacing: -0.01em;
   line-height: 1.2;
-  margin-top: 48px;
+  margin-top: 56px;
   margin-bottom: 16px;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border);
 }
 
@@ -306,7 +324,7 @@ body {
   font-size: clamp(17px, 2.5vw, 20px);
   font-weight: 600;
   color: var(--text);
-  margin-top: 32px;
+  margin-top: 36px;
   margin-bottom: 12px;
 }
 
@@ -315,7 +333,7 @@ body {
   font-size: 16px;
   font-weight: 600;
   color: var(--dim);
-  margin-top: 24px;
+  margin-top: 28px;
   margin-bottom: 8px;
 }
 
@@ -376,11 +394,13 @@ body {
 }
 
 .prose blockquote {
-  border-left: 2px solid var(--gold-dim);
-  padding-left: 20px;
+  border-left: 3px solid var(--gold-dim);
+  padding: 12px 20px;
   margin: 1.5em 0;
   color: var(--faint);
   font-style: italic;
+  background: color-mix(in srgb, var(--gold-dim) 5%, transparent);
+  border-radius: 0 6px 6px 0;
 }
 
 .prose table {
@@ -388,6 +408,8 @@ body {
   border-collapse: collapse;
   margin: 1.5em 0;
   font-size: 16px;
+  overflow-x: auto;
+  display: block;
 }
 
 .prose th,

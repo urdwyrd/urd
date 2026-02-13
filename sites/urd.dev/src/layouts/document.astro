@@ -15,6 +15,9 @@ interface Props {
   format: string;
   date: string;
   status: string;
+  slug: string;
+  tags: string[];
+  details: string[];
   toc: TocEntry[];
   colour: string;
 }
@@ -25,18 +28,28 @@ const MONTHS: Record<string, string> = {
   "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec",
 };
 
-const { title, description, category, format, date, status, toc, colour } = Astro.props;
+const { title, description, category, format, date, status, slug, tags, details, toc, colour } = Astro.props;
 
 const [year, month] = date.split("-");
 const displayDate = `${MONTHS[month] ?? month} ${year}`;
+const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
 ---
 
 <Base title={`${title} · Urd`} description={description}>
   <Nav />
 
-  <div class="doc-page">
+  <!-- Reading progress bar -->
+  <div class="reading-progress" id="reading-progress" style={`--accent: ${colour}`}>
+    <div class="reading-progress-fill" id="reading-progress-fill"></div>
+  </div>
+
+  <div class="doc-page" style={`--accent: ${colour}`}>
+    <!-- TOC sidebar -->
     <aside class="doc-toc" aria-label="Table of contents">
       <div class="doc-toc-panel">
+        <a href="/#documents" class="doc-toc-back">
+          <span aria-hidden="true">←</span> Documents
+        </a>
         <p class="doc-toc-heading">Contents</p>
         <ol class="doc-toc-list">
           {toc.map((entry) => (
@@ -48,25 +61,89 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
       </div>
     </aside>
 
+    <!-- Main content -->
     <article class="doc-content">
+      <!-- Breadcrumb -->
+      <nav class="doc-breadcrumb" aria-label="Breadcrumb">
+        <a href="/#documents">Documents</a>
+        <span aria-hidden="true">→</span>
+        <span class="doc-breadcrumb-category">{category}</span>
+        <span aria-hidden="true">→</span>
+        <span class="doc-breadcrumb-current">{title}</span>
+      </nav>
+
+      <!-- Header -->
       <header class="doc-header">
+        <div class="doc-header-accent"></div>
         <div class="doc-header-meta">
-          <span class="doc-header-pill" style={`--pill-colour: ${colour}`}>{format}</span>
+          <span class="doc-header-pill">{format}</span>
+          <span class="doc-header-sep" aria-hidden="true">◆</span>
           <span class="doc-header-category">{category}</span>
+          <span class="doc-header-sep" aria-hidden="true">◆</span>
           <span class="doc-header-date">{displayDate}</span>
           <span class="doc-header-status">{status}</span>
         </div>
         <h1 class="doc-title">{title}</h1>
         <p class="doc-description">{description}</p>
+
+        {tags.length > 0 && (
+          <div class="doc-tags">
+            {tags.map((tag) => (
+              <span class="doc-tag">{tag}</span>
+            ))}
+          </div>
+        )}
+
+        {details.length > 0 && (
+          <div class="doc-details">
+            <p class="doc-details-label">Key points</p>
+            <ul class="doc-details-list">
+              {details.map((detail) => (
+                <li>{detail}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </header>
 
       <div class="prose">
         <slot />
       </div>
+
+      <!-- Footer -->
+      <footer class="doc-footer">
+        <div class="doc-footer-rule"></div>
+        <div class="doc-footer-actions">
+          <a href="/#documents" class="doc-footer-link">
+            <span aria-hidden="true">←</span> Back to Documents
+          </a>
+          <a href={githubHref} class="doc-footer-link" target="_blank" rel="noopener noreferrer">
+            View on GitHub <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+        <p class="doc-footer-meta">
+          {title} · {format} · {displayDate} · {status}
+        </p>
+      </footer>
     </article>
   </div>
 
   <script>
+    // Reading progress bar
+    const fill = document.getElementById('reading-progress-fill');
+    if (fill) {
+      const update = () => {
+        const scrollTop = window.scrollY;
+        const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+        fill.style.transform = `scaleX(${progress})`;
+      };
+      window.addEventListener('scroll', update, { passive: true });
+      update();
+    }
+
+    // TOC active highlight with scroll spy
+    const tocPanel = document.querySelector('.doc-toc-panel');
     const tocLinks = document.querySelectorAll('.doc-toc-link');
     const headings = document.querySelectorAll('.prose h2[id], .prose h3[id]');
 
@@ -77,43 +154,137 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
             if (entry.isIntersecting) {
               const id = entry.target.id;
               tocLinks.forEach((link) => {
-                link.classList.toggle(
-                  'active',
-                  link.getAttribute('href') === `#${id}`
-                );
+                const isActive = link.getAttribute('href') === `#${id}`;
+                link.classList.toggle('active', isActive);
+                // Auto-scroll only the TOC panel (not the page) to keep active item visible
+                if (isActive && tocPanel) {
+                  const linkEl = link as HTMLElement;
+                  const panelEl = tocPanel as HTMLElement;
+                  const panelRect = panelEl.getBoundingClientRect();
+                  const linkRect = linkEl.getBoundingClientRect();
+                  // Position of link relative to the panel's scroll container
+                  const linkRelTop = linkRect.top - panelRect.top + panelEl.scrollTop;
+                  const linkH = linkRect.height;
+                  const panelH = panelEl.clientHeight;
+                  const scrollTop = panelEl.scrollTop;
+                  // Safe zone: middle 60% of panel
+                  const safeTop = scrollTop + panelH * 0.2;
+                  const safeBottom = scrollTop + panelH * 0.8;
+                  if (linkRelTop < safeTop || linkRelTop + linkH > safeBottom) {
+                    panelEl.scrollTo({
+                      top: linkRelTop - panelH / 2 + linkH / 2,
+                      behavior: 'smooth',
+                    });
+                  }
+                }
               });
             }
           }
         },
-        { rootMargin: '0px 0px -80% 0px' }
+        { rootMargin: '-80px 0px -80% 0px' }
       );
 
       for (const heading of headings) {
         observer.observe(heading);
       }
     }
+
+    // Smooth scroll for TOC links
+    for (const link of tocLinks) {
+      link.addEventListener('click', (e) => {
+        const href = (link as HTMLAnchorElement).getAttribute('href');
+        if (!href) return;
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          history.pushState(null, '', href);
+        }
+      });
+    }
   </script>
 </Base>
 
 <style>
+  /* ── Reading progress bar ── */
+  .reading-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 20;
+    background: transparent;
+  }
+
+  .reading-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transform-origin: left;
+    transform: scaleX(0);
+    opacity: 0.8;
+    transition: transform 0.1s linear;
+  }
+
   /* ── Page Grid ── */
   .doc-page {
     max-width: 1160px;
     margin: 0 auto;
-    padding: 48px 32px;
+    padding: 0 32px 96px;
     display: grid;
     grid-template-columns: 240px 1fr;
     gap: 48px;
   }
 
+  /* ── Article content ── */
+  .doc-content {
+    max-width: 720px;
+    min-width: 0;
+  }
+
+  /* ── Breadcrumb ── */
+  .doc-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
+
+  .doc-breadcrumb a {
+    color: var(--faint);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .doc-breadcrumb a:hover {
+    color: var(--accent);
+  }
+
+  .doc-breadcrumb-category {
+    text-transform: capitalize;
+    color: var(--accent);
+  }
+
+  .doc-breadcrumb-current {
+    color: var(--dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+  }
+
   /* ── TOC Sidebar ── */
   .doc-toc-panel {
     position: sticky;
-    top: 24px;
+    top: 72px;
     background: var(--raise);
     border-radius: 8px;
     padding: 20px;
-    max-height: calc(100vh - 48px);
+    max-height: calc(100vh - 96px);
     overflow-y: auto;
     box-shadow: var(--toc-shadow);
     scrollbar-width: thin;
@@ -137,16 +308,32 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
     background: var(--faint);
   }
 
+  .doc-toc-back {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    text-decoration: none;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.15s ease;
+    letter-spacing: 0.02em;
+  }
+
+  .doc-toc-back:hover {
+    color: var(--accent);
+  }
+
   .doc-toc-heading {
     font-family: var(--display);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    color: var(--gold-dim);
+    color: var(--accent);
     margin-bottom: 14px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--border);
+    opacity: 0.7;
   }
 
   .doc-toc-list {
@@ -162,26 +349,26 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
     color: var(--faint);
     text-decoration: none;
     display: block;
-    padding: 4px 10px;
+    padding: 5px 10px;
     border-left: 2px solid transparent;
-    border-radius: 2px;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    border-radius: 0 2px 2px 0;
+    transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
     line-height: 1.4;
   }
 
-  .doc-toc-link:hover,
-  .doc-toc-link.active {
-    color: var(--gold);
-    border-left-color: var(--gold);
+  .doc-toc-link:hover {
+    color: var(--dim);
+    background: var(--deep);
   }
 
-  .depth-3 .doc-toc-link.active {
-    color: var(--gold-dim);
-    border-left-color: var(--gold-dim);
+  .doc-toc-link.active {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 6%, transparent);
   }
 
   .doc-toc-link:focus-visible {
-    outline: 2px solid var(--gold);
+    outline: 2px solid var(--accent);
     outline-offset: 1px;
     border-radius: 2px;
   }
@@ -189,15 +376,27 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
   .depth-3 .doc-toc-link {
     font-size: 11px;
     padding-left: 24px;
-    color: var(--faint);
-    opacity: 0.8;
+    opacity: 0.75;
+  }
+
+  .depth-3 .doc-toc-link.active {
+    opacity: 1;
   }
 
   /* ── Document Header ── */
   .doc-header {
-    margin-bottom: 40px;
+    margin-bottom: 48px;
     padding-bottom: 32px;
     border-bottom: 1px solid var(--border);
+  }
+
+  .doc-header-accent {
+    width: 48px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-bottom: 20px;
+    opacity: 0.8;
   }
 
   .doc-header-meta {
@@ -211,15 +410,20 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
   .doc-header-pill {
     font-family: var(--display);
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--pill-colour);
-    background: color-mix(in srgb, var(--pill-colour) 10%, transparent);
-    border: 1px solid color-mix(in srgb, var(--pill-colour) 20%, transparent);
-    border-radius: 4px;
-    padding: 2px 8px;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-radius: 20px;
+    padding: 4px 12px;
     line-height: 1.6;
+  }
+
+  .doc-header-sep {
+    font-size: 5px;
+    color: var(--border-light);
+    line-height: 1;
   }
 
   .doc-header-category {
@@ -231,49 +435,200 @@ const displayDate = `${MONTHS[month] ?? month} ${year}`;
     color: var(--faint);
   }
 
-  .doc-header-date,
-  .doc-header-status {
+  .doc-header-date {
     font-family: var(--mono);
     font-size: 12px;
     color: var(--faint);
     letter-spacing: 0.06em;
   }
 
+  .doc-header-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    margin-left: auto;
+    opacity: 0.7;
+  }
+
   .doc-title {
     font-family: var(--display);
-    font-size: clamp(26px, 4vw, 36px);
+    font-size: clamp(28px, 4vw, 40px);
     font-weight: 600;
     color: var(--text);
-    letter-spacing: -0.01em;
-    line-height: 1.2;
-    margin-bottom: 12px;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 14px;
   }
 
   .doc-description {
     font-family: var(--body);
-    font-size: 18px;
+    font-size: 19px;
     color: var(--dim);
     line-height: 1.6;
+  }
+
+  /* ── Tags ── */
+  .doc-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .doc-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    background: var(--deep);
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Key details ── */
+  .doc-details {
+    margin-top: 24px;
+    padding: 18px 20px;
+    background: color-mix(in srgb, var(--accent) 4%, var(--raise));
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .doc-details-label {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--accent);
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+
+  .doc-details-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .doc-details-list li {
+    font-family: var(--body);
+    font-size: 15px;
+    color: var(--dim);
+    line-height: 1.5;
+    padding-left: 16px;
+    position: relative;
+  }
+
+  .doc-details-list li::before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    opacity: 0.6;
+    font-size: 12px;
+  }
+
+  /* ── Document Footer ── */
+  .doc-footer {
+    margin-top: 64px;
+    padding-top: 32px;
+  }
+
+  .doc-footer-rule {
+    width: 48px;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    opacity: 0.5;
+  }
+
+  .doc-footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .doc-footer-link {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--faint);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .doc-footer-link:hover {
+    color: var(--accent);
+    border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  .doc-footer-link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .doc-footer-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    opacity: 0.5;
+    letter-spacing: 0.04em;
   }
 
   /* ── Responsive ── */
   @media (max-width: 980px) {
     .doc-page {
       grid-template-columns: 1fr;
-      padding: 32px 18px;
-      gap: 32px;
+      padding: 0 18px 64px;
+      gap: 0;
+    }
+
+    .doc-toc {
+      order: -1;
     }
 
     .doc-toc-panel {
       position: static;
       max-height: none;
+      margin-bottom: 32px;
+    }
+
+    .doc-breadcrumb-current {
+      max-width: 200px;
     }
   }
 
-  @media (max-width: 520px) {
+  @media (max-width: 640px) {
     .doc-page {
-      padding: 24px 16px;
-      gap: 24px;
+      padding: 0 16px 48px;
+    }
+
+    .doc-breadcrumb {
+      padding: 16px 0;
+    }
+
+    .doc-title {
+      font-size: clamp(24px, 6vw, 32px);
+    }
+
+    .doc-header-status {
+      margin-left: 0;
+    }
+
+    .doc-footer-actions {
+      flex-direction: column;
+      align-items: flex-start;
     }
   }
 </style>
