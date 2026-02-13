@@ -1,3 +1,23 @@
+---
+title: "Developer Pain Points Report"
+slug: "pain-points-report"
+description: "Mined Reddit, Hacker News, GDC talks, developer blogs, and postmortems. Found seven pain clusters. Every team builds the same glue code. Writers edit dialogue in spreadsheets. Testing is manual and terrifying."
+category: "research"
+format: "Forum-Sourced Research"
+date: "2026-01-28"
+status: "v1.0 complete"
+order: 2
+tags:
+  - research
+  - pain-points
+  - developer-experience
+  - forums
+details:
+  - "The integration tax: 30–50% of effort on glue code"
+  - "Writer-hostile workflows forcing non-technical users into code"
+  - "Testing is manual, fragile, and terrifying"
+  - "No standard interface between narrative data and game state"
+---
 
 > **Document status: INFORMATIVE — RESEARCH**
 > Forum-sourced research documenting developer pain points in narrative game tooling. Provides the evidence base for the product vision. Not an implementable specification.

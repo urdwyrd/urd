@@ -11,12 +11,13 @@ Urd is a declarative schema system for interactive worlds. Writers author in Sch
 ```
 briefs/           AI task briefs: backlog/ → active/ → done/
 content/          Site content (markdown + frontmatter, Astro collections)
+  documents/        Design docs with frontmatter (Astro collection source)
   reviews/          AI peer reviews of the specification
   updates/          Project log / changelog entries
 design/           Design system — read before any visual work
   themes/gloaming/  Dark theme (current default)
   themes/parchment/ Light theme (future)
-docs/             Design documents (markdown, being populated)
+docs/             Design documents (clean markdown, no frontmatter — for GitHub/download)
 packages/         Shared packages (future — compiler, runtime, etc.)
 sites/urd.dev/    Astro 5 static site — development journal
 ```
@@ -63,7 +64,7 @@ The design brief is the specification. It is the single source of truth.
 - **No secrets in code** — tokens and keys live in GitHub Actions secrets or `.dev.vars` (gitignored). A gitleaks pre-commit hook blocks commits containing secrets
 - **Commit frequently** — after each logical unit of work, with the project building cleanly at each point
 - **Minimise client JS** — zero-JS pages where possible, vanilla JS preferred over framework code for simple interactions
-- **Content architecture**: `docs/` holds design documents (Astro `designDocs` collection); `content/` holds site content with each subdirectory as its own Astro collection (e.g. `content/reviews/` → `reviews` collection). Each collection has a JSON endpoint under `src/pages/` and a Svelte island consumer
+- **Content architecture**: `content/` holds site content with each subdirectory as its own Astro collection (e.g. `content/documents/` → `designDocs`, `content/reviews/` → `reviews`). Each collection has a JSON endpoint under `src/pages/` and a Svelte island consumer. `docs/` contains the same design documents without frontmatter for clean GitHub viewing and download. When a document is updated, both `docs/` and `content/documents/` must be kept in sync
 
 ## Known gotchas
 

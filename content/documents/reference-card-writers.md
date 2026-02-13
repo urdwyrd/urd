@@ -1,3 +1,22 @@
+---
+title: "Urd Schema Markdown — Writer Reference Card"
+slug: "reference-card-writers"
+description: "Quick reference for writers authoring .urd.md files. Covers the seven-symbol vocabulary, file structure, dialogue mechanics, nesting rules, and common patterns."
+category: "authoring"
+format: "Reference Card"
+date: "2026-02-12"
+status: "v1.0"
+order: 1
+tags:
+  - reference
+  - writers
+  - schema-markdown
+  - quick-start
+details:
+  - "Seven-symbol vocabulary at a glance"
+  - "File structure, dialogue mechanics, and nesting rules"
+  - "Common patterns and quick-start examples"
+---
 
 > **Document status: INFORMATIVE**
 > Quick reference card for writers. All rules are derived from the normative Schema Markdown Syntax Specification and Schema Specification.

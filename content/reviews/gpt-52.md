@@ -1,5 +1,5 @@
 ---
-model: GPT-5.2
+model: GPT-5.2 (Thinking)
 company: OpenAI
 date: "2026-02"
 rating: 5

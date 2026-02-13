@@ -1,3 +1,24 @@
+---
+title: "Architecture & Technical Design"
+slug: "architecture"
+description: "Four components connected by one contract. The compiler (5-phase pipeline). The Wyrd reference runtime (immutable state, event sourcing, deterministic rules). The testing framework (Monte Carlo, reachability, coverage). Developer tooling (LSP server, VS Code extension)."
+category: "architecture"
+format: "System Blueprint"
+date: "2026-02-12"
+status: "v1.0 complete"
+order: 1
+tags:
+  - architecture
+  - compiler
+  - runtime
+  - testing
+  - tooling
+details:
+  - "Four-component pipeline: compiler, runtime, testing, tooling"
+  - "Five-phase compiler: parse → resolve → link → validate → emit"
+  - "Immutable state with event sourcing in the runtime"
+  - "Build order and dependency graph for implementation"
+---
 
 > **Document status: NORMATIVE**
 > Defines the system architecture: component boundaries, interfaces, data flow, and build order. This is the authoritative blueprint for engineering implementation.

@@ -1,3 +1,24 @@
+---
+title: "Urd + Wyrd Product Vision v2.0"
+slug: "product-vision"
+description: "The strategic vision for Urd and Wyrd — market analysis, the fragmentation tax in narrative game development, product architecture, revenue model, and development roadmap."
+category: "strategy"
+format: "Product Strategy"
+date: "2026-02-12"
+status: "v2.0 complete"
+order: 1
+tags:
+  - vision
+  - strategy
+  - product
+  - roadmap
+  - market
+details:
+  - "Seven pain points from developer forums and postmortems"
+  - "Four-component pipeline: compiler, runtime, testing, tooling"
+  - "Open core revenue model with hosted services"
+  - "AI-native design philosophy throughout"
+---
 
 > **Document status: INFORMATIVE**
 > Product strategy, market positioning, and roadmap. Provides context for the normative specifications but does not itself define implementable contracts.

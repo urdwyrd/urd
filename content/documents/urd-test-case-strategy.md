@@ -1,3 +1,24 @@
+---
+title: "Test Case Strategy"
+slug: "urd-test-case-strategy"
+description: "Validating the schema through executable proof. Four progressive test cases — Tavern Scene (dialogue systems), Monty Hall (emergent probability), Two-Room Key Puzzle (spatial + inventory), and Interrogation (dialogue stress test)."
+category: "validation"
+format: "Validation Plan"
+date: "2026-02-12"
+status: "v1.0 complete"
+order: 1
+tags:
+  - testing
+  - validation
+  - monte-carlo
+  - test-cases
+  - proof
+details:
+  - "Three testing layers: static analysis, playthrough simulation, statistical validation"
+  - "Monty Hall: emergent 2/3 switching advantage from structure alone"
+  - "Two-Room Key Puzzle: containment as universal spatial primitive"
+  - "Tests run against compiled JSON, not source — validates the real artefact"
+---
 
 > **Document status: INFORMATIVE**
 > Defines the test case strategy for validating the schema and runtime against executable proof. Test definitions reference the normative specifications.

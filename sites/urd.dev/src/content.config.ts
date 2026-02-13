@@ -22,7 +22,7 @@ const reviews = defineCollection({
 });
 
 const designDocs = defineCollection({
-  loader: glob({ pattern: '**/*.md', base: '../../docs' }),
+  loader: glob({ pattern: '**/*.md', base: '../../content/documents' }),
   schema: z.object({
     title: z.string(),
     slug: z.string(),

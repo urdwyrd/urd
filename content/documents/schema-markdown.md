@@ -1,3 +1,24 @@
+---
+title: "Schema Markdown Syntax Specification"
+slug: "schema-markdown"
+description: "The writer-facing authoring format. Feels as clean as ink for pure dialogue but compiles directly to the world schema. Seven symbols: @ for entity references, ? for conditions, > for effects, * and + for choice types, → for section jumps, == for section headers."
+category: "authoring"
+format: "Syntax Specification"
+date: "2026-02-12"
+status: "v0.1 complete"
+order: 1
+tags:
+  - syntax
+  - authoring
+  - writers
+  - compiler
+  - schema-markdown
+details:
+  - "Seven-symbol vocabulary for narrative authoring"
+  - "Separation of writer, designer, and engineer concerns"
+  - "Indentation-scoped nesting with explicit jump targets"
+  - "Validated against four test cases including complex interrogation"
+---
 
 > **Document status: NORMATIVE**
 > Defines the Schema Markdown writer-facing syntax (`.urd.md` files) and its compilation rules to the Urd World Schema JSON. This is the authoritative reference for compiler implementers and writer tooling.

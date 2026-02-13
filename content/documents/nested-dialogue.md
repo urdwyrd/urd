@@ -1,3 +1,23 @@
+---
+title: "Nested Dialogue Architecture"
+slug: "nested-dialogue"
+description: "Design exploration for nested dialogue in Schema Markdown. Analyses five structural patterns (branch, hub-and-spoke, conditional, loop, fallthrough) and how ink, Yarn Spinner, and Ren'Py solve them."
+category: "contract"
+format: "Design Document"
+date: "2026-02-12"
+status: "v1.0 complete"
+order: 2
+tags:
+  - dialogue
+  - nesting
+  - syntax
+  - design-exploration
+details:
+  - "Five structural patterns every dialogue system must handle"
+  - "Comparison with ink, Yarn Spinner, and Ren'Py approaches"
+  - "Indentation-based nesting with explicit hub/spoke via arrows"
+  - "Stress-tested against a complex interrogation scene"
+---
 
 > **Document status: INFORMATIVE — DESIGN EXPLORATION**
 > Documents the design rationale and alternatives considered for the nested dialogue model. The decisions reached here are codified in the Schema Markdown Syntax Specification; this document provides the reasoning behind them.

@@ -1,3 +1,24 @@
+---
+title: "Urd Schema — Engine Developer Reference Card"
+slug: "reference-card-engine-developers"
+description: "Quick reference for developers consuming .urd.json files. Covers the eight schema blocks, property types, containment model, visibility, conditions, effects, dialogue structure, and runtime evaluation order."
+category: "runtime"
+format: "Reference Card"
+date: "2026-02-12"
+status: "v1.0"
+order: 2
+tags:
+  - reference
+  - engineers
+  - schema
+  - runtime
+  - integration
+  - json
+details:
+  - "Eight schema blocks and their JSON structure"
+  - "Property types, containment model, and visibility rules"
+  - "Condition expressions, effects, and runtime evaluation order"
+---
 
 > **Document status: INFORMATIVE**
 > Quick reference card for engine integration developers. All rules are derived from the normative Schema Specification and Wyrd Reference Runtime specification.

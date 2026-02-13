@@ -1,3 +1,24 @@
+---
+title: "Landscape Analysis & Gap Assessment"
+slug: "world-framework-research"
+description: "Surveyed 12+ frameworks across interactive fiction engines, MUD systems, professional narrative tools, and game engines. Identified seven critical gaps — no standard world format, narrative and simulation data divorced, no graduated complexity."
+category: "research"
+format: "Research Report"
+date: "2026-01-28"
+status: "v1.0 complete"
+order: 1
+tags:
+  - research
+  - landscape
+  - competition
+  - frameworks
+  - market
+details:
+  - "Evennia, Ranvier, ink, Yarn Spinner, articy:draft, Arcweave, Twine deep-dives"
+  - "Layered world schema proposal (Layer 0–3)"
+  - "AI integration architecture analysis"
+  - "Revenue model and competitive positioning"
+---
 
 > **Document status: INFORMATIVE — RESEARCH**
 > Landscape analysis and gap assessment of existing interactive world frameworks. Provides competitive context for the product vision. Not an implementable specification.

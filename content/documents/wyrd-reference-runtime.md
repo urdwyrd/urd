@@ -1,3 +1,24 @@
+---
+title: "Wyrd Reference Runtime"
+slug: "wyrd-reference-runtime"
+description: "The browser-native engine for executing Urd worlds. Loads compiled JSON, executes the world model, and presents interactive text and choice interfaces. Zero install, zero config."
+category: "runtime"
+format: "Runtime Specification"
+date: "2026-02-12"
+status: "v0.1 complete"
+order: 1
+tags:
+  - runtime
+  - wyrd
+  - browser
+  - execution
+  - api
+details:
+  - "Browser-native execution — zero install, zero config"
+  - "Immutable world state with copy-on-write snapshots"
+  - "Event sourcing for undo, replay, and deterministic testing"
+  - "Embeddable in the Urd IDE as a web view"
+---
 
 > **Document status: NORMATIVE**
 > Defines the Wyrd reference runtime architecture, API surface, deployment contexts, and build passes. This is the authoritative specification for runtime implementers.

@@ -1,3 +1,22 @@
+---
+title: "Urd — Future Proposals"
+slug: "future-proposals"
+description: "Design work for capabilities planned beyond v1. These proposals are not part of the v1 specification and MUST NOT be implemented by v1 runtimes. They are preserved here to inform forward-compatible architectural decisions."
+category: "strategy"
+format: "Proposal Collection"
+date: "2026-02-12"
+status: "draft"
+order: 99
+tags:
+  - future
+  - proposals
+  - lambda
+  - extensions
+details:
+  - "Post-v1 design work — not part of the v1 specification"
+  - "Lambda functions, dynamic entity creation, meta-programming"
+  - "Forward-compatible architectural guidance for v1 implementation"
+---
 
 > **Document status: INFORMATIVE — NOT IN V1**
 > Nothing in this document is part of the v1 specification. v1 runtimes MUST NOT implement any feature described here. v1 worlds MUST NOT use any construct described here. This document preserves design work for future schema versions and informs forward-compatible architectural decisions in the v1 implementation.

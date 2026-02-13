@@ -1,3 +1,25 @@
+---
+title: "Urd World Schema Specification v0.1"
+slug: "schema-spec"
+description: "The formal data contract. Defines entities, typed properties, containment hierarchies, visibility layers, conditional expressions, effects, behavioural rules, dialogue sections, and sequence phases."
+category: "contract"
+format: "Technical Specification"
+date: "2026-02-12"
+status: "v0.1 complete"
+order: 1
+tags:
+  - schema
+  - specification
+  - entities
+  - containment
+  - visibility
+  - dialogue
+details:
+  - "Entity-property-behaviour model with hidden/revealed state"
+  - "Containment as the universal spatial primitive"
+  - "Condition expressions and effect grammar"
+  - "Rule system: trigger → condition → select → effect"
+---
 
 > **Document status: NORMATIVE**
 > Defines the Urd World Schema JSON structure. All compiled `.urd.json` output must conform to this specification. This is the authoritative contract between the compiler, runtime, and testing framework.
