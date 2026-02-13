@@ -8,6 +8,11 @@ interface TocEntry {
   id: string;
 }
 
+interface TocSection {
+  entry: TocEntry;
+  children: TocEntry[];
+}
+
 interface Props {
   title: string;
   description: string;
@@ -28,11 +33,29 @@ const MONTHS: Record<string, string> = {
   "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec",
 };
 
+function groupToc(flat: TocEntry[]): TocSection[] {
+  const sections: TocSection[] = [];
+  let current: TocSection | null = null;
+  for (const entry of flat) {
+    if (entry.depth === 2) {
+      current = { entry, children: [] };
+      sections.push(current);
+    } else if (entry.depth === 3 && current) {
+      current.children.push(entry);
+    } else if (entry.depth === 3) {
+      sections.push({ entry, children: [] });
+    }
+  }
+  return sections;
+}
+
 const { title, description, category, format, date, status, slug, tags, details, toc, colour } = Astro.props;
 
 const [year, month] = date.split("-");
 const displayDate = `${MONTHS[month] ?? month} ${year}`;
 const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
+const tocTree = groupToc(toc);
+const hasCollapsible = tocTree.some(s => s.children.length > 0);
 ---
 
 <Base title={`${title} · Urd`} description={description}>
@@ -50,11 +73,46 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
         <a href="/#documents" class="doc-toc-back">
           <span aria-hidden="true">←</span> Documents
         </a>
-        <p class="doc-toc-heading">Contents</p>
-        <ol class="doc-toc-list">
-          {toc.map((entry) => (
-            <li class:list={[`depth-${entry.depth}`]}>
-              <a href={`#${entry.id}`} class="doc-toc-link">{entry.text}</a>
+        <div class="doc-toc-header">
+          <p class="doc-toc-heading">Contents</p>
+          {hasCollapsible && (
+            <div class="toc-mode-toggle" id="toc-mode-toggle" role="radiogroup" aria-label="TOC mode">
+              <button type="button" class="toc-mode-opt active" data-mode="smart">Smart</button>
+              <button type="button" class="toc-mode-opt" data-mode="all">All</button>
+            </div>
+          )}
+        </div>
+        <ol class="doc-toc-list" role="tree">
+          {tocTree.map((section) => (
+            <li
+              class:list={['toc-section', { 'has-children': section.children.length > 0 }]}
+              role="treeitem"
+              aria-expanded={section.children.length > 0 ? "false" : undefined}
+              data-section-id={section.entry.id}
+            >
+              <div class="toc-section-row">
+                {section.children.length > 0 && (
+                  <button
+                    type="button"
+                    class="toc-toggle"
+                    aria-label={`Expand ${section.entry.text}`}
+                  >
+                    <span class="toc-toggle-icon" aria-hidden="true">▸</span>
+                  </button>
+                )}
+                <a href={`#${section.entry.id}`} class="doc-toc-link">{section.entry.text}</a>
+              </div>
+              {section.children.length > 0 && (
+                <div class="toc-children-wrap">
+                  <ol class="toc-children" role="group">
+                    {section.children.map((child) => (
+                      <li class="toc-child" role="treeitem">
+                        <a href={`#${child.id}`} class="doc-toc-link">{child.text}</a>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </li>
           ))}
         </ol>
@@ -129,7 +187,7 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
   </div>
 
   <script>
-    // Reading progress bar
+    // ── Reading progress bar ──
     const fill = document.getElementById('reading-progress-fill');
     if (fill) {
       const update = () => {
@@ -142,42 +200,127 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
       update();
     }
 
-    // TOC active highlight with scroll spy
-    const tocPanel = document.querySelector('.doc-toc-panel');
+    // ── TOC tree: expand / collapse helpers ──
+    const tocPanel = document.querySelector('.doc-toc-panel') as HTMLElement | null;
     const tocLinks = document.querySelectorAll('.doc-toc-link');
     const headings = document.querySelectorAll('.prose h2[id], .prose h3[id]');
+    const sections = document.querySelectorAll('.toc-section.has-children');
+    const modeToggle = document.getElementById('toc-mode-toggle');
 
+    let tocMode: 'smart' | 'all' = 'smart';
+
+    function expandSection(el: HTMLElement) {
+      el.classList.add('expanded');
+      el.setAttribute('aria-expanded', 'true');
+    }
+
+    function collapseSection(el: HTMLElement) {
+      el.classList.remove('expanded');
+      el.setAttribute('aria-expanded', 'false');
+    }
+
+    function expandAll() {
+      for (const s of sections) expandSection(s as HTMLElement);
+    }
+
+    function collapseAll() {
+      for (const s of sections) collapseSection(s as HTMLElement);
+    }
+
+    // Find which toc-section owns a heading id (works for both H2 and H3)
+    function findOwningSection(headingId: string): HTMLElement | null {
+      // Direct match (the heading is an H2 that is a section entry)
+      const direct = document.querySelector(`.toc-section[data-section-id="${headingId}"]`);
+      if (direct) return direct as HTMLElement;
+      // It's an H3 — find its link, walk up to the parent section
+      const childLink = document.querySelector(`.toc-child a[href="#${headingId}"]`);
+      if (childLink) {
+        const parent = childLink.closest('.toc-section');
+        if (parent) return parent as HTMLElement;
+      }
+      return null;
+    }
+
+    function applySmartExpansion(headingId: string) {
+      if (tocMode !== 'smart') return;
+      const active = findOwningSection(headingId);
+      for (const s of sections) {
+        const el = s as HTMLElement;
+        if (el === active) expandSection(el);
+        else collapseSection(el);
+      }
+    }
+
+    // ── Mode toggle ──
+    if (modeToggle) {
+      const opts = modeToggle.querySelectorAll('.toc-mode-opt');
+      for (const opt of opts) {
+        opt.addEventListener('click', () => {
+          const mode = (opt as HTMLElement).dataset.mode as 'smart' | 'all';
+          if (mode === tocMode) return;
+          tocMode = mode;
+          opts.forEach(o => o.classList.toggle('active', o === opt));
+          if (mode === 'all') {
+            expandAll();
+          } else {
+            collapseAll();
+            const activeLink = document.querySelector('.doc-toc-link.active');
+            if (activeLink) {
+              const href = activeLink.getAttribute('href');
+              if (href) applySmartExpansion(href.slice(1));
+            }
+          }
+        });
+      }
+    }
+
+    // ── Manual toggle buttons ──
+    for (const s of sections) {
+      const btn = s.querySelector('.toc-toggle');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const el = s as HTMLElement;
+          if (el.classList.contains('expanded')) collapseSection(el);
+          else expandSection(el);
+        });
+      }
+    }
+
+    // ── Scroll spy with smart expansion ──
     if (tocLinks.length > 0 && headings.length > 0) {
       const observer = new IntersectionObserver(
         (entries) => {
           for (const entry of entries) {
             if (entry.isIntersecting) {
               const id = entry.target.id;
+
+              // Highlight active link
               tocLinks.forEach((link) => {
                 const isActive = link.getAttribute('href') === `#${id}`;
                 link.classList.toggle('active', isActive);
-                // Auto-scroll only the TOC panel (not the page) to keep active item visible
+
+                // Auto-scroll TOC panel to keep active item visible
                 if (isActive && tocPanel) {
                   const linkEl = link as HTMLElement;
-                  const panelEl = tocPanel as HTMLElement;
-                  const panelRect = panelEl.getBoundingClientRect();
+                  const panelRect = tocPanel.getBoundingClientRect();
                   const linkRect = linkEl.getBoundingClientRect();
-                  // Position of link relative to the panel's scroll container
-                  const linkRelTop = linkRect.top - panelRect.top + panelEl.scrollTop;
+                  const linkRelTop = linkRect.top - panelRect.top + tocPanel.scrollTop;
                   const linkH = linkRect.height;
-                  const panelH = panelEl.clientHeight;
-                  const scrollTop = panelEl.scrollTop;
-                  // Safe zone: middle 60% of panel
+                  const panelH = tocPanel.clientHeight;
+                  const scrollTop = tocPanel.scrollTop;
                   const safeTop = scrollTop + panelH * 0.2;
                   const safeBottom = scrollTop + panelH * 0.8;
                   if (linkRelTop < safeTop || linkRelTop + linkH > safeBottom) {
-                    panelEl.scrollTo({
+                    tocPanel.scrollTo({
                       top: linkRelTop - panelH / 2 + linkH / 2,
                       behavior: 'smooth',
                     });
                   }
                 }
               });
+
+              // Smart expand/collapse
+              applySmartExpansion(id);
             }
           }
         },
@@ -189,7 +332,7 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
       }
     }
 
-    // Smooth scroll for TOC links
+    // ── Smooth scroll for TOC links ──
     for (const link of tocLinks) {
       link.addEventListener('click', (e) => {
         const href = (link as HTMLAnchorElement).getAttribute('href');
@@ -238,7 +381,6 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
 
   /* ── Article content ── */
   .doc-content {
-    max-width: 720px;
     min-width: 0;
   }
 
@@ -287,7 +429,12 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
     max-height: calc(100vh - 96px);
     overflow-y: auto;
     box-shadow: var(--toc-shadow);
+    scrollbar-gutter: stable;
     scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+  }
+
+  .doc-toc-panel:hover {
     scrollbar-color: var(--border-light) transparent;
   }
 
@@ -300,8 +447,13 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
   }
 
   .doc-toc-panel::-webkit-scrollbar-thumb {
-    background: var(--border-light);
+    background: transparent;
     border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+
+  .doc-toc-panel:hover::-webkit-scrollbar-thumb {
+    background: var(--border-light);
   }
 
   .doc-toc-panel::-webkit-scrollbar-thumb:hover {
@@ -325,6 +477,13 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
     color: var(--accent);
   }
 
+  .doc-toc-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
   .doc-toc-heading {
     font-family: var(--display);
     font-size: 11px;
@@ -332,8 +491,44 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--accent);
-    margin-bottom: 14px;
     opacity: 0.7;
+  }
+
+  .toc-mode-toggle {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .toc-mode-opt {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--faint);
+    background: transparent;
+    border: none;
+    padding: 2px 8px;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+    line-height: 1.6;
+  }
+
+  .toc-mode-opt:hover {
+    color: var(--dim);
+  }
+
+  .toc-mode-opt.active {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+  }
+
+  .toc-mode-opt:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+    border-radius: 2px;
   }
 
   .doc-toc-list {
@@ -343,6 +538,48 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
     gap: 2px;
   }
 
+  /* ── Section row (toggle + link) ── */
+  .toc-section-row {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  .toc-toggle {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 27px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: var(--faint);
+    transition: color 0.15s ease;
+  }
+
+  .toc-toggle:hover {
+    color: var(--accent);
+  }
+
+  .toc-toggle-icon {
+    font-family: var(--mono);
+    font-size: 9px;
+    display: inline-block;
+    transition: transform 0.15s ease;
+  }
+
+  .toc-section.expanded .toc-toggle-icon {
+    transform: rotate(90deg);
+  }
+
+  /* Align H2s without toggles with those that have toggles */
+  .toc-section:not(.has-children) .toc-section-row {
+    padding-left: 20px;
+  }
+
+  /* ── TOC links ── */
   .doc-toc-link {
     font-family: var(--mono);
     font-size: 12px;
@@ -373,13 +610,32 @@ const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
     border-radius: 2px;
   }
 
-  .depth-3 .doc-toc-link {
+  /* ── Collapsible children ── */
+  .toc-children-wrap {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.2s ease;
+  }
+
+  .toc-children-wrap > .toc-children {
+    overflow: hidden;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .toc-section.expanded .toc-children-wrap {
+    grid-template-rows: 1fr;
+  }
+
+  .toc-child .doc-toc-link {
     font-size: 11px;
-    padding-left: 24px;
+    padding-left: 34px;
     opacity: 0.75;
   }
 
-  .depth-3 .doc-toc-link.active {
+  .toc-child .doc-toc-link.active {
     opacity: 1;
   }
 
