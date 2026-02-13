@@ -1,7 +1,29 @@
 # Brief: ProjectLog Island Component
 
+## Execution Record
+
+> **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
+
+**Date completed:** 2026-02-13
+**Status:** Complete
+
+### What was done
+
+- Created `content/updates/` directory with 3 initial update markdown files covering existing project milestones (specs locked, homepage live, Cloudflare deployment).
+- Registered `updates` collection in `content.config.ts` alongside `designDocs` and `reviews`, with Zod schema for title and date.
+- Created `updates.json.ts` endpoint sorted by date descending.
+- Built `ProjectLog.svelte` island: single-column timeline with mono date column (80px, right-aligned), display-font titles, body-font descriptions. Responsive stacking at 640px.
+- Added section to homepage below DocumentExplorer with matching wrapper constraints.
+- Updated `CLAUDE.md` with `updates/` in repo layout and ProjectLog in island list.
+
+### What changed from the brief
+
+- Tag functionality (tag field, colour mapping, tag pills) was removed at user request — the component is simpler than originally specified.
+- Launched with 3 entries instead of 5 (user trimmed the initial set).
+
+---
+
 **Created:** 2026-02-13
-**Status:** Done
 
 ## Objective
 

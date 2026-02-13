@@ -1,7 +1,32 @@
 # Brief: PeerReview Island Component
 
+## Execution Record
+
+> **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
+
+**Date completed:** 2026-02-13
+**Status:** Complete
+
+### What was done
+
+- Created `content/reviews/` directory with 4 review markdown files (claude-opus, gemini3, gpt-52, deepseek-r1, grok) — each with frontmatter for model, company, date, rating, initial, and colour.
+- Registered `reviews` collection in `content.config.ts` alongside `designDocs`, with Zod schema validation.
+- Created `reviews.json.ts` endpoint following the same pattern as `documents.json.ts`.
+- Built `PeerReview.svelte` island: 2-column card grid with star ratings (gold filled / dim empty), coloured avatar circles, left-border accent per review colour, italic quotes in Source Serif 4.
+- Added CTA line below cards: "Don't take their word for it — feed the specs to your favourite model and see what it thinks."
+- Unified section width constraints in `index.astro` — both PeerReview and DocumentExplorer share `max-width: 980px` wrapper.
+- Aligned heading styles (label, title, subtitle) to match DocumentExplorer.
+- Updated `CLAUDE.md` with `content/` directory, content architecture convention, and Svelte 5 island list.
+
+### What changed from the brief
+
+- Added a `grok.md` review (5th review, not in original 4).
+- Review content was updated by the user to reflect newer model versions (GPT-5.2, Gemini 3, DeepSeek-V3.2).
+- Width constraint moved from component internals to section wrappers in `index.astro`.
+
+---
+
 **Created:** 2026-02-13
-**Status:** Done
 
 ## Objective
 
