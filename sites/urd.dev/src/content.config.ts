@@ -40,4 +40,14 @@ const designDocs = defineCollection({
   }),
 });
 
-export const collections = { designDocs, reviews, updates };
+const timeline = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: '../../content/timeline' }),
+  schema: z.object({
+    title: z.string(),
+    status: z.enum(['complete', 'active', 'next']),
+    subtitle: z.string(),
+    order: z.number(),
+  }),
+});
+
+export const collections = { designDocs, reviews, updates, timeline };

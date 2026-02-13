@@ -1,6 +1,7 @@
 ---
 import Base from "./base.astro";
 import Nav from "../components/Nav.astro";
+import RuneCanvas from "../components/RuneCanvas.astro";
 
 interface TocEntry {
   depth: number;
@@ -60,6 +61,7 @@ const hasCollapsible = tocTree.some(s => s.children.length > 0);
 
 <Base title={`${title} · Urd`} description={description}>
   <Nav />
+  <RuneCanvas />
 
   <!-- Reading progress bar -->
   <div class="reading-progress" id="reading-progress" style={`--accent: ${colour}`}>

@@ -9,11 +9,13 @@ import DocumentExplorer from "../components/DocumentExplorer.svelte";
 import PeerReview from "../components/PeerReview.svelte";
 import ProjectLog from "../components/ProjectLog.svelte";
 import Architecture from "../components/Architecture.astro";
+import ProjectTimeline from "../components/ProjectTimeline.svelte";
+import RuneCanvas from "../components/RuneCanvas.astro";
 ---
 
 <Base title="Urd · Define Worlds">
   <Nav />
-  <canvas id="rune-canvas" aria-hidden="true"></canvas>
+  <RuneCanvas />
 
   <main class="hero">
     <div class="hero-content">
@@ -56,6 +58,10 @@ import Architecture from "../components/Architecture.astro";
       <PeerReview client:visible />
     </section>
 
+    <section id="timeline">
+      <ProjectTimeline client:visible />
+    </section>
+
     <section id="documents">
       <DocumentExplorer client:visible />
     </section>
@@ -68,138 +74,9 @@ import Architecture from "../components/Architecture.astro";
       <Architecture />
     </section>
   </div>
-
-  <script>
-    const RUNES = "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛝᛟᛞ";
-    const RUNE_COUNT = 25;
-
-    function getThemeValues() {
-      const style = getComputedStyle(document.documentElement);
-      return {
-        colour: style.getPropertyValue('--rune-colour').trim() || '218, 184, 96',
-        maxOpacity: parseFloat(style.getPropertyValue('--rune-max-opacity')) || 0.05,
-      };
-    }
-
-    interface Rune {
-      char: string;
-      x: number;
-      y: number;
-      size: number;
-      speed: number;
-      phase: number;
-      breathSpeed: number;
-    }
-
-    function createRune(canvasHeight: number, canvasWidth: number): Rune {
-      return {
-        char: RUNES[Math.floor(Math.random() * RUNES.length)],
-        x: Math.random() * canvasWidth,
-        y: Math.random() * canvasHeight,
-        size: 14 + Math.random() * 18,
-        speed: 0.15 + Math.random() * 0.35,
-        phase: Math.random() * Math.PI * 2,
-        breathSpeed: 0.3 + Math.random() * 0.4,
-      };
-    }
-
-    function initRuneCanvas(): void {
-      const canvas = document.getElementById("rune-canvas") as HTMLCanvasElement | null;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      const prefersReducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      ).matches;
-
-      let width = window.innerWidth;
-      let height = window.innerHeight;
-      let theme = getThemeValues();
-
-      function resize(): void {
-        width = window.innerWidth;
-        height = window.innerHeight;
-        canvas!.width = width;
-        canvas!.height = height;
-      }
-
-      resize();
-      window.addEventListener("resize", resize);
-
-      // Re-read theme tokens when data-theme changes
-      const observer = new MutationObserver(() => {
-        theme = getThemeValues();
-        if (prefersReducedMotion) renderStatic();
-      });
-      observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme'],
-      });
-
-      const runes: Rune[] = Array.from({ length: RUNE_COUNT }, () =>
-        createRune(height, width)
-      );
-
-      function renderStatic(): void {
-        ctx!.clearRect(0, 0, width, height);
-        for (const rune of runes) {
-          ctx!.font = `${rune.size}px Georgia, serif`;
-          ctx!.fillStyle = `rgba(${theme.colour}, ${theme.maxOpacity})`;
-          ctx!.fillText(rune.char, rune.x, rune.y);
-        }
-      }
-
-      if (prefersReducedMotion) {
-        renderStatic();
-        return;
-      }
-
-      let time = 0;
-
-      function draw(): void {
-        ctx!.clearRect(0, 0, width, height);
-        time += 0.016;
-
-        for (const rune of runes) {
-          rune.y -= rune.speed;
-
-          // Wrap around when rune drifts above viewport
-          if (rune.y < -30) {
-            rune.y = height + 30;
-            rune.x = Math.random() * width;
-          }
-
-          // Breathing opacity via sine wave
-          const breath = (Math.sin(time * rune.breathSpeed + rune.phase) + 1) / 2;
-          const opacity = breath * theme.maxOpacity;
-
-          ctx!.font = `${rune.size}px Georgia, serif`;
-          ctx!.fillStyle = `rgba(${theme.colour}, ${opacity})`;
-          ctx!.fillText(rune.char, rune.x, rune.y);
-        }
-
-        requestAnimationFrame(draw);
-      }
-
-      requestAnimationFrame(draw);
-    }
-
-    initRuneCanvas();
-  </script>
 </Base>
 
 <style>
-  #rune-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 0;
-    pointer-events: none;
-  }
-
   .hero {
     position: relative;
     z-index: 1;
