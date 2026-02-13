@@ -10,7 +10,17 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       <span class="nav-logo nav-logo-light" aria-hidden="true" set:html={urdLogoLight} />
       URD.DEV
     </a>
-    <div class="nav-links">
+    <button
+      id="nav-toggle"
+      class="nav-toggle"
+      type="button"
+      aria-label="Open menu"
+      aria-expanded="false"
+      aria-controls="nav-links"
+    >
+      <span class="nav-toggle-icon" aria-hidden="true">≡</span>
+    </button>
+    <div class="nav-links" id="nav-links">
       <a href="/#documents" class="nav-link">Documents</a>
       <a href="/#updates" class="nav-link">Updates</a>
       <a href="/#architecture" class="nav-link">Architecture</a>
@@ -55,6 +65,30 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
         btn.setAttribute('title', 'Switch to dark theme');
       }
     });
+  }
+
+  // Mobile menu toggle
+  const toggle = document.getElementById('nav-toggle');
+  const links = document.getElementById('nav-links');
+  if (toggle && links) {
+    toggle.addEventListener('click', () => {
+      const open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+      const icon = toggle.querySelector('.nav-toggle-icon');
+      if (icon) icon.textContent = open ? '✕' : '≡';
+    });
+
+    // Close menu when a nav link is clicked
+    for (const link of links.querySelectorAll('.nav-link')) {
+      link.addEventListener('click', () => {
+        links.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open menu');
+        const icon = toggle.querySelector('.nav-toggle-icon');
+        if (icon) icon.textContent = '≡';
+      });
+    }
   }
 
   // Sticky compact nav on scroll
@@ -131,6 +165,26 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
 
   .nav-wordmark:hover {
     color: var(--gold-light);
+  }
+
+  /* ── Menu toggle (hidden on desktop) ── */
+  .nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    color: var(--dim);
+    transition: color 0.15s ease;
+  }
+
+  .nav-toggle:hover {
+    color: var(--text);
+  }
+
+  .nav-toggle-icon {
+    font-size: 1.4rem;
+    line-height: 1;
   }
 
   /* ── Links ── */
@@ -224,13 +278,38 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
   }
 
   /* ── Responsive ── */
-  @media (max-width: 520px) {
+  @media (max-width: 640px) {
     .site-nav {
+      flex-wrap: wrap;
       padding: 14px 18px;
     }
 
+    .nav-toggle {
+      display: block;
+    }
+
     .nav-links {
-      gap: 16px;
+      display: none;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0;
+      width: 100%;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+
+    .nav-links.open {
+      display: flex;
+    }
+
+    .nav-link,
+    .nav-links .theme-toggle {
+      display: block;
+      width: 100%;
+      padding: 10px 0;
+      font-size: 0.9rem;
+      text-align: left;
     }
 
     .nav-bar.scrolled .site-nav {
@@ -238,7 +317,14 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     }
 
     .nav-bar.scrolled .nav-links {
-      gap: 12px;
+      padding-top: 8px;
+      margin-top: 8px;
+    }
+
+    .nav-bar.scrolled .nav-link,
+    .nav-bar.scrolled .nav-links .theme-toggle {
+      padding: 8px 0;
+      font-size: 0.82rem;
     }
   }
 </style>
