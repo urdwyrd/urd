@@ -5,6 +5,7 @@ import urdLogo from "../assets/logos/urd-logo-dark.svg?raw";
 import wyrdLogo from "../assets/logos/wyrd-logo-dark.svg?raw";
 import DocumentExplorer from "../components/DocumentExplorer.svelte";
 import PeerReview from "../components/PeerReview.svelte";
+import ProjectLog from "../components/ProjectLog.svelte";
 ---
 
 <Base title="Urd · Define Worlds">
@@ -51,6 +52,10 @@ import PeerReview from "../components/PeerReview.svelte";
 
   <section id="documents" class="documents-section">
     <DocumentExplorer client:visible />
+  </section>
+
+  <section id="updates" class="updates-section">
+    <ProjectLog client:visible />
   </section>
 
   <script>
@@ -265,7 +270,8 @@ import PeerReview from "../components/PeerReview.svelte";
   }
 
   .reviews-section,
-  .documents-section {
+  .documents-section,
+  .updates-section {
     position: relative;
     z-index: 1;
     max-width: 980px;
@@ -274,13 +280,14 @@ import PeerReview from "../components/PeerReview.svelte";
     border-top: 1px solid var(--border);
   }
 
-  .documents-section {
+  .updates-section {
     padding-bottom: 96px;
   }
 
   @media (max-width: 520px) {
     .reviews-section,
-    .documents-section {
+    .documents-section,
+    .updates-section {
       padding-left: 18px;
       padding-right: 18px;
     }

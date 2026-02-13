@@ -12,6 +12,7 @@ Urd is a declarative schema system for interactive worlds. Writers author in Sch
 briefs/           AI task briefs: backlog/ → active/ → done/
 content/          Site content (markdown + frontmatter, Astro collections)
   reviews/          AI peer reviews of the specification
+  updates/          Project log / changelog entries
 design/           Design system — read before any visual work
   themes/gloaming/  Dark theme (current default)
   themes/parchment/ Light theme (future)
@@ -34,7 +35,7 @@ pnpm preview      # Preview production build
 
 - **Astro 5** with TypeScript strict mode — static output, no SSR
 - **Tailwind CSS v4** via `@tailwindcss/vite` (not `@astrojs/tailwind` — it doesn't support v4)
-- **Svelte 5** interactive islands (DocumentExplorer, PeerReview) hydrated client-side
+- **Svelte 5** interactive islands (DocumentExplorer, PeerReview, ProjectLog) hydrated client-side
 - **Cloudflare Pages** deployment via GitHub Actions (path-filtered to `sites/urd.dev/**`)
 - **pnpm 10** — never use npm or yarn
 
