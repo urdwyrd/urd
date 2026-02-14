@@ -553,9 +553,7 @@
             or simply watch the project take shape.
           </p>
           <div class="pres-closing-links">
-            <a href="/#documents" class="pres-closing-link pres-closing-primary">Design Documents</a>
-            <a href="https://github.com/urdwyrd/urd" class="pres-closing-link" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <button class="pres-closing-link" onclick={close}>Close Presentation</button>
+            <button class="pres-closing-link pres-closing-primary" onclick={close}>Close Presentation</button>
           </div>
         </section>
 
