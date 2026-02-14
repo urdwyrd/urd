@@ -10,16 +10,27 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       <span class="nav-logo nav-logo-light" aria-hidden="true" set:html={urdLogoLight} />
       URD.DEV
     </a>
-    <button
-      id="nav-toggle"
-      class="nav-toggle"
-      type="button"
-      aria-label="Open menu"
-      aria-expanded="false"
-      aria-controls="nav-links"
-    >
-      <span class="nav-toggle-icon" aria-hidden="true">≡</span>
-    </button>
+    <div class="nav-right">
+      <button
+        id="nav-toggle"
+        class="nav-toggle"
+        type="button"
+        aria-label="Open menu"
+        aria-expanded="false"
+        aria-controls="nav-links"
+      >
+        <span class="nav-toggle-icon" aria-hidden="true">≡</span>
+      </button>
+      <button
+        class="nav-close"
+        type="button"
+        aria-label="Close presentation and return to site"
+        onclick="window.dispatchEvent(new CustomEvent('urd:close-presentation'))"
+      >
+        <span class="nav-close-text">Back</span>
+        <span class="nav-close-icon" aria-hidden="true">✕</span>
+      </button>
+    </div>
     <div class="nav-links" id="nav-links">
       <a href="/#documents" class="nav-link">Documents</a>
       <a href="/#updates" class="nav-link">Updates</a>
@@ -32,14 +43,6 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       >
         GitHub <span aria-hidden="true">↗</span>
       </a>
-      <button
-        class="nav-back"
-        type="button"
-        aria-label="Close presentation and return to site"
-        onclick="window.dispatchEvent(new CustomEvent('urd:close-presentation'))"
-      >
-        Back
-      </button>
       <button
         id="theme-toggle"
         class="theme-toggle"
@@ -87,8 +90,8 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       if (icon) icon.textContent = open ? '✕' : '≡';
     });
 
-    // Close menu when a nav link or back button is clicked
-    for (const link of links.querySelectorAll('.nav-link, .nav-back')) {
+    // Close menu when a nav link is clicked
+    for (const link of links.querySelectorAll('.nav-link')) {
       link.addEventListener('click', () => {
         links.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
@@ -272,8 +275,15 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     display: inline;
   }
 
-  /* ── Back to site (presentation mode) ── */
-  .nav-back {
+  /* ── Right group (hamburger + close) ── */
+  .nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ── Close presentation ── */
+  .nav-close {
     display: none;
     font-family: var(--display);
     font-size: 0.85rem;
@@ -286,26 +296,31 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     transition: color 0.15s ease, font-size 0.25s ease;
   }
 
-  .nav-back:hover {
+  .nav-close:hover {
     color: var(--gold-light);
   }
 
-  .nav-back:focus-visible {
+  .nav-close:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  .nav-close-icon {
+    display: none;
   }
 
   :global(html[data-presentation="open"]) .nav-link {
     display: none;
   }
 
-  :global(html[data-presentation="open"]) .nav-back {
-    display: inline-block;
+  :global(html[data-presentation="open"]) .nav-right {
+    margin-left: auto;
+    margin-right: 24px;
   }
 
-  :global(html[data-presentation="open"]) .nav-toggle {
-    display: none;
+  :global(html[data-presentation="open"]) .nav-close {
+    display: flex;
   }
 
   /* ── Scrolled (compact) state ── */
@@ -335,7 +350,7 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     font-size: 11px;
   }
 
-  .nav-bar.scrolled .nav-back {
+  .nav-bar.scrolled .nav-close {
     font-size: 0.78rem;
   }
 
@@ -389,22 +404,34 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       font-size: 0.82rem;
     }
 
-    /* Presentation mode — show hamburger, Back + theme toggle inside it */
+    /* Presentation mode — show hamburger for theme toggle, ✕ icon for close */
     :global(html[data-presentation="open"]) .nav-toggle {
       display: block;
     }
 
-    :global(html[data-presentation="open"]) .nav-back {
-      display: block;
-      width: 100%;
-      padding: 10px 0;
-      font-size: 0.9rem;
-      text-align: left;
+    :global(html[data-presentation="open"]) .nav-close-text {
+      display: none;
     }
 
-    :global(html[data-presentation="open"]) .nav-bar.scrolled .nav-back {
-      padding: 8px 0;
-      font-size: 0.82rem;
+    :global(html[data-presentation="open"]) .nav-close-icon {
+      display: inline;
+    }
+
+    :global(html[data-presentation="open"]) .nav-close {
+      font-size: 1.1rem;
+      line-height: 1;
+      color: var(--faint);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    :global(html[data-presentation="open"]) .nav-close:hover {
+      color: var(--text);
+      background: color-mix(in srgb, var(--text) 8%, transparent);
     }
   }
 </style>

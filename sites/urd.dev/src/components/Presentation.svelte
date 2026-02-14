@@ -18,7 +18,7 @@
     { id: 'pres-how', numeral: 'VI', label: 'How It Works', shortLabel: 'How It Works' },
     { id: 'pres-different', numeral: 'VII', label: 'What Makes It Different', shortLabel: 'Difference' },
     { id: 'pres-status', numeral: 'VIII', label: 'Where We Are', shortLabel: 'Status' },
-    { id: 'pres-closing', numeral: '', label: 'Take a Look Around', shortLabel: 'Links' },
+    { id: 'pres-closing', numeral: '', label: 'Take a Look Around', shortLabel: 'Explore' },
   ];
 
   let isOpen = $state(false);
@@ -195,10 +195,6 @@
           </button>
 
           <div class="pres-audio-slot"></div>
-
-          <button class="pres-collapse-btn" onclick={close} aria-label="Close presentation">
-            Collapse <span aria-hidden="true">✕</span>
-          </button>
         </div>
       </div>
 
@@ -553,7 +549,9 @@
             or simply watch the project take shape.
           </p>
           <div class="pres-closing-links">
-            <button class="pres-closing-link pres-closing-primary" onclick={close}>Close Presentation</button>
+            <button class="pres-closing-link pres-closing-primary" onclick={close} aria-label="Close presentation">
+              <span aria-hidden="true">✕</span>
+            </button>
           </div>
         </section>
 
@@ -655,29 +653,6 @@
 
   .pres-audio-slot {
     /* Reserved for future audio controls */
-  }
-
-  .pres-collapse-btn {
-    font-family: var(--display);
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--faint);
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 4px 12px;
-    cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
-  }
-
-  .pres-collapse-btn:hover {
-    color: var(--text);
-    border-color: var(--border-light);
-  }
-
-  .pres-collapse-btn:focus-visible {
-    outline: 2px solid var(--gold);
-    outline-offset: 1px;
   }
 
   /* ── Content ── */
@@ -1064,32 +1039,25 @@
   }
 
   .pres-closing-link {
-    font-family: var(--display);
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--dim);
-    text-decoration: none;
-    padding: 8px 18px;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--faint);
+    background: none;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    background: transparent;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     cursor: pointer;
-    transition: color 0.2s ease, border-color 0.2s ease;
+    transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
   }
 
   .pres-closing-link:hover {
-    border-color: var(--gold-dim);
-    color: var(--gold);
-  }
-
-  .pres-closing-primary {
-    border-color: var(--gold-dark);
-    color: var(--gold);
-  }
-
-  .pres-closing-primary:hover {
-    border-color: var(--gold);
-    color: var(--gold-light);
+    color: var(--text);
+    border-color: var(--border-light);
+    background: color-mix(in srgb, var(--text) 6%, transparent);
   }
 
   .pres-closing-link:focus-visible {
@@ -1117,11 +1085,6 @@
 
     .pres-section-indicator {
       font-size: 11px;
-    }
-
-    .pres-collapse-btn {
-      font-size: 12px;
-      padding: 4px 8px;
     }
 
     .pres-symbols {
