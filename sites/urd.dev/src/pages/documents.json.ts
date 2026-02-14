@@ -21,7 +21,7 @@ export const GET: APIRoute = async () => {
   const entries = await getCollection('designDocs');
 
   const documents = entries
-    .sort((a, b) => a.data.order - b.data.order)
+    .sort((a, b) => b.data.date.localeCompare(a.data.date))
     .map((entry) => {
       const body = entry.body ?? '';
       const wordCount = body.split(/\s+/).filter(Boolean).length;

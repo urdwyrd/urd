@@ -29,7 +29,7 @@ const designDocs = defineCollection({
     description: z.string(),
     category: z.enum([
       'research', 'contract', 'authoring',
-      'architecture', 'runtime', 'validation', 'strategy',
+      'architecture', 'runtime', 'validation', 'strategy', 'brief',
     ]),
     format: z.string(),
     date: z.string(),

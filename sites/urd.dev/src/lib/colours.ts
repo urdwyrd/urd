@@ -6,4 +6,5 @@ export const categoryColours: Record<string, string> = {
   runtime: '#b090dd',
   validation: '#70b080',
   strategy: '#dab860',
+  brief: '#5ca8a0',
 };

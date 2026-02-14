@@ -112,6 +112,10 @@
   --rose: #cc8888;
   --rose-dim: #2a1515;
 
+  --teal: #5ca8a0;
+  --teal-light: #80c8c0;
+  --teal-dim: #142a28;
+
   /* Document taxonomy (maps category → colour) */
   --doc-research: var(--rose);
   --doc-research-dim: var(--rose-dim);
@@ -127,6 +131,8 @@
   --doc-validation-dim: var(--green-dim);
   --doc-strategy: var(--gold);
   --doc-strategy-dim: var(--doc-contract-dim);
+  --doc-brief: var(--teal);
+  --doc-brief-dim: var(--teal-dim);
 
   /* Typography */
   --wordmark: "Georgia", "Times New Roman", serif;
@@ -185,6 +191,10 @@
   --rose-light: #cc8888;
   --rose-dim: #f5ece8;
 
+  --teal: #3a8a82;
+  --teal-light: #5ca8a0;
+  --teal-dim: #e8f5f3;
+
   /* Document taxonomy */
   --doc-research: var(--rose);
   --doc-research-dim: var(--rose-dim);
@@ -200,6 +210,8 @@
   --doc-validation-dim: var(--green-dim);
   --doc-strategy: var(--gold);
   --doc-strategy-dim: var(--doc-contract-dim);
+  --doc-brief: var(--teal);
+  --doc-brief-dim: var(--teal-dim);
 
   /* Theme-dependent depth tokens */
   --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
