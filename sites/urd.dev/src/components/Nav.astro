@@ -33,6 +33,14 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
         GitHub <span aria-hidden="true">↗</span>
       </a>
       <button
+        class="nav-back"
+        type="button"
+        aria-label="Close presentation and return to site"
+        onclick="window.dispatchEvent(new CustomEvent('urd:close-presentation'))"
+      >
+        Back
+      </button>
+      <button
         id="theme-toggle"
         class="theme-toggle"
         type="button"
@@ -95,10 +103,24 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
   const bar = document.getElementById('nav-bar');
   if (bar) {
     const onScroll = () => {
-      bar.classList.toggle('scrolled', window.scrollY > 60);
+      const inPres = document.documentElement.hasAttribute('data-presentation');
+      bar.classList.toggle('scrolled', inPres || window.scrollY > 60);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
+
+    // Presentation mode — close mobile menu and sync scroll state
+    window.addEventListener('urd:presentation-changed', (e) => {
+      if (e.detail?.open && links && toggle) {
+        links.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+        toggle.setAttribute('aria-label', 'Open menu');
+        const icon = toggle.querySelector('.nav-toggle-icon');
+        if (icon) icon.textContent = '≡';
+      }
+      const inPres = document.documentElement.hasAttribute('data-presentation');
+      bar.classList.toggle('scrolled', inPres || window.scrollY > 60);
+    });
   }
 </script>
 
@@ -250,6 +272,42 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     display: inline;
   }
 
+  /* ── Back to site (presentation mode) ── */
+  .nav-back {
+    display: none;
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--gold);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.15s ease, font-size 0.25s ease;
+  }
+
+  .nav-back:hover {
+    color: var(--gold-light);
+  }
+
+  .nav-back:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  :global(html[data-presentation="open"]) .nav-link {
+    display: none;
+  }
+
+  :global(html[data-presentation="open"]) .nav-back {
+    display: inline-block;
+  }
+
+  :global(html[data-presentation="open"]) .nav-toggle {
+    display: none !important;
+  }
+
   /* ── Scrolled (compact) state ── */
   .nav-bar.scrolled .site-nav {
     padding: 8px 32px;
@@ -275,6 +333,10 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
 
   .nav-bar.scrolled .theme-toggle {
     font-size: 11px;
+  }
+
+  .nav-bar.scrolled .nav-back {
+    font-size: 0.78rem;
   }
 
   /* ── Responsive ── */
@@ -325,6 +387,18 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     .nav-bar.scrolled .nav-links .theme-toggle {
       padding: 8px 0;
       font-size: 0.82rem;
+    }
+
+    /* Presentation mode — override mobile stacking, keep horizontal */
+    :global(html[data-presentation="open"]) .nav-links {
+      display: flex !important;
+      flex-direction: row;
+      align-items: center;
+      gap: 16px;
+      width: auto;
+      padding-top: 0;
+      border-top: none;
+      margin-top: 0;
     }
   }
 </style>

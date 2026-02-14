@@ -11,47 +11,61 @@ import ProjectLog from "../components/ProjectLog.svelte";
 import Architecture from "../components/Architecture.astro";
 import ProjectTimeline from "../components/ProjectTimeline.svelte";
 import RuneCanvas from "../components/RuneCanvas.astro";
+import Presentation from "../components/Presentation.svelte";
 ---
 
 <Base title="Urd · Define Worlds">
   <Nav />
   <RuneCanvas />
 
-  <main class="hero">
-    <div class="hero-content">
-      <h1 class="wordmark">
-        <span class="wordmark-half">
-          <span class="logo logo-dark" aria-hidden="true" set:html={urdLogoDark} />
-          <span class="logo logo-light" aria-hidden="true" set:html={urdLogoLight} />
-          <span class="wordmark-urd">URD</span>
-        </span>
+  <div class="hero-wrapper">
+    <main class="hero">
+      <div class="hero-content">
+        <h1 class="wordmark">
+          <span class="wordmark-half">
+            <span class="logo logo-dark" aria-hidden="true" set:html={urdLogoDark} />
+            <span class="logo logo-light" aria-hidden="true" set:html={urdLogoLight} />
+            <span class="wordmark-urd">URD</span>
+          </span>
 
-        <span class="wordmark-half">
-          <span class="logo logo-dark" aria-hidden="true" set:html={wyrdLogoDark} />
-          <span class="logo logo-light" aria-hidden="true" set:html={wyrdLogoLight} />
-          <span class="wordmark-wyrd">WYRD</span>
-        </span>
-      </h1>
+          <span class="wordmark-half">
+            <span class="logo logo-dark" aria-hidden="true" set:html={wyrdLogoDark} />
+            <span class="logo logo-light" aria-hidden="true" set:html={wyrdLogoLight} />
+            <span class="wordmark-wyrd">WYRD</span>
+          </span>
+        </h1>
 
-      <p class="tagline">Define in Urd. Test in Wyrd. Ship Anywhere.</p>
+        <p class="tagline">Define in Urd. Test in Wyrd. Ship Anywhere.</p>
 
-      <p class="description">
-        A declarative schema system for interactive worlds — author in
-        Schema Markdown, compile to JSON, run everywhere.
-      </p>
+        <p class="description">
+          A declarative schema system for interactive worlds — author in
+          Schema Markdown, compile to JSON, run everywhere.
+        </p>
 
+        <div class="hero-actions">
+          <button
+            class="hero-cta"
+            id="presentation-trigger"
+            aria-expanded="false"
+            aria-controls="presentation-container"
+            onclick="window.dispatchEvent(new CustomEvent('urd:open-presentation'))"
+          >
+            A Quiet Introduction <span aria-hidden="true">▸</span>
+          </button>
+          <a
+            href="https://github.com/urdwyrd/urd"
+            class="github-link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on GitHub <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
 
-
-      <a
-        href="https://github.com/urdwyrd/urd"
-        class="github-link"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        View on GitHub <span aria-hidden="true">↗</span>
-      </a>
-    </div>
-  </main>
+  <Presentation client:idle />
 
   <div class="content">
     <section id="reviews">
@@ -77,9 +91,16 @@ import RuneCanvas from "../components/RuneCanvas.astro";
 </Base>
 
 <style>
-  .hero {
+  .hero-wrapper {
     position: relative;
     z-index: 1;
+  }
+
+  :global(html[data-presentation="open"]) .hero-wrapper {
+    display: none;
+  }
+
+  .hero {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -167,6 +188,39 @@ import RuneCanvas from "../components/RuneCanvas.astro";
     margin-bottom: 2rem;
   }
 
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .hero-cta {
+    display: inline-block;
+    font-family: var(--display);
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--gold);
+    background: transparent;
+    padding: 0.6em 1.4em;
+    border: 1px solid var(--gold-dark);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  }
+
+  .hero-cta:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold-light);
+    background: color-mix(in srgb, var(--gold) 4%, transparent);
+  }
+
+  .hero-cta:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
   .github-link {
     display: inline-block;
     font-family: var(--display);
@@ -201,6 +255,10 @@ import RuneCanvas from "../components/RuneCanvas.astro";
   .content > section {
     padding: 48px 0;
     border-top: 1px solid var(--border);
+  }
+
+  :global(html[data-presentation="open"]) .content {
+    display: none;
   }
 
   @media (max-width: 520px) {

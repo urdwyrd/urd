@@ -1,0 +1,1149 @@
+<script lang="ts">
+  import { onMount, tick } from 'svelte';
+
+  interface PresentationSection {
+    id: string;
+    numeral: string;
+    label: string;
+    shortLabel: string;
+  }
+
+  const sections: PresentationSection[] = [
+    { id: 'pres-welcome', numeral: '', label: 'Welcome', shortLabel: 'Welcome' },
+    { id: 'pres-tradition', numeral: 'I', label: 'A Long Tradition', shortLabel: 'Tradition' },
+    { id: 'pres-gap', numeral: 'II', label: 'The Gap', shortLabel: 'The Gap' },
+    { id: 'pres-collaborator', numeral: 'III', label: 'A New Collaborator', shortLabel: 'Collaborator' },
+    { id: 'pres-idea', numeral: 'IV', label: 'The Idea', shortLabel: 'The Idea' },
+    { id: 'pres-pair', numeral: 'V', label: 'Two Halves of a Whole', shortLabel: 'Urd + Wyrd' },
+    { id: 'pres-how', numeral: 'VI', label: 'How It Works', shortLabel: 'How It Works' },
+    { id: 'pres-different', numeral: 'VII', label: 'What Makes It Different', shortLabel: 'Difference' },
+    { id: 'pres-status', numeral: 'VIII', label: 'Where We Are', shortLabel: 'Status' },
+    { id: 'pres-closing', numeral: '', label: 'Take a Look Around', shortLabel: 'Links' },
+  ];
+
+  let isOpen = $state(false);
+  let hasBeenOpened = $state(false);
+  let currentSection = $state(0);
+  let savedScrollY = $state(0);
+  let navHeight = $state(0);
+  let reducedMotion = $state(false);
+
+  let wrapperEl: HTMLElement | undefined = $state(undefined);
+  let headerEl: HTMLElement | undefined = $state(undefined);
+
+  let observer: IntersectionObserver | null = null;
+
+  function measureNav(): void {
+    const nav = document.getElementById('nav-bar');
+    if (nav) navHeight = nav.offsetHeight;
+  }
+
+  function open(): void {
+    savedScrollY = window.scrollY;
+    hasBeenOpened = true;
+    isOpen = true;
+
+    // Enter presentation mode — drives hero collapse, nav simplification, content hiding
+    document.documentElement.setAttribute('data-presentation', 'open');
+    window.dispatchEvent(new CustomEvent('urd:presentation-changed', { detail: { open: true } }));
+
+    const btn = document.getElementById('presentation-trigger');
+    if (btn) btn.setAttribute('aria-expanded', 'true');
+
+    // After transition, scroll to presentation
+    if (wrapperEl) {
+      const onEnd = () => {
+        wrapperEl?.removeEventListener('transitionend', onEnd);
+        headerEl?.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'start' });
+        headerEl?.focus();
+        setupObserver();
+      };
+      wrapperEl.addEventListener('transitionend', onEnd, { once: true });
+      // Fallback if transition doesn't fire (e.g. reduced motion)
+      if (reducedMotion) {
+        setTimeout(onEnd, 50);
+      }
+    }
+  }
+
+  function close(): void {
+    isOpen = false;
+    teardownObserver();
+
+    const btn = document.getElementById('presentation-trigger');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+
+    if (wrapperEl) {
+      const onEnd = () => {
+        wrapperEl?.removeEventListener('transitionend', onEnd);
+        // Exit presentation mode after collapse — restores hero, nav, content
+        document.documentElement.removeAttribute('data-presentation');
+        window.dispatchEvent(new CustomEvent('urd:presentation-changed', { detail: { open: false } }));
+        window.scrollTo({ top: savedScrollY, behavior: 'instant' });
+        const triggerBtn = document.getElementById('presentation-trigger');
+        triggerBtn?.focus();
+      };
+      wrapperEl.addEventListener('transitionend', onEnd, { once: true });
+      if (reducedMotion) {
+        setTimeout(onEnd, 50);
+      }
+    }
+  }
+
+  function setupObserver(): void {
+    teardownObserver();
+    const headerHeight = headerEl?.offsetHeight ?? 48;
+    observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const index = sections.findIndex(s => s.id === entry.target.id);
+            if (index !== -1) currentSection = index;
+          }
+        }
+      },
+      { rootMargin: `-${navHeight + headerHeight}px 0px -50% 0px` }
+    );
+    for (const section of sections) {
+      const el = document.getElementById(section.id);
+      if (el) observer.observe(el);
+    }
+  }
+
+  function teardownObserver(): void {
+    if (observer) {
+      observer.disconnect();
+      observer = null;
+    }
+  }
+
+  function navigateToSection(index: number): void {
+    if (index < 0 || index >= sections.length) return;
+    const el = document.getElementById(sections[index].id);
+    if (!el) return;
+    const headerHeight = headerEl?.offsetHeight ?? 48;
+    const offset = navHeight + headerHeight + 16;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: reducedMotion ? 'instant' : 'smooth' });
+  }
+
+  onMount(() => {
+    reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    measureNav();
+
+    const scrollHandler = () => measureNav();
+    window.addEventListener('scroll', scrollHandler, { passive: true });
+    window.addEventListener('resize', measureNav, { passive: true });
+
+    const openHandler = () => open();
+    const closeHandler = () => close();
+    window.addEventListener('urd:open-presentation', openHandler);
+    window.addEventListener('urd:close-presentation', closeHandler);
+
+    return () => {
+      window.removeEventListener('scroll', scrollHandler);
+      window.removeEventListener('resize', measureNav);
+      window.removeEventListener('urd:open-presentation', openHandler);
+      window.removeEventListener('urd:close-presentation', closeHandler);
+      teardownObserver();
+    };
+  });
+</script>
+
+<div
+  class="pres-wrapper"
+  class:open={isOpen}
+  id="presentation-container"
+  role="region"
+  aria-label="Interactive project presentation"
+  bind:this={wrapperEl}
+>
+  <div class="pres-outer">
+    {#if hasBeenOpened}
+      <!-- Sticky header — outside the overflow container so sticky works -->
+      <div
+        class="pres-header"
+        style="top: {navHeight}px"
+        bind:this={headerEl}
+        tabindex="-1"
+      >
+        <div class="pres-header-inner">
+          <button
+            class="pres-nav-btn"
+            disabled={currentSection === 0}
+            onclick={() => navigateToSection(currentSection - 1)}
+            aria-label="Previous section"
+          >
+            <span aria-hidden="true">◂</span> Prev
+          </button>
+
+          <span class="pres-section-indicator" aria-live="polite">
+            {#if sections[currentSection].numeral}
+              <span class="pres-section-numeral">{sections[currentSection].numeral}</span>
+              <span class="pres-section-sep" aria-hidden="true">·</span>
+            {/if}
+            {sections[currentSection].shortLabel}
+          </span>
+
+          <button
+            class="pres-nav-btn"
+            disabled={currentSection === sections.length - 1}
+            onclick={() => navigateToSection(currentSection + 1)}
+            aria-label="Next section"
+          >
+            Next <span aria-hidden="true">▸</span>
+          </button>
+
+          <div class="pres-audio-slot"></div>
+
+          <button class="pres-collapse-btn" onclick={close} aria-label="Close presentation">
+            Collapse <span aria-hidden="true">✕</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <div class="pres-content">
+
+        <!-- ═══ WELCOME ═══ -->
+        <section class="pres-section pres-section-welcome" id="pres-welcome">
+          <span class="pres-welcome-eyebrow">A quiet introduction</span>
+          <h2 class="pres-welcome-heading">Welcome to Urd</h2>
+          <p class="pres-welcome-subtitle">
+            A brief walk through the lineage, purpose, and architecture of a
+            project that aims to give interactive worlds a common language.
+          </p>
+          <span class="pres-welcome-hint" aria-hidden="true">Take your time ↓</span>
+        </section>
+
+        <!-- ═══ I — A LONG TRADITION ═══ -->
+        <section class="pres-section" id="pres-tradition">
+          <div class="pres-divider">
+            <span class="pres-numeral">I</span>
+          </div>
+          <h2 class="pres-heading">A long tradition</h2>
+          <p>
+            People have been building interactive worlds with text for decades,
+            and the tools they have created are remarkable — each one solving a
+            real part of the puzzle.
+          </p>
+
+          <div class="pres-timeline">
+            <div class="pres-timeline-entry">
+              <div class="pres-timeline-marker"></div>
+              <div class="pres-timeline-body">
+                <span class="pres-timeline-era">1970s–90s</span>
+                <span class="pres-timeline-title">MUDs and Inform</span>
+                <p>
+                  Multi-User Dungeons proved that text worlds could be rich, spatial, and
+                  multiplayer. <span class="hl">Inform</span>, born in 1993, gave us
+                  the first serious world model for interactive fiction: rooms, objects,
+                  containment, rules, paired with a natural-language parser. It remains
+                  a gold standard for single-player text adventures.
+                </p>
+              </div>
+            </div>
+
+            <div class="pres-timeline-entry">
+              <div class="pres-timeline-marker"></div>
+              <div class="pres-timeline-body">
+                <span class="pres-timeline-era">2009</span>
+                <span class="pres-timeline-title">Twine</span>
+                <p>
+                  Twine democratised branching narrative. Anyone could create a
+                  hypertext story with no programming at all. It opened the door
+                  for writers, educators, and artists. But its world model is
+                  passages and links — no objects, no space, no state beyond variables.
+                </p>
+              </div>
+            </div>
+
+            <div class="pres-timeline-entry">
+              <div class="pres-timeline-marker"></div>
+              <div class="pres-timeline-body">
+                <span class="pres-timeline-era">2016</span>
+                <span class="pres-timeline-title">ink</span>
+                <p>
+                  inkle's <span class="hl">ink</span> cracked the middleware
+                  problem for dialogue. An elegant scripting language that compiles to
+                  JSON and runs inside Unity, Unreal, or the browser. It powers
+                  games like <em>80 Days</em> and <em>Heaven's Vault</em>. But ink is
+                  dialogue — it has no spatial model, no inventory, no world simulation.
+                </p>
+              </div>
+            </div>
+
+            <div class="pres-timeline-entry">
+              <div class="pres-timeline-marker pres-timeline-marker-now"></div>
+              <div class="pres-timeline-body">
+                <span class="pres-timeline-era">Today</span>
+                <span class="pres-timeline-title">The current landscape</span>
+                <p>
+                  Yarn Spinner and articy:draft handle narrative design.
+                  Unity and Godot handle simulation. Each is powerful within
+                  its domain. But the world's <em>story</em> lives in one system, its
+                  <em>space</em> in another, its <em>rules</em> in a third — stitched
+                  together with custom glue code, every time.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══ II — THE GAP ═══ -->
+        <section class="pres-section" id="pres-gap">
+          <div class="pres-divider">
+            <span class="pres-numeral">II</span>
+          </div>
+          <h2 class="pres-heading">The gap</h2>
+          <p>
+            Inform came closest. It unified space, objects, rules, and narrative in a
+            single system, and it did it thirty years ago. But the world it describes
+            is inseparable from the Inform runtime. You cannot hand an Inform world to
+            Unity, to Godot, to a browser, to an AI. The world model and the execution
+            engine are the same thing.
+          </p>
+          <p>
+            ink solved the portability problem, but only for dialogue. It compiles to a clean JSON
+            format that any engine can consume. But it deliberately stops at conversation —
+            no rooms, no objects, no containment.
+          </p>
+          <p>
+            What is missing is the combination: <span class="hl">a portable, structured
+            data format</span>, like ink's JSON contract, <span class="hl">but for
+            entire worlds</span>, like Inform's model. A format that describes space, objects,
+            characters, rules, <em>and</em> narrative in one file that any runtime can execute
+            without custom glue code.
+          </p>
+          <p class="pres-aside">
+            The unification has been done. The portability has been done. Never at the same time.
+          </p>
+        </section>
+
+        <!-- ═══ III — A NEW COLLABORATOR ═══ -->
+        <section class="pres-section" id="pres-collaborator">
+          <div class="pres-divider">
+            <span class="pres-numeral">III</span>
+          </div>
+          <h2 class="pres-heading">A new collaborator at the table</h2>
+          <p>
+            There is another reason this matters now in a way it did not a decade ago.
+          </p>
+          <p>
+            The tools in that lineage were built for a world where a single author, or a
+            small team, typed every word, placed every object, wrote every rule by hand.
+            That world is changing. Worlds are getting bigger, teams larger, and <span class="hl">AI is becoming a creative
+            collaborator</span> — not a replacement for human vision, but an amplifier of it.
+            A writer who once spent hours hand-placing furniture in forty rooms can now
+            describe what they want and let an AI fill in the details. A designer sketching
+            a quest line can have an AI generate the supporting NPCs, their dialogue, their
+            behavioural rules — all consistent with the world's existing structure.
+          </p>
+          <p>
+            But here is the problem: most existing formats were not designed to be read
+            by machines in any meaningful way. Twine stores its state in HTML passages.
+            Inform's world model is embedded in natural-language source code. Game engine
+            scenes are serialised into opaque binary formats. An AI can interact with these
+            systems, but it is working <em>around</em> the format, not <em>with</em> it.
+          </p>
+
+          <div class="pres-callout">
+            <span class="pres-callout-label">The insight</span>
+            <p>
+              If a world is described as <span class="hl">typed, structured,
+              unambiguous data</span> — where every entity has a defined type, every
+              property has a schema, every rule has explicit conditions and effects —
+              then an AI does not need to guess what anything means. The format itself
+              is a formal contract. An AI can read it, reason about it, generate
+              content that conforms to it, and validate its own output against it.
+              Not as a bolted-on feature. As an inherent property of the format.
+            </p>
+          </div>
+
+          <p>
+            This does not mean AI is required. Every Urd world works perfectly without it.
+            But when an AI <em>is</em> part of the creative process — and increasingly it
+            will be — the world it is helping to build should be described in a language
+            it can actually understand. Not prose. Not markup hacks. A schema.
+          </p>
+        </section>
+
+        <!-- ═══ IV — THE IDEA ═══ -->
+        <section class="pres-section" id="pres-idea">
+          <div class="pres-divider">
+            <span class="pres-numeral">IV</span>
+          </div>
+          <h2 class="pres-heading">The idea</h2>
+          <p>
+            Urd starts from a simple premise: <span class="hl">what if you could describe
+            an entire interactive world as structured data?</span>
+          </p>
+          <p>
+            Not code. Not a script tied to an engine. Just a clear, typed description of
+            what exists, where things are, what the rules are, and what can happen. A
+            description that any runtime — whether a browser, a game engine, a text terminal,
+            or an AI — could pick up and execute.
+          </p>
+          <p>
+            A universal contract for interactive worlds.
+          </p>
+        </section>
+
+        <!-- ═══ V — TWO HALVES ═══ -->
+        <section class="pres-section" id="pres-pair">
+          <div class="pres-divider">
+            <span class="pres-numeral">V</span>
+          </div>
+          <h2 class="pres-heading">Two halves of a whole</h2>
+          <p>
+            The project has two parts, named from Norse mythology. They are
+            complementary — one defines, the other executes.
+          </p>
+
+          <div class="pres-pair-grid">
+            <div class="pres-pair-card pres-pair-urd">
+              <h3>Urd</h3>
+              <span class="pres-pair-etymology">Old Norse Ur&#240;r — "that which has become"</span>
+              <p>
+                The schema. The definition layer. Urd is how you describe what a world
+                <em>is</em>: its entities, locations, rules, and narrative structures.
+                It is the contract between writers and machines.
+              </p>
+            </div>
+            <div class="pres-pair-card pres-pair-wyrd">
+              <h3>Wyrd</h3>
+              <span class="pres-pair-etymology">Old English — "fate, what comes to pass"</span>
+              <p>
+                The runtime. The execution layer. Wyrd takes a world definition and
+                brings it to life — evaluating conditions, resolving actions, advancing
+                state. It is destiny unfolding.
+              </p>
+            </div>
+          </div>
+
+          <div class="pres-callout">
+            <span class="pres-callout-label">In practice</span>
+            <p>
+              Writers describe worlds in a clean markdown syntax. The compiler produces a
+              <span class="pres-gold">.urd.json</span> file — the contract. The
+              <span class="pres-purple">Wyrd</span> runtime reads that contract and runs the world.
+              The writer never sees JSON. The runtime never sees prose.
+            </p>
+          </div>
+        </section>
+
+        <!-- ═══ VI — HOW IT WORKS ═══ -->
+        <section class="pres-section" id="pres-how">
+          <div class="pres-divider">
+            <span class="pres-numeral">VI</span>
+          </div>
+          <h2 class="pres-heading">How it works</h2>
+          <p>
+            Writers author worlds using <span class="hl">Schema Markdown</span>, a
+            syntax designed to feel like writing prose. The entire vocabulary is seven symbols.
+          </p>
+
+          <div class="pres-symbols">
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">@</span>
+              <span class="pres-symbol-label">Entity</span>
+            </div>
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">?</span>
+              <span class="pres-symbol-label">Condition</span>
+            </div>
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">></span>
+              <span class="pres-symbol-label">Effect</span>
+            </div>
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">*</span>
+              <span class="pres-symbol-label">Choice</span>
+            </div>
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">+</span>
+              <span class="pres-symbol-label">Sticky</span>
+            </div>
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">&#8594;</span>
+              <span class="pres-symbol-label">Jump</span>
+            </div>
+            <div class="pres-symbol">
+              <span class="pres-symbol-glyph">//</span>
+              <span class="pres-symbol-label">Comment</span>
+            </div>
+          </div>
+
+          <p>
+            That is it. A character is <span class="pres-gold">@halvard</span>. A condition
+            checks state. An effect changes it. Choices branch. Jumps navigate. If the syntax
+            forces a writer to touch type definitions or JSON, the tooling has failed.
+          </p>
+
+          <div class="pres-flow">
+            <span class="pres-flow-step pres-flow-write">.urd.md</span>
+            <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
+            <span class="pres-flow-step pres-flow-compile">compiler</span>
+            <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
+            <span class="pres-flow-step pres-flow-compile">.urd.json</span>
+            <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
+            <span class="pres-flow-step pres-flow-run">Wyrd runtime</span>
+          </div>
+        </section>
+
+        <!-- ═══ VII — WHAT MAKES IT DIFFERENT ═══ -->
+        <section class="pres-section" id="pres-different">
+          <div class="pres-divider">
+            <span class="pres-numeral">VII</span>
+          </div>
+          <h2 class="pres-heading">What makes it different</h2>
+          <p>
+            <span class="hl">Declarative, not imperative.</span> You describe what the
+            world <em>is</em>, not what it <em>does</em>. A door is locked. A guard reveals
+            information under certain conditions. The runtime figures out when and how.
+            Outcomes emerge from structure, not scripted sequences.
+          </p>
+          <p>
+            <span class="hl">One spatial primitive.</span> A room holds a sword. A chest
+            holds a sword. A player's inventory holds a sword. It is all containment. One
+            mechanism replaces three separate systems. Moving, picking up, and storing are
+            the same operation.
+          </p>
+          <p>
+            <span class="hl">Engine agnostic.</span> The <span class="pres-gold">.urd.json</span>
+            contract carries no rendering instructions. No pixel coordinates, no audio references,
+            no UI layouts. A Unity plugin, a Godot addon, a browser, or a plain terminal can
+            all consume the same file.
+          </p>
+          <p>
+            <span class="hl">AI native.</span> Every element is typed and unambiguous.
+            An AI reading an Urd world does not need to guess what anything means. It is a
+            formal contract, not documentation. But every world works perfectly without AI.
+          </p>
+        </section>
+
+        <!-- ═══ VIII — WHERE WE ARE ═══ -->
+        <section class="pres-section" id="pres-status">
+          <div class="pres-divider">
+            <span class="pres-numeral">VIII</span>
+          </div>
+          <h2 class="pres-heading">Where we are</h2>
+          <p>
+            Urd is being built in the open. The v1 specification is complete — it defines
+            the schema, the markdown syntax, the compiler contract, and the runtime
+            semantics. The schema is at v0.1, intentionally minimal, covering the
+            primitives needed to validate the first test cases and establishing the
+            extension patterns for everything that follows. The project is now in
+            <span class="hl">formalisation</span>: turning prose specifications into
+            machine-enforceable JSON schemas and beginning compiler development.
+          </p>
+          <p>
+            This site, <span class="pres-gold">urd.dev</span>, is the development journal. Every
+            design document, architectural decision, and progress update is published here
+            as it happens. Full transparency — including the backlog, the active work, and
+            the completed milestones.
+          </p>
+        </section>
+
+        <!-- ═══ CLOSING ═══ -->
+        <section class="pres-section pres-section-closing" id="pres-closing">
+          <h2 class="pres-heading pres-heading-closing">Take a look around</h2>
+          <p class="pres-closing-text">
+            You are welcome here. Read the specifications, explore the design documents,
+            or simply watch the project take shape.
+          </p>
+          <div class="pres-closing-links">
+            <a href="/#documents" class="pres-closing-link pres-closing-primary">Design Documents</a>
+            <a href="https://github.com/urdwyrd/urd" class="pres-closing-link" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <button class="pres-closing-link" onclick={close}>Close Presentation</button>
+          </div>
+        </section>
+
+      </div>
+    {/if}
+  </div>
+</div>
+
+<style>
+  /* ── Wrapper animation ── */
+  .pres-wrapper {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.5s ease-out;
+  }
+
+  .pres-wrapper.open {
+    grid-template-rows: 1fr;
+  }
+
+  .pres-outer {
+    overflow: clip;
+    min-height: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pres-wrapper {
+      transition-duration: 0.01ms;
+    }
+  }
+
+  /* ── Sticky header ── */
+  .pres-header {
+    position: sticky;
+    z-index: 5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    outline: none;
+  }
+
+  .pres-header-inner {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 10px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .pres-nav-btn {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .pres-nav-btn:hover:not(:disabled) {
+    color: var(--text);
+    border-color: var(--border-light);
+  }
+
+  .pres-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+  }
+
+  .pres-nav-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+
+  .pres-section-indicator {
+    flex: 1;
+    text-align: center;
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--gold-dim);
+  }
+
+  .pres-section-numeral {
+    color: var(--faint);
+  }
+
+  .pres-section-sep {
+    color: var(--border-light);
+    margin: 0 4px;
+  }
+
+  .pres-audio-slot {
+    /* Reserved for future audio controls */
+  }
+
+  .pres-collapse-btn {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--faint);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .pres-collapse-btn:hover {
+    color: var(--text);
+    border-color: var(--border-light);
+  }
+
+  .pres-collapse-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 1px;
+  }
+
+  /* ── Content ── */
+  .pres-content {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 32px 64px;
+  }
+
+  .pres-section {
+    padding: 80px 0;
+    border-top: 1px solid var(--border);
+    scroll-margin-top: 120px;
+  }
+
+  .pres-section:first-child {
+    border-top: none;
+  }
+
+  /* ── Welcome section ── */
+  .pres-section-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 60vh;
+    padding: 96px 0;
+    border-top: none;
+  }
+
+  .pres-welcome-eyebrow {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    margin-bottom: 20px;
+  }
+
+  .pres-welcome-heading {
+    font-family: var(--display);
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+
+  .pres-welcome-subtitle {
+    font-family: var(--body);
+    font-size: clamp(16px, 2.5vw, 19px);
+    color: var(--dim);
+    line-height: 1.7;
+    max-width: 480px;
+    margin-bottom: 40px;
+  }
+
+  .pres-welcome-hint {
+    font-family: var(--display);
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--faint);
+    letter-spacing: 0.08em;
+    opacity: 0.6;
+  }
+
+  /* ── Section dividers ── */
+  .pres-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 32px;
+  }
+
+  .pres-divider::before,
+  .pres-divider::after {
+    content: '';
+    height: 1px;
+    width: 48px;
+    background: linear-gradient(to right, transparent, var(--border-light), transparent);
+  }
+
+  .pres-numeral {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--gold-dim);
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Typography ── */
+  .pres-heading {
+    font-family: var(--display);
+    font-size: clamp(22px, 3.5vw, 28px);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+    margin-bottom: 28px;
+  }
+
+  .pres-content p {
+    font-family: var(--body);
+    font-size: 18px;
+    color: var(--dim);
+    line-height: 1.75;
+    margin-bottom: 1.5rem;
+  }
+
+  .pres-content p:last-child {
+    margin-bottom: 0;
+  }
+
+  .hl {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .pres-gold {
+    color: var(--gold);
+  }
+
+  .pres-purple {
+    color: var(--purple-light);
+  }
+
+  .pres-aside {
+    color: var(--faint);
+    font-style: italic;
+  }
+
+  /* ── Timeline ── */
+  .pres-timeline {
+    position: relative;
+    margin: 36px 0 12px;
+    padding-left: 28px;
+  }
+
+  .pres-timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 8px;
+    bottom: 8px;
+    width: 1px;
+    background: linear-gradient(to bottom, var(--gold-dark), var(--border), var(--purple-dim));
+  }
+
+  .pres-timeline-entry {
+    position: relative;
+    padding-bottom: 36px;
+  }
+
+  .pres-timeline-entry:last-child {
+    padding-bottom: 0;
+  }
+
+  .pres-timeline-marker {
+    position: absolute;
+    left: -28px;
+    top: 6px;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 1.5px solid var(--gold-dim);
+  }
+
+  .pres-timeline-marker-now {
+    border-color: var(--purple);
+    box-shadow: 0 0 6px rgba(176, 144, 221, 0.2);
+  }
+
+  .pres-timeline-era {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 4px;
+  }
+
+  .pres-timeline-title {
+    display: block;
+    font-family: var(--display);
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .pres-timeline-body p {
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+
+  /* ── Callouts ── */
+  .pres-callout {
+    border-left: 2px solid var(--border-light);
+    padding: 20px 24px;
+    margin: 32px 0;
+    background: var(--raise);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .pres-callout-label {
+    display: block;
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--faint);
+    margin-bottom: 8px;
+  }
+
+  .pres-callout p {
+    font-size: 16px;
+    margin-bottom: 0;
+  }
+
+  /* ── Pair cards ── */
+  .pres-pair-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 36px 0;
+  }
+
+  .pres-pair-card {
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--raise);
+    position: relative;
+    border-left: 3px solid var(--border);
+  }
+
+  .pres-pair-urd {
+    border-left-color: var(--gold);
+  }
+
+  .pres-pair-wyrd {
+    border-left-color: var(--purple);
+  }
+
+  .pres-pair-card h3 {
+    font-family: var(--display);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .pres-pair-urd h3 {
+    color: var(--gold);
+  }
+
+  .pres-pair-wyrd h3 {
+    color: var(--purple-light);
+  }
+
+  .pres-pair-etymology {
+    display: block;
+    font-family: var(--body);
+    font-size: 13px;
+    color: var(--faint);
+    font-style: italic;
+    margin-bottom: 14px;
+    letter-spacing: 0.02em;
+  }
+
+  .pres-pair-card p {
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 0;
+  }
+
+  /* ── Symbols ── */
+  .pres-symbols {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin: 36px 0;
+    flex-wrap: wrap;
+  }
+
+  .pres-symbol {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 48px;
+  }
+
+  .pres-symbol-glyph {
+    font-family: var(--mono);
+    font-size: 1.3rem;
+    color: var(--gold);
+    background: var(--deep);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  .pres-symbol-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* ── Pipeline flow ── */
+  .pres-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 36px 0;
+    flex-wrap: wrap;
+  }
+
+  .pres-flow-step {
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+
+  .pres-flow-write {
+    background: color-mix(in srgb, var(--blue) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--blue) 25%, transparent);
+    color: var(--blue-light);
+  }
+
+  .pres-flow-compile {
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
+    color: var(--gold-dim);
+  }
+
+  .pres-flow-run {
+    background: color-mix(in srgb, var(--purple) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--purple) 20%, transparent);
+    color: var(--purple);
+  }
+
+  .pres-flow-arrow {
+    color: var(--faint);
+    font-size: 16px;
+  }
+
+  /* ── Closing ── */
+  .pres-section-closing {
+    text-align: center;
+    padding: 80px 0 96px;
+  }
+
+  .pres-heading-closing {
+    text-align: center;
+  }
+
+  .pres-closing-text {
+    text-align: center;
+    max-width: 480px;
+    margin: 0 auto 2rem;
+  }
+
+  .pres-closing-links {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pres-closing-link {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dim);
+    text-decoration: none;
+    padding: 8px 18px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .pres-closing-link:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold);
+  }
+
+  .pres-closing-primary {
+    border-color: var(--gold-dark);
+    color: var(--gold);
+  }
+
+  .pres-closing-primary:hover {
+    border-color: var(--gold);
+    color: var(--gold-light);
+  }
+
+  .pres-closing-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 980px) {
+    .pres-pair-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pres-header-inner {
+      padding: 8px 18px;
+      gap: 8px;
+    }
+
+    .pres-nav-btn {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
+    .pres-section-indicator {
+      font-size: 11px;
+    }
+
+    .pres-collapse-btn {
+      font-size: 12px;
+      padding: 4px 8px;
+    }
+
+    .pres-symbols {
+      gap: 10px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .pres-content {
+      padding-left: 18px;
+      padding-right: 18px;
+    }
+
+    .pres-flow {
+      gap: 6px;
+    }
+
+    .pres-flow-step {
+      font-size: 11px;
+      padding: 4px 10px;
+    }
+  }
+</style>
