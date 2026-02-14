@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   interface Review {
     model: string;
@@ -39,6 +39,12 @@
       // Fetch failed — reviews stays empty, component renders nothing
     }
     loaded = true;
+
+    // If the URL hash targets #reviews, scroll to it after render
+    if (reviews.length > 0 && window.location.hash === '#reviews') {
+      await tick();
+      document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' });
+    }
   });
 
   function stars(rating: number): { filled: number; empty: number } {
@@ -47,7 +53,7 @@
 </script>
 
 {#if loaded && reviews.length > 0}
-  <section class="doc-reviews">
+  <section class="doc-reviews" id="reviews">
     <div class="doc-reviews-rule"></div>
     <header class="doc-reviews-header">
       <span class="doc-reviews-label">{label}</span>

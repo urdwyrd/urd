@@ -27,6 +27,8 @@ interface Props {
   details: string[];
   toc: TocEntry[];
   colour: string;
+  rating: number | null;
+  reviewCount: number;
 }
 
 const MONTHS: Record<string, string> = {
@@ -51,11 +53,12 @@ function groupToc(flat: TocEntry[]): TocSection[] {
   return sections;
 }
 
-const { title, description, category, format, date, status, slug, tags, details, toc, colour } = Astro.props;
+const { title, description, category, format, date, status, slug, tags, details, toc, colour, rating, reviewCount } = Astro.props;
 
 const [year, month] = date.split("-");
 const displayDate = `${MONTHS[month] ?? month} ${year}`;
 const githubHref = `https://github.com/urdwyrd/urd/blob/main/docs/${slug}.md`;
+const downloadHref = `https://raw.githubusercontent.com/urdwyrd/urd/main/docs/${slug}.md`;
 const tocTree = groupToc(toc);
 const hasCollapsible = tocTree.some(s => s.children.length > 0);
 ---
@@ -136,13 +139,24 @@ const hasCollapsible = tocTree.some(s => s.children.length > 0);
       <!-- Header -->
       <header class="doc-header">
         <div class="doc-header-accent"></div>
-        <div class="doc-header-meta">
-          <span class="doc-header-pill">{format}</span>
-          <span class="doc-header-sep" aria-hidden="true">◆</span>
-          <span class="doc-header-category">{category}</span>
-          <span class="doc-header-sep" aria-hidden="true">◆</span>
-          <span class="doc-header-date">{displayDate}</span>
-          <span class="doc-header-status">{status}</span>
+        <div class="doc-header-top">
+          <div class="doc-header-meta">
+            <span class="doc-header-pill">{format}</span>
+            <span class="doc-header-sep" aria-hidden="true">◆</span>
+            <span class="doc-header-category">{category}</span>
+            <span class="doc-header-sep" aria-hidden="true">◆</span>
+            <span class="doc-header-date">{displayDate}</span>
+            <span class="doc-header-status">{status}</span>
+          </div>
+          <div class="doc-header-actions">
+            {rating !== null && (
+              <a href="#reviews" class="doc-header-rating" title={`${rating} / 5 from ${reviewCount} reviews — click for details`}>
+                <span class="doc-header-rating-star">★</span> {rating}
+              </a>
+            )}
+            <a href={githubHref} class="doc-header-action" target="_blank" rel="noopener noreferrer" title="View on GitHub">↗</a>
+            <button class="doc-header-action" data-download-url={downloadHref} data-download-name={`${slug}.md`} title="Download .md">⤓</button>
+          </div>
         </div>
         <h1 class="doc-title">{title}</h1>
         <p class="doc-description">{description}</p>
@@ -183,6 +197,12 @@ const hasCollapsible = tocTree.some(s => s.children.length > 0);
           <a href={githubHref} class="doc-footer-link" target="_blank" rel="noopener noreferrer">
             View on GitHub <span aria-hidden="true">↗</span>
           </a>
+          <button class="doc-footer-link" data-download-url={downloadHref} data-download-name={`${slug}.md`}>
+            Download .md
+          </button>
+          <button class="doc-footer-link" id="back-to-top">
+            <span aria-hidden="true">↑</span> Back to top
+          </button>
         </div>
         <p class="doc-footer-meta">
           {title} · {format} · {displayDate} · {status}
@@ -203,6 +223,44 @@ const hasCollapsible = tocTree.some(s => s.children.length > 0);
       };
       window.addEventListener('scroll', update, { passive: true });
       update();
+    }
+
+    // ── Download buttons (fetch/blob) ──
+    document.querySelectorAll<HTMLButtonElement>('[data-download-url]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        btn.disabled = true;
+        const url = btn.dataset.downloadUrl!;
+        const name = btn.dataset.downloadName!;
+        fetch(url)
+          .then((r) => r.blob())
+          .then((blob) => {
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = name;
+            a.click();
+            URL.revokeObjectURL(blobUrl);
+          })
+          .finally(() => { btn.disabled = false; });
+      });
+    });
+
+    // ── Back to top ──
+    document.getElementById('back-to-top')?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ── Header rating link — smooth scroll to #reviews ──
+    const ratingLink = document.querySelector('.doc-header-rating');
+    if (ratingLink) {
+      ratingLink.addEventListener('click', (e) => {
+        const target = document.getElementById('reviews');
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+          history.pushState(null, '', '#reviews');
+        }
+      });
     }
 
     // ── TOC tree: expand / collapse helpers ──
@@ -660,12 +718,71 @@ const hasCollapsible = tocTree.some(s => s.children.length > 0);
     opacity: 0.8;
   }
 
+  .doc-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
   .doc-header-meta {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 16px;
     flex-wrap: wrap;
+  }
+
+  .doc-header-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .doc-header-action {
+    font-size: 13px;
+    line-height: 1;
+    color: var(--faint);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 4px 7px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .doc-header-action:hover {
+    color: var(--accent);
+    border-color: var(--border-light);
+  }
+
+  .doc-header-action:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .doc-header-rating {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1;
+    color: var(--faint);
+    text-decoration: none;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    margin-right: 8px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .doc-header-rating:hover {
+    color: var(--gold);
+    border-color: var(--border-light);
+  }
+
+  .doc-header-rating-star {
+    color: var(--gold);
+    font-size: 11px;
   }
 
   .doc-header-pill {
@@ -826,6 +943,8 @@ const hasCollapsible = tocTree.some(s => s.children.length > 0);
     padding: 8px 16px;
     border-radius: 6px;
     border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
     transition: color 0.15s ease, border-color 0.15s ease;
   }
 

@@ -19,6 +19,15 @@ function stripMarkdown(text: string): string {
 
 export const GET: APIRoute = async () => {
   const entries = await getCollection('designDocs');
+  const allReviews = await getCollection('documentReviews');
+
+  // Build a map of slug → average rating
+  const ratingsBySlug = new Map<string, number[]>();
+  for (const review of allReviews) {
+    const slug = review.id.split('/')[0];
+    if (!ratingsBySlug.has(slug)) ratingsBySlug.set(slug, []);
+    ratingsBySlug.get(slug)!.push(review.data.rating);
+  }
 
   const documents = entries
     .sort((a, b) => b.data.date.localeCompare(a.data.date))
@@ -44,6 +53,12 @@ export const GET: APIRoute = async () => {
         readingTime,
         excerpt,
         colour: categoryColours[entry.data.category] ?? '#888888',
+        rating: (() => {
+          const ratings = ratingsBySlug.get(entry.data.slug);
+          if (!ratings || ratings.length === 0) return null;
+          return Math.round((ratings.reduce((a, b) => a + b, 0) / ratings.length) * 10) / 10;
+        })(),
+        reviewCount: ratingsBySlug.get(entry.data.slug)?.length ?? 0,
         url: `/documents/${entry.data.slug}`,
         githubUrl: `https://github.com/urdwyrd/urd/blob/main/docs/${entry.id}.md`,
         downloadUrl: `https://raw.githubusercontent.com/urdwyrd/urd/main/docs/${entry.id}.md`,

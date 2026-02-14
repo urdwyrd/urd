@@ -53,6 +53,13 @@ const { entry } = Astro.props;
 const { Content } = await render(entry);
 const toc = extractToc(entry.body ?? "");
 const colour = categoryColours[entry.data.category] ?? "#888888";
+
+const allReviews = await getCollection("documentReviews");
+const docReviews = allReviews.filter((r) => r.id.split("/")[0] === entry.data.slug);
+const reviewCount = docReviews.length;
+const rating = reviewCount > 0
+  ? Math.round((docReviews.reduce((sum, r) => sum + r.data.rating, 0) / reviewCount) * 10) / 10
+  : null;
 ---
 
 <DocumentLayout
@@ -67,6 +74,8 @@ const colour = categoryColours[entry.data.category] ?? "#888888";
   details={entry.data.details ?? []}
   toc={toc}
   colour={colour}
+  rating={rating}
+  reviewCount={reviewCount}
 >
   <Content />
 </DocumentLayout>

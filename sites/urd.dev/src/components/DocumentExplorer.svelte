@@ -16,6 +16,8 @@
     readingTime: number;
     excerpt: string;
     colour: string;
+    rating: number | null;
+    reviewCount: number;
     url: string;
     githubUrl: string;
     downloadUrl: string;
@@ -42,7 +44,11 @@
   let documents = $state<Document[]>([]);
   let activeFilter = $state<string>('all');
   let activeFormat = $state<string>('all');
-  let viewMode = $state<'list' | 'grid' | 'compact'>('compact');
+  const VALID_VIEWS = new Set(['list', 'grid', 'compact']);
+  const storedView = typeof localStorage !== 'undefined' ? localStorage.getItem('urd-view') : null;
+  let viewMode = $state<'list' | 'grid' | 'compact'>(
+    storedView && VALID_VIEWS.has(storedView) ? storedView as 'list' | 'grid' | 'compact' : 'compact'
+  );
   let expandedSlugs = $state<Set<string>>(new Set());
   let loaded = $state(false);
   let reducedMotion = $state(false);
@@ -88,6 +94,11 @@
 
   function titleCase(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  function starsFromRating(rating: number): { filled: number; empty: number } {
+    const rounded = Math.round(rating);
+    return { filled: rounded, empty: 5 - rounded };
   }
 
   function toggleExpanded(slug: string): void {
@@ -185,19 +196,19 @@
             <button
               class="doc-view-btn"
               class:active={viewMode === 'compact'}
-              onclick={() => { viewMode = 'compact'; }}
+              onclick={() => { viewMode = 'compact'; localStorage.setItem('urd-view', 'compact'); }}
               aria-label="Compact view"
             ><span class="doc-view-icon">—</span> Compact</button>
             <button
               class="doc-view-btn"
               class:active={viewMode === 'list'}
-              onclick={() => { viewMode = 'list'; }}
+              onclick={() => { viewMode = 'list'; localStorage.setItem('urd-view', 'list'); }}
               aria-label="List view"
             ><span class="doc-view-icon">≡</span> List</button>
             <button
               class="doc-view-btn"
               class:active={viewMode === 'grid'}
-              onclick={() => { viewMode = 'grid'; }}
+              onclick={() => { viewMode = 'grid'; localStorage.setItem('urd-view', 'grid'); }}
               aria-label="Card view"
             ><span class="doc-view-icon">⊞</span> Cards</button>
           </div>
@@ -315,33 +326,45 @@
                   </p>
                 {/if}
 
-                <div class="doc-card-actions">
-                  <a class="doc-card-link" href={doc.url}>
-                    Read full document →
-                  </a>
-                  <a class="doc-card-link doc-card-link-secondary" href={doc.githubUrl} target="_blank" rel="noopener noreferrer">
-                    View on GitHub <span aria-hidden="true">↗</span>
-                  </a>
-                  <button
-                    class="doc-card-link doc-card-link-secondary"
-                    onclick={(e) => {
-                      const btn = e.currentTarget;
-                      btn.disabled = true;
-                      fetch(doc.downloadUrl)
-                        .then((r) => r.blob())
-                        .then((blob) => {
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = `${doc.slug}.md`;
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        })
-                        .finally(() => { btn.disabled = false; });
-                    }}
-                  >
-                    Download .md
-                  </button>
+                <div class="doc-card-actions-row">
+                  <div class="doc-card-actions">
+                    <a class="doc-card-link" href={doc.url}>
+                      Read full document →
+                    </a>
+                    <a class="doc-card-link doc-card-link-secondary" href={doc.githubUrl} target="_blank" rel="noopener noreferrer">
+                      View on GitHub <span aria-hidden="true">↗</span>
+                    </a>
+                    <button
+                      class="doc-card-link doc-card-link-secondary"
+                      onclick={(e) => {
+                        const btn = e.currentTarget;
+                        btn.disabled = true;
+                        fetch(doc.downloadUrl)
+                          .then((r) => r.blob())
+                          .then((blob) => {
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${doc.slug}.md`;
+                            a.click();
+                            URL.revokeObjectURL(url);
+                          })
+                          .finally(() => { btn.disabled = false; });
+                      }}
+                    >
+                      Download .md
+                    </button>
+                  </div>
+                  {#if doc.rating !== null}
+                    <a class="doc-card-rating" href="{doc.url}#reviews" title="{doc.rating} / 5 from {doc.reviewCount} reviews — click for details">
+                      {#each { length: starsFromRating(doc.rating).filled } as _}
+                        <span class="star-inline filled">★</span>
+                      {/each}
+                      {#each { length: starsFromRating(doc.rating).empty } as _}
+                        <span class="star-inline empty">★</span>
+                      {/each}
+                    </a>
+                  {/if}
                 </div>
               </div>
             {/if}
@@ -363,7 +386,14 @@
             <a class="doc-grid-card-title" href={doc.url}>{doc.title}</a>
             <p class="doc-grid-card-desc">{doc.description}</p>
             <div class="doc-grid-card-footer">
-              <span class="doc-grid-card-date">{formatDate(doc.date)}</span>
+              <span class="doc-grid-card-date">
+                {formatDate(doc.date)}
+                {#if doc.rating !== null}
+                  <a class="doc-grid-rating" href="{doc.url}#reviews" title="{doc.rating} / 5 from {doc.reviewCount} reviews — click for details">
+                    <span class="star-inline filled">★</span> {doc.rating}
+                  </a>
+                {/if}
+              </span>
               <div class="doc-grid-card-actions">
                 <a class="doc-grid-action" href={doc.url} title="Read document">→</a>
                 <a class="doc-grid-action" href={doc.githubUrl} target="_blank" rel="noopener noreferrer" title="View on GitHub">↗</a>
@@ -404,6 +434,18 @@
             <span class="doc-compact-format">{doc.format}</span>
             <span class="doc-compact-time">{formatReadingTimeShort(doc.readingTime)}</span>
             <span class="doc-compact-date">{formatDate(doc.date)}</span>
+            {#if doc.rating !== null}
+              <span
+                class="doc-compact-rating"
+                title="{doc.rating} / 5 from {doc.reviewCount} reviews — click for details"
+                role="link"
+                onclick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `${doc.url}#reviews`; }}
+                onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.location.href = `${doc.url}#reviews`; } }}
+                tabindex="0"
+              >
+                <span class="star-inline filled">★</span> {doc.rating}
+              </span>
+            {/if}
           </a>
         {/each}
       </div>
@@ -1026,6 +1068,73 @@
     white-space: nowrap;
     width: 100px;
     text-align: right;
+  }
+
+  /* ── Star Ratings ── */
+  .star-inline {
+    font-size: 11px;
+    line-height: 1;
+  }
+
+  .star-inline.filled {
+    color: var(--gold);
+  }
+
+  .star-inline.empty {
+    color: var(--border-light);
+  }
+
+  .doc-card-actions-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .doc-card-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    flex-shrink: 0;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+  }
+
+  .doc-card-rating:hover {
+    opacity: 0.8;
+  }
+
+  .doc-compact-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    width: 42px;
+    text-align: right;
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .doc-compact-rating:hover {
+    color: var(--gold);
+  }
+
+  .doc-grid-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s ease;
+  }
+
+  .doc-grid-rating:hover {
+    opacity: 0.8;
   }
 
   /* ── Empty State ── */
