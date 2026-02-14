@@ -87,8 +87,8 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       if (icon) icon.textContent = open ? '✕' : '≡';
     });
 
-    // Close menu when a nav link is clicked
-    for (const link of links.querySelectorAll('.nav-link')) {
+    // Close menu when a nav link or back button is clicked
+    for (const link of links.querySelectorAll('.nav-link, .nav-back')) {
       link.addEventListener('click', () => {
         links.classList.remove('open');
         toggle.setAttribute('aria-expanded', 'false');
@@ -305,7 +305,7 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
   }
 
   :global(html[data-presentation="open"]) .nav-toggle {
-    display: none !important;
+    display: none;
   }
 
   /* ── Scrolled (compact) state ── */
@@ -389,16 +389,22 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
       font-size: 0.82rem;
     }
 
-    /* Presentation mode — override mobile stacking, keep horizontal */
-    :global(html[data-presentation="open"]) .nav-links {
-      display: flex !important;
-      flex-direction: row;
-      align-items: center;
-      gap: 16px;
-      width: auto;
-      padding-top: 0;
-      border-top: none;
-      margin-top: 0;
+    /* Presentation mode — show hamburger, Back + theme toggle inside it */
+    :global(html[data-presentation="open"]) .nav-toggle {
+      display: block;
+    }
+
+    :global(html[data-presentation="open"]) .nav-back {
+      display: block;
+      width: 100%;
+      padding: 10px 0;
+      font-size: 0.9rem;
+      text-align: left;
+    }
+
+    :global(html[data-presentation="open"]) .nav-bar.scrolled .nav-back {
+      padding: 8px 0;
+      font-size: 0.82rem;
     }
   }
 </style>
