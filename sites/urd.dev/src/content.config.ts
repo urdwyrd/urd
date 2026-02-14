@@ -50,4 +50,16 @@ const timeline = defineCollection({
   }),
 });
 
-export const collections = { designDocs, reviews, updates, timeline };
+const documentReviews = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: '../../content/document-reviews' }),
+  schema: z.object({
+    model: z.string(),
+    company: z.string(),
+    date: z.string(),
+    rating: z.number().min(1).max(5),
+    initial: z.string().length(1),
+    colour: z.string(),
+  }),
+});
+
+export const collections = { designDocs, reviews, updates, timeline, documentReviews };
