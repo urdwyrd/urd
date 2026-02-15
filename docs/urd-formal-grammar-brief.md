@@ -64,13 +64,17 @@ The grammar must handle line endings robustly. The final line may or may not end
 ```
 File        ← Frontmatter? Content EOF
 Frontmatter ← '---' EOL FrontmatterBody '---' EOL
-Content     ← (Line EOL)*
+Content     ← Line*
 Line        ← Block / BlankLine
-BlankLine   ← SPACE*
+BlankLine   ← SP* EOL?
+SP          ← ' '
 EOL         ← NEWLINE
+NEWLINE     ← '\n' / '\r\n'
 ```
 
-Note: `EOF` appears only on the `File` rule. `EOL` is strictly `NEWLINE`. This avoids double-EOF consumption that some PEG engines handle poorly. The final line of a file is matched by `Content` consuming zero or more lines, followed by `File`'s `EOF`.
+Note: `EOF` appears only on the `File` rule. `SP` matches a single space character. `EOL` is strictly `NEWLINE`. The final `BlankLine` in a file may have no trailing newline, hence `EOL?` on `BlankLine`. Every `Block` rule consumes its own `EOL` at the end of the line. Multi-line blocks consume `EOL` for each of their internal lines as well. This uniform convention means there is one rule: **every line-level rule owns its own line ending.**
+
+**Block rules require a sigil after indentation.** Every `Block` alternative begins with optional `INDENT*` followed by a required sigil (`?`, `>`, `*`, `+`, `->`, `!`, `@`, `#`, `==`, `rule`, `[`, `//`, etc.). A line containing only spaces and no sigil always matches `BlankLine`, never a `Block`. This is enforced by PEG's ordered choice: `Block` alternatives require at least one sigil character after any indentation, and `Prose` (the final fallback) requires at least one non-whitespace character.
 
 ### Frontmatter Grammar
 
@@ -122,7 +126,36 @@ Below the frontmatter, every line is one of the following. The grammar must defi
 | ExitDeclaration | `->` | `-> SPACE Identifier ':' SPACE text` | `-> north: Corridor` |
 | Prose | (none) | `any text not matching above` | `A dim stone cell.` |
 
-**Inline comments.** In addition to whole-line `LineComment` above, any content-bearing line may end with an inline comment: `SPACE+ // text`. Inline comments are a suffix on other rules, not a separate Block type. See the Comments sub-rule section for the full grammar.
+**Inline comments.** In addition to whole-line `LineComment` above, any content-bearing line may end with an inline comment: `SP+ // text`. Inline comments are a suffix on other rules, not a separate Block type. See the Comments sub-rule section and the Lexical Tokens section for the full grammar.
+
+#### Block Rule (Ordered)
+
+The `Block` rule is the core dispatch for narrative content. PEG's ordered choice (`/`) means alternatives are tried left to right; the first match wins. The ordering below resolves all ambiguities documented in the Ambiguity Resolution section.
+
+```
+Block ← OrConditionBlock
+     / RuleBlock
+     / Heading
+     / SectionLabel
+     / EntityLine
+     / ArrowLine
+     / ConditionLine
+     / EffectLine
+     / ChoiceLine
+     / BlockedMessage
+     / EntityPresence
+     / LineComment
+     / Prose
+
+Heading    ← PhaseHeading / SequenceHeading / LocationHeading
+EntityLine ← EntitySpeech / StageDirection
+ArrowLine  ← ExitDeclaration / ExitJump / Jump
+EffectLine ← INDENT* '>' SP Effect EOL
+```
+
+Multi-line blocks (`OrConditionBlock`, `RuleBlock`) come first because they consume multiple lines and must not be pre-empted by single-line rules that match their opening sigil. `Prose` is always last — it is the fallback for any line that does not match a sigil. Sub-groups (`Heading`, `EntityLine`, `ArrowLine`) encode the internal ordering documented in the Ambiguity Resolution section.
+
+Note: Each `Block` alternative is responsible for consuming its own `EOL`. Single-line blocks append `EOL` at the end of their rule. Multi-line blocks consume `EOL` for each of their internal lines. `Prose` consumes `Text EOL`. `EffectLine` is defined inline here for convenience; the `Effect` sub-rule it references is defined in the Effect Declarations section below. Similarly, `ConditionLine` references rules from the Condition Expressions section.
 
 ### Sub Rule Grammars
 
@@ -143,16 +176,54 @@ Value           ← String / Number / Boolean / Identifier
 
 Note: `EntityProp` requires the `@` prefix in narrative content conditions. Bare identifiers without `@` (e.g., `guard.mood`) are not valid in conditions — the `@` is what distinguishes an entity property access from prose text. Inside frontmatter, property references in type definitions use bare names (e.g., `requires: rusty_key`), but that is the frontmatter grammar, not the condition expression grammar.
 
+#### Terminal Rules
+
+Several rules above reference `Identifier`, `EntityRef`, and other terminals. Their definitions:
+
+```
+Identifier     ← [a-z] [a-z0-9_]*
+EntityRef      ← '@' Identifier
+SectionName    ← Identifier
+TypeName       ← [A-Z] [a-zA-Z0-9]*
+```
+
+`Identifier` permits lowercase letters, digits, and underscores. It must start with a lowercase letter. **This is intentional style enforcement at the grammar level, not incidental grammar design.** Section labels (`== topics`), exit names (`-> harbor`), and entity IDs (`@door_1`) are all lowercase by grammar rule. Display names use `TypeName` (uppercase start) or `String` (quoted). If a future spec version wants mixed-case identifiers, this rule must change explicitly. `TypeName` starts with an uppercase letter (e.g., `Door`, `Barkeep`), distinguishing types from identifiers at the grammar level.
+
+#### Lexical Tokens
+
+The grammar references several lexical tokens used across rules. `SP`, `EOL`, and `NEWLINE` are defined in the File Structure section above. The remaining tokens:
+
+```
+Char               ← !'\t' !NEWLINE .
+InlineCommentStart ← SP+ '//'
+Text               ← (!InlineCommentStart Char)+ InlineComment?
+TextRaw            ← Char+
+InlineComment      ← InlineCommentStart TextRaw
+StringChar         ← '\\"' / '\\\\' / !('"' / NEWLINE) .
+String             ← '"' StringChar* '"'
+Number             ← '-'? [0-9]+ ('.' [0-9]+)?
+Boolean            ← 'true' / 'false'
+```
+
+`Char` matches any character except tab (`\t`) and newline. **Tab rejection mechanism:** tabs are rejected because `Char` explicitly excludes `\t`, and `Text`, `TextRaw`, and `String` are all built on `Char`. If `Char` is ever refactored, the tab exclusion must be preserved or moved to an equivalent guard. Tabs in indentation are separately rejected because `INDENT` is defined as exactly two space characters.
+
+`Text` requires at least one character and stops before an inline comment boundary (`SP+ //`). This means empty text is invalid — a heading like `# ` with no title is a parse error, as is a choice like `* ` with no label. **No-empty-content policy:** this is a deliberate grammar-wide constraint. Every content-bearing construct (headings, choices, speech, stage directions, blocked messages, prose) requires at least one character of content. Implementers and tool authors must not reintroduce empty nodes. `TextRaw` also requires at least one character and is used only inside comments and in `LineComment`.
+
+`String` forbids raw newlines. A string must open and close on the same line. Escaped quotes (`\\"`) and escaped backslashes (`\\\\`) are supported. Partial forms like `.5` or `5.` are not valid numbers — both sides of the decimal point are required. Scientific notation is not supported in v1. `Boolean` is the literal strings `true` and `false`.
+
+Note: `FrontmatterBody` is part of the grammar artifact but is specified separately. The frontmatter subset grammar — covering the restricted YAML-like syntax for types, entities, properties, and imports — is complex enough to warrant its own sub-grammar section, to be written alongside the compiler's frontmatter parser. Until then, the Frontmatter Grammar section above defines the acceptance and rejection rules in prose, and the compiler treats frontmatter as a dedicated parser module. The PEG file includes a stub nonterminal for `FrontmatterBody` that is implemented by the dedicated frontmatter parser module, so the combined system is the normative validator. Frontmatter parsing is formally delegated: the `.peg` file defines `FrontmatterBody` as an opaque rule, and the compiler's frontmatter module is the normative implementation of that rule. The narrative content grammar defined in this document is complete and self-contained.
+
+
 #### OR Condition Blocks
 
 The `? any:` opener introduces a block of indented condition expressions. The inner lines are bare `ConditionExpr` without a leading `?` sigil. Any single inner condition being true validates the entire block.
 
 ```
-OrConditionBlock ← INDENT* '?' SPACE 'any:' NEWLINE OrConditionLine+
-OrConditionLine  ← INDENT+ ConditionExpr
+OrConditionBlock ← INDENT* '?' SP 'any:' EOL OrConditionLine+
+OrConditionLine  ← INDENT+ ConditionExpr EOL
 ```
 
-Note: `OrConditionBlock` is an exception to the "Content handles EOL" rule. It is a multi-line construct, so it must consume the `NEWLINE` after `any:` to reach the indented inner lines. The inner `OrConditionLine` rules do not consume their own line endings — those are handled when the block returns control to `Content`. **Integration rule:** `OrConditionBlock` is a `Block` alternative and is parsed within the same `Content ← (Line EOL)*` loop. When the block finishes consuming its inner lines, control returns to `Content`, which applies `EOL` to the next line normally.
+`OrConditionBlock` is a multi-line construct. The header line consumes its own `EOL` after `any:`, and each `OrConditionLine` consumes its own `EOL`. This makes the block self-contained: each line rule owns its line ending, matching the pattern used by all other multi-line block constructs (see Rule Block below). **Integration rule:** `OrConditionBlock` is a `Block` alternative and is parsed within the same `Content ← Line*` loop. When the block finishes consuming its inner lines, control returns to `Content`, which resumes at the next `Line` normally.
 
 Note: `OrConditionLine` uses `ConditionExpr`, not the full `Condition` rule. The inner lines have no `?` prefix. This matches the syntax spec where `? any:` is followed by indented bare expressions like `@guard.mood == hostile`.
 
@@ -167,21 +238,87 @@ RevealEffect   ← 'reveal' EntityProp
 DestroyEffect  ← 'destroy' EntityRef
 ```
 
+#### Rule Block
+
+Rule blocks define constrained NPC behaviour. They are engineer-authored constructs that appear in narrative content (not frontmatter). A rule block is a multi-line construct: the `rule name:` header line consumes its own `EOL`, and each indented body line consumes its own `EOL`. This makes the block self-contained, matching the pattern used by `OrConditionBlock`.
+
+The rule block body reuses existing sub-rules (entity references, conditions, effects) in a structured sequence: an actor performs a `selects ... from ... where` query, and the matching target receives effects.
+
+```
+RuleBlock      ← 'rule' SP Identifier ':' EOL RuleBody
+RuleBody       ← RuleActorLine RuleWhereLine* RuleEffectLine+
+RuleActorLine  ← INDENT EntityRef (SP 'selects' SP Identifier SP 'from' SP EntityIdList)? EOL
+RuleWhereLine  ← INDENT 'where' SP RuleCondition EOL
+RuleEffectLine ← INDENT '>' SP RuleEffect EOL
+EntityIdRef    ← '@' Identifier
+EntityIdList   ← '[' EntityIdRef (',' SP? EntityIdRef)* ']'
+```
+
+Each body line rule consumes its own trailing `EOL`. This makes `RuleBody` a simple sequence of self-contained line rules, consistent with how a PEG engine will see them and straightforward to port into pest or peggy.
+
+Note: `RuleBody` uses `RuleWhereLine*` (zero or more) rather than `RuleWhereLine+`. A rule without a `selects` clause may still have direct effects with no `where` conditions. `RuleEffectLine+` requires at least one effect — a rule with no effects is meaningless.
+
+Note: `EntityIdRef` is always `@`-prefixed. The keywords `here` and `player` are not valid inside a `selects from` list — the select block operates on declared entities, not runtime-resolved containers. `EntityIdList` uses `EntityIdRef` rather than the broader `EntityRef` to enforce this restriction at the grammar level.
+
+The `selects` clause is optional on `RuleActorLine`. When absent, the rule has no select block (direct conditions and effects only, no bound variable). When present, the `Identifier` after `selects` is the variable name (e.g., `target`) scoped to the rule block.
+
+**Rule-scoped conditions.** Narrative content conditions require the `@` prefix on entity property access (`@guard.mood == neutral`). Inside rule `where` clauses, the bound variable uses a bare dotted identifier (`target.prize != car`). To handle both forms without making the main `ConditionExpr` context-sensitive, rule blocks use a dedicated `RuleCondition` rule:
+
+```
+RulePropRef    ← Identifier '.' Identifier
+RuleLHS        ← EntityProp / RulePropRef
+RuleCondition  ← RuleLHS CompOp Value
+              / EntityRef 'in' ContainerRef
+              / EntityRef 'not in' ContainerRef
+              / SectionName '.exhausted'
+```
+
+`RuleLHS` is scoped to the rule block grammar. It extends the left-hand side of comparisons to accept both `@entity.prop` (via `EntityProp`) and `variable.prop` (via `RulePropRef`). The distinction between a bound variable and a bare identifier that happens to look like one is a semantic check (Phase 3), not a syntactic one. All other condition forms (`in`, `not in`, `.exhausted`) are unchanged. `RuleLHS` is not used in narrative-scope conditions — those continue to use `EntityProp` exclusively.
+
+**Rule-scoped effects.** Effects inside rule blocks may reference the bound variable (`target.state = open`) rather than an `@`-prefixed entity. `RuleEffect` follows the same pattern as `Effect` but accepts `RuleLHS` where property access is needed, and `RuleRef` where an entity or bound variable is needed:
+
+```
+RuleRef            ← EntityRef / Identifier
+RuleEffect         ← RuleSetEffect / RuleMoveEffect / RuleRevealEffect / RuleDestroyEffect
+RuleSetEffect      ← RuleLHS '=' Value
+                  / RuleLHS ('+' / '-') Number
+RuleMoveEffect     ← 'move' RuleRef '->' ContainerRef
+RuleRevealEffect   ← 'reveal' RuleLHS
+RuleDestroyEffect  ← 'destroy' RuleRef
+```
+
+`RuleRef` accepts either an `@`-prefixed entity reference or a bare identifier (the bound variable). This allows `> move target -> here` and `> destroy target` inside rule blocks. `RuleLHS` handles dotted property access (`target.state`, `@entity.prop`) for set and reveal effects. `ContainerRef` is unchanged — move destinations are always concrete (`@entity`, `here`, `player`), never bound variables. `RuleRevealEffect` takes `RuleLHS` because reveal operates on properties (e.g., `> reveal target.prize`), not on entities directly.
+
+**Example parsed by this grammar:**
+
+```
+rule monty_reveals:
+  @monty selects target from [@door_1, @door_2, @door_3]
+  where target.prize != car
+  where target.chosen == false
+  where target.state == closed
+  > target.state = open
+```
+
+Parses as: `RuleBlock` with identifier `monty_reveals`, containing a `RuleActorLine` (`@monty` with `selects target from [...]` using `EntityIdList`), three `RuleWhereLine` entries using `RuleCondition` with `RulePropRef` on the left-hand side via `RuleLHS`, and one `RuleEffectLine` using `RuleSetEffect` with `RuleLHS`. Each body line consumes its own `EOL`.
+
+**Integration rule:** `RuleBlock` is a `Block` alternative in the `Content ← Line*` loop. It is listed in the narrative content grammar table as `rule + SP + name + :`. When the block finishes consuming its indented body lines, control returns to `Content`, which resumes at the next `Line` normally. This follows the same pattern as `OrConditionBlock`.
+
 #### Choice Lines
 
 Choice targets appear at the end of the choice label line, not as separate jump lines. The full choice line grammar:
 
 ```
-ChoiceLine     ← INDENT* ChoiceSigil SPACE ChoiceLabel ChoiceTarget?
+ChoiceLine     ← INDENT* ChoiceSigil SP ChoiceLabel ChoiceTarget?
 ChoiceSigil    ← '*' / '+'
 ChoiceLabel    ← Text
-ChoiceTarget   ← SPACE '->' SPACE TargetRef
+ChoiceTarget   ← SP '->' SP TargetRef
 TargetRef      ← '@' Identifier              // specific entity target
-             / 'any' SPACE TypeName          // type target
+             / 'any' SP TypeName             // type target
              / Identifier                     // section or exit target
 ```
 
-A choice with no target (e.g., `* Back off`) has its content nested as indented lines below it. A choice with a target (e.g., `* Pick a door -> any Door`) compiles to an action with `target_type`. Note: `EOL` is not included here because the `Content` rule applies `EOL` to each `Line` globally.
+A choice with no target (e.g., `* Back off`) has its content nested as indented lines below it. A choice with a target (e.g., `* Pick a door -> any Door`) compiles to an action with `target_type`. Note: `EOL` is not included here because `ChoiceLine` is a single-line construct parsed as part of a `Block` inside `Line`, which appends `EOL?` after the block. Multi-line blocks like `RuleBlock` and `OrConditionBlock` handle `EOL` internally.
 
 #### Indentation
 
@@ -211,22 +348,21 @@ Tabs are always rejected at the grammar level. The parser does not accept `\t` a
 Comments use `//` and come in two forms. Below the frontmatter, `//` is the comment marker (frontmatter uses `#`).
 
 ```
-LineComment   ← '//' Text                             // whole line, is a Block alternative
-InlineComment ← SPACE+ '//' Text                      // suffix on any content line
+LineComment   ← INDENT* '//' TextRaw? EOL
 ```
 
-**`LineComment`** is a `Block` alternative in the narrative content grammar table. It matches lines that start with `//` (possibly after indentation). It appears in the `Block` rule alongside other line types.
+`InlineComment` and `InlineCommentStart` are defined in the Lexical Tokens section above. They are integrated into `Text` itself, so any rule using `Text` automatically handles inline comments.
 
-**`InlineComment`** is **not** a `Block` alternative. It is a suffix that can appear at the end of any content-bearing line. The grammar must strip it as a trailing production on every content rule, not as an independent line type. For example, `@arina: What'll it be? // hub prompt` parses as `EntitySpeech` with an `InlineComment` suffix.
+**`LineComment`** is a `Block` alternative. It allows optional leading indentation (`INDENT*`) so comments can be aligned with the surrounding content. `TextRaw?` is optional to permit bare `//` lines with no comment text. It uses `TextRaw` (not `Text`) because comment content should not be further parsed for nested comment boundaries. Like all `Block` rules, it consumes its own `EOL`.
 
-An inline comment begins at `//` preceded by whitespace. The content before the `//` is parsed normally; the comment text is stripped during compilation and does not appear in JSON.
+**`InlineComment`** is **not** a `Block` alternative. It is a suffix consumed by `Text` at the end of any content-bearing line. For example, `@arina: What'll it be? // hub prompt` parses as `EntitySpeech` where the `Text` portion captures `What'll it be?` and the `InlineComment` suffix captures `// hub prompt`. The comment text is stripped during compilation and does not appear in JSON.
 
 #### Auto Marker
 
 The `(auto)` suffix on phase headings compiles to `auto: true`. It requires a space before the opening parenthesis and uses the exact string `auto`.
 
 ```
-AutoMarker ← SPACE '(auto)'
+AutoMarker ← SP '(auto)'
 ```
 
 `AutoMarker` is only valid on `PhaseHeading` (`###`). If `(auto)` appears on a `LocationHeading` (`#`) or `SequenceHeading` (`##`), the grammar should accept it as part of the heading text (it will be caught as a semantic warning in a later phase). This keeps the grammar simple and avoids making `(auto)` a globally reserved token.
@@ -428,8 +564,8 @@ PEG's ordered choice operator (`/`) resolves ambiguity by trying alternatives le
 
 ```
 EntityLine ← EntitySpeech / StageDirection
-EntitySpeech  ← '@' Identifier ':' SPACE Text
-StageDirection ← '@' Identifier SPACE Text
+EntitySpeech  ← '@' Identifier ':' SP Text
+StageDirection ← '@' Identifier SP Text
 ```
 
 `EntitySpeech` must come first. If the parser tried `StageDirection` first, it would match `@arina` followed by a space and consume `: What'll it be?` as prose, producing an incorrect AST. The colon check in `EntitySpeech` prevents this.
@@ -450,12 +586,12 @@ Block ← OneShotChoice / StickyChoice / ... / Prose
 
 ```
 ArrowLine ← ExitDeclaration / ExitJump / Jump
-ExitDeclaration ← '->' SPACE Identifier ':' SPACE Text
-ExitJump        ← '->' SPACE 'exit:' Identifier       // no space after colon
-Jump            ← '->' SPACE Identifier
+ExitDeclaration ← '->' SP Identifier ':' SP Text
+ExitJump        ← '->' SP 'exit:' Identifier       // no space after colon
+Jump            ← '->' SP Identifier
 ```
 
-`ExitDeclaration` (with colon after a freeform identifier) must be tried before `Jump` (without colon), otherwise `-> north: Corridor` would be parsed as a jump to `north:` which is not a valid identifier. All three forms require a single space after `->`, consistent with every other arrow construct. `ExitJump` uses `exit:` as a reserved prefix with no space before the target name.
+`ExitDeclaration` (with colon after a freeform identifier) must be tried before `Jump` (without colon), otherwise `-> north: Corridor` would be parsed as a jump to `north:` which is not a valid identifier. All three forms require a single space after `->`, consistent with every other arrow construct. `ExitJump` uses `exit:` as a reserved prefix with no space before the target name. Note: the target in `ExitJump` is an `Identifier`, which requires lowercase. `-> exit:harbor` is valid; `-> exit:Harbor` is a parse error. This is consistent with exit names being identifiers, not display names.
 
 ### Or-Condition Block vs Simple Condition
 
@@ -463,9 +599,9 @@ Jump            ← '->' SPACE Identifier
 
 ```
 ConditionLine    ← OrConditionBlock / Condition
-OrConditionBlock ← INDENT* '?' SPACE 'any:' NEWLINE OrConditionLine+
-OrConditionLine  ← INDENT+ ConditionExpr
-Condition        ← INDENT* '?' SPACE ConditionExpr
+OrConditionBlock ← INDENT* '?' SP 'any:' EOL OrConditionLine+
+OrConditionLine  ← INDENT+ ConditionExpr EOL
+Condition        ← INDENT* '?' SP ConditionExpr
 ```
 
 `OrConditionBlock` must come first because `any:` would otherwise be consumed as the start of a condition expression, failing at the colon. Note that the inner lines of the OR block use bare `ConditionExpr` without a `?` prefix, matching the syntax spec exactly.
@@ -476,9 +612,9 @@ Condition        ← INDENT* '?' SPACE ConditionExpr
 
 ```
 Heading ← PhaseHeading / SequenceHeading / LocationHeading
-PhaseHeading    ← '###' SPACE Text
-SequenceHeading ← '##' SPACE Text
-LocationHeading ← '#' SPACE Text
+PhaseHeading    ← '###' SP Text
+SequenceHeading ← '##' SP Text
+LocationHeading ← '#' SP Text
 ```
 
 If `LocationHeading` were tried first, `## The Game` would match `#` and leave `# The Game` as text.
