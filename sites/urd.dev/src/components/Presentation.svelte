@@ -421,13 +421,14 @@
               <div class="pres-timeline-marker"></div>
               <div class="pres-timeline-body">
                 <span class="pres-timeline-era">1970s–90s</span>
-                <span class="pres-timeline-title">MUDs and Inform</span>
+                <span class="pres-timeline-title">MUDs and IF</span>
                 <p>
                   Multi-User Dungeons proved that text worlds could be rich, spatial, and
-                  multiplayer. <span class="hl">Inform</span>, born in 1993, gave us
-                  the first serious world model for interactive fiction: rooms, objects,
-                  containment, rules, paired with a natural-language parser. It remains
-                  a gold standard for single-player text adventures.
+                  multiplayer. Parser-based IF languages — ZIL, TADS (1988),
+                  <span class="hl">Inform</span> (1993) — built serious world models
+                  for interactive fiction: rooms, objects, containment, rules, paired
+                  with natural-language parsers. Inform remains a gold standard for
+                  single-player text adventures.
                 </p>
               </div>
             </div>
