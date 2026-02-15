@@ -242,13 +242,13 @@ const {
   <div class="docs-bar">
     <div class="docs-row">
       <span class="docs-label">Specifications</span>
-      <span class="doc-tag">Schema Spec</span>
-      <span class="doc-tag">Schema Markdown</span>
-      <span class="doc-tag">Architecture</span>
-      <span class="doc-tag">Nested Dialogue</span>
-      <span class="doc-tag">Test Strategy</span>
-      <span class="doc-tag doc-tag-wyrd">Wyrd Runtime</span>
-      <span class="doc-tag">Future Proposals</span>
+      <a class="doc-tag" href="/documents/schema-spec">Schema Spec</a>
+      <a class="doc-tag" href="/documents/schema-markdown">Schema Markdown</a>
+      <a class="doc-tag" href="/documents/architecture">Architecture</a>
+      <a class="doc-tag" href="/documents/nested-dialogue">Nested Dialogue</a>
+      <a class="doc-tag" href="/documents/urd-test-case-strategy">Test Strategy</a>
+      <a class="doc-tag doc-tag-wyrd" href="/documents/wyrd-reference-runtime">Wyrd Runtime</a>
+      <a class="doc-tag" href="/documents/future-proposals">Future Proposals</a>
     </div>
     <div class="docs-row">
       <span class="docs-label">Domains</span>
@@ -622,12 +622,17 @@ const {
   .doc-tag {
     font-family: var(--mono); font-size: 11px; padding: 4px 10px; border-radius: 20px;
     background: var(--surface); color: var(--faint);
+    text-decoration: none; transition: color 0.15s ease, background 0.15s ease;
   }
+
+  .doc-tag:hover { color: var(--gold); background: rgba(218, 184, 96, 0.08); }
 
   .doc-tag-wyrd {
     background: var(--purple-dim); color: var(--purple-light);
     font-weight: 500;
   }
+
+  .doc-tag-wyrd:hover { color: var(--purple-light); background: rgba(154, 122, 204, 0.16); }
 
   .docs-sep { width: 1px; height: 20px; background: var(--border-light); margin: 0 8px; }
 

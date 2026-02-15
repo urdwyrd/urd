@@ -47,7 +47,7 @@
   const VALID_VIEWS = new Set(['list', 'grid', 'compact']);
   const storedView = typeof localStorage !== 'undefined' ? localStorage.getItem('urd-view') : null;
   let viewMode = $state<'list' | 'grid' | 'compact'>(
-    storedView && VALID_VIEWS.has(storedView) ? storedView as 'list' | 'grid' | 'compact' : 'compact'
+    storedView && VALID_VIEWS.has(storedView) ? storedView as 'list' | 'grid' | 'compact' : 'grid'
   );
   let expandedSlugs = $state<Set<string>>(new Set());
   let loaded = $state(false);

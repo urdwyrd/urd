@@ -68,10 +68,6 @@ import Presentation from "../components/Presentation.svelte";
   <Presentation client:idle />
 
   <div class="content">
-    <section id="reviews">
-      <PeerReview client:visible />
-    </section>
-
     <section id="timeline">
       <ProjectTimeline client:visible />
     </section>
@@ -86,6 +82,10 @@ import Presentation from "../components/Presentation.svelte";
 
     <section id="architecture">
       <Architecture />
+    </section>
+
+    <section id="reviews">
+      <PeerReview client:visible />
     </section>
   </div>
 </Base>
