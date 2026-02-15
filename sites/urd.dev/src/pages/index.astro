@@ -221,6 +221,19 @@ import Presentation from "../components/Presentation.svelte";
     outline-offset: 2px;
   }
 
+  @keyframes hero-cta-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 18px -4px color-mix(in srgb, var(--gold) 25%, transparent); }
+  }
+
+  .hero-cta {
+    animation: hero-cta-pulse 3s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-cta { animation: none; }
+  }
+
   .github-link {
     display: inline-block;
     font-family: var(--display);
