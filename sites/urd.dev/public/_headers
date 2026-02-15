@@ -1,2 +1,6 @@
 /sitemap*.xml
   Content-Type: application/xml
+
+/audio/*.m4a
+  Content-Type: audio/mp4
+  Accept-Ranges: bytes
