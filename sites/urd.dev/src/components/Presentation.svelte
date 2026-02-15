@@ -30,6 +30,12 @@
 
   let scrollProgress = $state(0);
 
+  let audioEl: HTMLAudioElement | undefined = $state(undefined);
+  let isPlaying = $state(false);
+  let audioProgress = $state(0);
+  let audioDuration = $state(0);
+  let audioCurrentTime = $state(0);
+
   let wrapperEl: HTMLElement | undefined = $state(undefined);
   let headerEl: HTMLElement | undefined = $state(undefined);
 
@@ -90,6 +96,10 @@
   }
 
   function close(): void {
+    if (audioEl && isPlaying) {
+      audioEl.pause();
+      isPlaying = false;
+    }
     isOpen = false;
     teardownObserver();
 
@@ -168,6 +178,58 @@
     }
   }
 
+  function toggleAudio(): void {
+    if (!audioEl) return;
+    if (isPlaying) {
+      audioEl.pause();
+      isPlaying = false;
+    } else {
+      audioEl.play();
+      isPlaying = true;
+    }
+  }
+
+  function onAudioTimeUpdate(): void {
+    if (!audioEl) return;
+    audioCurrentTime = audioEl.currentTime;
+    audioProgress = audioDuration > 0 ? audioEl.currentTime / audioDuration : 0;
+  }
+
+  function onAudioMetadata(): void {
+    if (!audioEl) return;
+    audioDuration = audioEl.duration;
+  }
+
+  function onAudioEnded(): void {
+    isPlaying = false;
+    audioProgress = 1;
+  }
+
+  function seekAudio(e: MouseEvent): void {
+    if (!audioEl || audioDuration <= 0) return;
+    const bar = e.currentTarget as HTMLElement;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audioEl.currentTime = ratio * audioDuration;
+  }
+
+  function skipAudio(seconds: number): void {
+    if (!audioEl || audioDuration <= 0) return;
+    audioEl.currentTime = Math.max(0, Math.min(audioDuration, audioEl.currentTime + seconds));
+  }
+
+  function seekAudioKey(e: KeyboardEvent): void {
+    if (!audioEl || audioDuration <= 0) return;
+    if (e.key === 'ArrowRight') skipAudio(10);
+    else if (e.key === 'ArrowLeft') skipAudio(-10);
+  }
+
+  function formatTime(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
   function navigateToSection(index: number): void {
     if (index < 0 || index >= sections.length) return;
     const el = document.getElementById(sections[index].id);
@@ -177,6 +239,19 @@
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: reducedMotion ? 'instant' : 'smooth' });
   }
+
+  $effect(() => {
+    const el = audioEl;
+    if (!el) return;
+    el.addEventListener('timeupdate', onAudioTimeUpdate);
+    el.addEventListener('loadedmetadata', onAudioMetadata);
+    el.addEventListener('ended', onAudioEnded);
+    return () => {
+      el.removeEventListener('timeupdate', onAudioTimeUpdate);
+      el.removeEventListener('loadedmetadata', onAudioMetadata);
+      el.removeEventListener('ended', onAudioEnded);
+    };
+  });
 
   onMount(() => {
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -211,6 +286,12 @@
 >
   <div class="pres-outer">
     {#if hasBeenOpened}
+      <audio
+        bind:this={audioEl}
+        src="/audio/introduction.m4a"
+        preload="none"
+      ></audio>
+
       <!-- Sticky header — outside the overflow container so sticky works -->
       <div
         class="pres-header"
@@ -245,7 +326,24 @@
             Next <span aria-hidden="true">▸</span>
           </button>
 
-          <div class="pres-audio-slot"></div>
+          <div class="pres-audio-slot">
+            {#if audioDuration > 0}
+              <button class="pres-audio-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
+                <span aria-hidden="true">↺</span>
+              </button>
+              <button class="pres-audio-toggle" onclick={toggleAudio} aria-label={isPlaying ? 'Pause' : 'Play'}>
+                <span aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
+              </button>
+              <button class="pres-audio-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
+                <span aria-hidden="true">↻</span>
+              </button>
+              <!-- svelte-ignore a11y_click_events_have_key_events -->
+              <div class="pres-audio-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+                <div class="pres-audio-bar-fill" style="width: {audioProgress * 100}%"></div>
+              </div>
+              <span class="pres-audio-time">{formatTime(audioCurrentTime)}</span>
+            {/if}
+          </div>
         </div>
         <div class="pres-progress" role="progressbar" aria-valuenow={Math.round(scrollProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
           <div class="pres-progress-fill" style="width: {scrollProgress * 100}%"></div>
@@ -263,6 +361,10 @@
             A brief walk through the lineage, purpose, and architecture of a
             project that aims to give interactive worlds a common language.
           </p>
+          <button class="pres-listen-btn pres-reveal" onclick={toggleAudio} aria-label={isPlaying ? 'Pause narration' : 'Listen to narration'}>
+            <span class="pres-listen-icon" aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
+          </button>
+          <span class="pres-listen-label pres-reveal">{isPlaying ? 'Listening' : audioCurrentTime > 0 ? 'Resume' : 'Listen along'}</span>
           <span class="pres-welcome-hint pres-reveal" aria-hidden="true">Take your time ↓</span>
         </section>
 
@@ -657,7 +759,8 @@
       transition-duration: 0.01ms;
     }
 
-    .pres-progress-fill {
+    .pres-progress-fill,
+    .pres-listen-btn {
       animation: none;
     }
 
@@ -735,7 +838,61 @@
   }
 
   .pres-audio-slot {
-    /* Reserved for future audio controls */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .pres-audio-toggle {
+    font-size: 11px;
+    color: var(--faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    transition: color 0.15s ease;
+  }
+
+  .pres-audio-toggle:hover { color: var(--text); }
+
+  .pres-audio-skip {
+    font-size: 13px;
+    color: var(--faint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px;
+    transition: color 0.15s ease;
+  }
+
+  .pres-audio-skip:hover { color: var(--text); }
+
+  .pres-audio-bar {
+    width: 60px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .pres-audio-bar:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  .pres-audio-bar-fill {
+    height: 100%;
+    background: var(--gold-dark);
+    border-radius: 2px;
+  }
+
+  .pres-audio-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    min-width: 28px;
   }
 
   /* ── Progress bar ── */
@@ -812,6 +969,47 @@
     line-height: 1.7;
     max-width: 480px;
     margin-bottom: 40px;
+  }
+
+  .pres-listen-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-dark);
+    background: none;
+    color: var(--gold);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+    margin-bottom: 8px;
+    animation: pres-listen-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes pres-listen-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 12px 2px color-mix(in srgb, var(--gold) 20%, transparent); }
+  }
+
+  .pres-listen-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--gold-light);
+    background: color-mix(in srgb, var(--gold) 4%, transparent);
+  }
+
+  .pres-listen-btn:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  .pres-listen-label {
+    font-family: var(--display);
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.08em;
+    margin-bottom: 32px;
   }
 
   .pres-welcome-hint {
@@ -1191,6 +1389,9 @@
     .pres-symbols {
       gap: 10px;
     }
+
+    .pres-audio-bar { width: 40px; }
+    .pres-audio-time { display: none; }
   }
 
   @media (max-width: 520px) {
@@ -1207,5 +1408,8 @@
       font-size: 11px;
       padding: 4px 10px;
     }
+
+    .pres-audio-bar { display: none; }
+    .pres-audio-skip { display: none; }
   }
 </style>

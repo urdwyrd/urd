@@ -405,6 +405,10 @@ import urdLogoLight from "../assets/logos/urd-logo-light.svg?raw";
     }
 
     /* Presentation mode — show hamburger for theme toggle, ✕ icon for close */
+    :global(html[data-presentation="open"]) .nav-right {
+      margin-right: 0;
+    }
+
     :global(html[data-presentation="open"]) .nav-toggle {
       display: block;
     }
