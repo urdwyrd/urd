@@ -35,6 +35,9 @@
   let audioProgress = $state(0);
   let audioDuration = $state(0);
   let audioCurrentTime = $state(0);
+  const playbackRates = [1, 1.1, 1.2, 1.3, 1.35] as const;
+  let playbackRateIndex = $state(0);
+  let playbackRate = $derived(playbackRates[playbackRateIndex]);
 
   let wrapperEl: HTMLElement | undefined = $state(undefined);
   let headerEl: HTMLElement | undefined = $state(undefined);
@@ -224,6 +227,11 @@
     else if (e.key === 'ArrowLeft') skipAudio(-10);
   }
 
+  function cyclePlaybackRate(): void {
+    playbackRateIndex = (playbackRateIndex + 1) % playbackRates.length;
+    if (audioEl) audioEl.playbackRate = playbackRate;
+  }
+
   function formatTime(seconds: number): string {
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
@@ -243,6 +251,7 @@
   $effect(() => {
     const el = audioEl;
     if (!el) return;
+    el.playbackRate = playbackRate;
     el.addEventListener('timeupdate', onAudioTimeUpdate);
     el.addEventListener('loadedmetadata', onAudioMetadata);
     el.addEventListener('ended', onAudioEnded);
@@ -317,15 +326,6 @@
             {sections[currentSection].shortLabel}
           </span>
 
-          <button
-            class="pres-nav-btn"
-            disabled={currentSection === sections.length - 1}
-            onclick={() => navigateToSection(currentSection + 1)}
-            aria-label="Next section"
-          >
-            Next <span aria-hidden="true">▸</span>
-          </button>
-
           <div class="pres-audio-slot">
             {#if audioDuration > 0}
               <button class="pres-audio-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
@@ -342,8 +342,20 @@
                 <div class="pres-audio-bar-fill" style="width: {audioProgress * 100}%"></div>
               </div>
               <span class="pres-audio-time">{formatTime(audioCurrentTime)}</span>
+              <button class="pres-audio-rate" onclick={cyclePlaybackRate} aria-label="Playback speed {playbackRate}x">
+                {playbackRate}x
+              </button>
             {/if}
           </div>
+
+          <button
+            class="pres-nav-btn"
+            disabled={currentSection === sections.length - 1}
+            onclick={() => navigateToSection(currentSection + 1)}
+            aria-label="Next section"
+          >
+            Next <span aria-hidden="true">▸</span>
+          </button>
         </div>
         <div class="pres-progress" role="progressbar" aria-valuenow={Math.round(scrollProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
           <div class="pres-progress-fill" style="width: {scrollProgress * 100}%"></div>
@@ -386,7 +398,9 @@
             </div>
             <span class="pres-listen-time">−{formatTime(audioDuration - audioCurrentTime)}</span>
           </div>
-          <span class="pres-listen-label pres-reveal">{isPlaying ? 'Listening' : audioCurrentTime > 0 ? 'Resume' : 'Listen along'}</span>
+          <span class="pres-listen-label pres-reveal">{isPlaying ? 'Listening' : audioCurrentTime > 0 ? 'Resume' : 'Listen along'}{#if audioDuration > 0}
+            <button class="pres-listen-rate" onclick={cyclePlaybackRate} aria-label="Playback speed {playbackRate}x">{playbackRate}x</button>
+          {/if}</span>
           <span class="pres-welcome-hint pres-reveal" aria-hidden="true">Take your time ↓</span>
         </section>
 
@@ -809,6 +823,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
   }
 
   .pres-nav-btn {
@@ -840,14 +855,16 @@
   }
 
   .pres-section-indicator {
-    flex: 1;
-    text-align: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     font-family: var(--display);
     font-size: 13px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--gold-dim);
+    pointer-events: none;
   }
 
   .pres-section-numeral {
@@ -915,6 +932,23 @@
     font-size: 10px;
     color: var(--faint);
     min-width: 28px;
+  }
+
+  .pres-audio-rate {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 4px;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .pres-audio-rate:hover {
+    color: var(--text);
+    border-color: var(--border-light);
   }
 
   /* ── Progress bar ── */
@@ -1110,6 +1144,27 @@
     color: var(--faint);
     letter-spacing: 0.08em;
     margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pres-listen-rate {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    cursor: pointer;
+    letter-spacing: 0;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .pres-listen-rate:hover {
+    color: var(--text);
+    border-color: var(--border-light);
   }
 
   .pres-welcome-hint {
@@ -1490,8 +1545,17 @@
       gap: 10px;
     }
 
+  }
+
+  @media (max-width: 840px) {
     .pres-audio-bar { width: 40px; }
     .pres-audio-time { display: none; }
+    .pres-audio-rate { display: none; }
+  }
+
+  @media (max-width: 720px) {
+    .pres-audio-bar { display: none; }
+    .pres-audio-skip { display: none; }
   }
 
   @media (max-width: 520px) {
@@ -1508,8 +1572,5 @@
       font-size: 11px;
       padding: 4px 10px;
     }
-
-    .pres-audio-bar { display: none; }
-    .pres-audio-skip { display: none; }
   }
 </style>
