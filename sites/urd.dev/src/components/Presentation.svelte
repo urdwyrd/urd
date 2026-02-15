@@ -329,13 +329,13 @@
           <div class="pres-audio-slot">
             {#if audioDuration > 0}
               <button class="pres-audio-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
-                <span aria-hidden="true">↺</span>
+                <span aria-hidden="true">◂◂</span>
               </button>
               <button class="pres-audio-toggle" onclick={toggleAudio} aria-label={isPlaying ? 'Pause' : 'Play'}>
                 <span aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
               </button>
               <button class="pres-audio-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
-                <span aria-hidden="true">↻</span>
+                <span aria-hidden="true">▸▸</span>
               </button>
               <!-- svelte-ignore a11y_click_events_have_key_events -->
               <div class="pres-audio-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
@@ -361,9 +361,31 @@
             A brief walk through the lineage, purpose, and architecture of a
             project that aims to give interactive worlds a common language.
           </p>
-          <button class="pres-listen-btn pres-reveal" onclick={toggleAudio} aria-label={isPlaying ? 'Pause narration' : 'Listen to narration'}>
-            <span class="pres-listen-icon" aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
-          </button>
+          <div class="pres-listen-controls pres-reveal">
+            {#if audioDuration > 0}
+              <button class="pres-listen-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
+                <span class="pres-listen-skip-icon" aria-hidden="true">↺</span>
+                <span class="pres-listen-skip-label">10s</span>
+              </button>
+            {/if}
+            <button class="pres-listen-btn" onclick={toggleAudio} aria-label={isPlaying ? 'Pause narration' : 'Listen to narration'}>
+              <span class="pres-listen-icon" aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
+            </button>
+            {#if audioDuration > 0}
+              <button class="pres-listen-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
+                <span class="pres-listen-skip-icon" aria-hidden="true">↻</span>
+                <span class="pres-listen-skip-label">10s</span>
+              </button>
+            {/if}
+          </div>
+          <div class="pres-listen-scrub" class:pres-listen-scrub-visible={audioDuration > 0}>
+            <span class="pres-listen-time">{formatTime(audioCurrentTime)}</span>
+            <!-- svelte-ignore a11y_click_events_have_key_events -->
+            <div class="pres-listen-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+              <div class="pres-listen-bar-fill" style="width: {audioProgress * 100}%"></div>
+            </div>
+            <span class="pres-listen-time">−{formatTime(audioDuration - audioCurrentTime)}</span>
+          </div>
           <span class="pres-listen-label pres-reveal">{isPlaying ? 'Listening' : audioCurrentTime > 0 ? 'Resume' : 'Listen along'}</span>
           <span class="pres-welcome-hint pres-reveal" aria-hidden="true">Take your time ↓</span>
         </section>
@@ -971,6 +993,38 @@
     margin-bottom: 40px;
   }
 
+  .pres-listen-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 8px;
+  }
+
+  .pres-listen-skip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--faint);
+    padding: 4px;
+    transition: color 0.15s ease;
+  }
+
+  .pres-listen-skip:hover { color: var(--text); }
+
+  .pres-listen-skip-icon {
+    font-size: 18px;
+  }
+
+  .pres-listen-skip-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.05em;
+  }
+
   .pres-listen-btn {
     width: 56px;
     height: 56px;
@@ -984,7 +1038,6 @@
     align-items: center;
     justify-content: center;
     transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
-    margin-bottom: 8px;
     animation: pres-listen-pulse 3s ease-in-out infinite;
   }
 
@@ -1002,6 +1055,53 @@
   .pres-listen-btn:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
+  }
+
+  .pres-listen-scrub {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 280px;
+    max-height: 0;
+    margin-bottom: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin-bottom 0.4s ease;
+  }
+
+  .pres-listen-scrub-visible {
+    max-height: 24px;
+    margin-bottom: 12px;
+    opacity: 1;
+  }
+
+  .pres-listen-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .pres-listen-bar:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  .pres-listen-bar-fill {
+    height: 100%;
+    background: var(--gold-dark);
+    border-radius: 2px;
+  }
+
+  .pres-listen-time {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--faint);
+    min-width: 32px;
+    text-align: center;
   }
 
   .pres-listen-label {
