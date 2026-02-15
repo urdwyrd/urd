@@ -14,10 +14,12 @@
     { id: 'pres-gap', numeral: 'II', label: 'The Gap', shortLabel: 'The Gap' },
     { id: 'pres-collaborator', numeral: 'III', label: 'A New Collaborator', shortLabel: 'Collaborator' },
     { id: 'pres-idea', numeral: 'IV', label: 'The Idea', shortLabel: 'The Idea' },
-    { id: 'pres-pair', numeral: 'V', label: 'Two Halves of a Whole', shortLabel: 'Urd + Wyrd' },
-    { id: 'pres-how', numeral: 'VI', label: 'How It Works', shortLabel: 'How It Works' },
-    { id: 'pres-different', numeral: 'VII', label: 'What Makes It Different', shortLabel: 'Difference' },
-    { id: 'pres-status', numeral: 'VIII', label: 'Where We Are', shortLabel: 'Status' },
+    { id: 'pres-proof', numeral: 'V', label: 'The Proof', shortLabel: 'The Proof' },
+    { id: 'pres-pair', numeral: 'VI', label: 'Two Halves of a Whole', shortLabel: 'Urd + Wyrd' },
+    { id: 'pres-how', numeral: 'VII', label: 'How It Works', shortLabel: 'How It Works' },
+    { id: 'pres-different', numeral: 'VIII', label: 'What Makes It Different', shortLabel: 'Difference' },
+    { id: 'pres-limits', numeral: 'IX', label: 'Where It Breaks', shortLabel: 'Limits' },
+    { id: 'pres-status', numeral: 'X', label: 'Where We Are', shortLabel: 'Status' },
     { id: 'pres-closing', numeral: '', label: 'Take a Look Around', shortLabel: 'Explore' },
   ];
 
@@ -367,11 +369,12 @@
 
         <!-- ═══ WELCOME ═══ -->
         <section class="pres-section pres-section-welcome" id="pres-welcome">
-          <span class="pres-welcome-eyebrow pres-reveal">A quiet introduction</span>
+          <span class="pres-welcome-eyebrow pres-reveal">An experiment in progress</span>
           <h2 class="pres-welcome-heading pres-reveal">Welcome to Urd</h2>
           <p class="pres-welcome-subtitle pres-reveal">
-            A brief walk through the lineage, purpose, and architecture of a
-            project that aims to give interactive worlds a common language.
+            This project asks a question: can you write a formal specification for
+            interactive worlds and hand it to AI to build? What follows is
+            the lineage, the thesis, and an honest account of where we are.
           </p>
           <div class="pres-listen-controls pres-reveal">
             {#if audioDuration > 0}
@@ -424,11 +427,11 @@
                 <span class="pres-timeline-title">MUDs and IF</span>
                 <p>
                   Multi-User Dungeons proved that text worlds could be rich, spatial, and
-                  multiplayer. Parser-based IF languages — ZIL, TADS (1988),
-                  <span class="hl">Inform</span> (1993) — built serious world models
-                  for interactive fiction: rooms, objects, containment, rules, paired
-                  with natural-language parsers. Inform remains a gold standard for
-                  single-player text adventures.
+                  multiplayer. Parser-based IF languages followed — ZIL at Infocom,
+                  <span class="hl">TADS</span> in 1988,
+                  <span class="hl">Inform</span> in 1993 — each building increasingly
+                  sophisticated world models: rooms, objects, containment, rules, paired
+                  with natural-language parsers.
                 </p>
               </div>
             </div>
@@ -488,9 +491,10 @@
           <p class="pres-reveal">
             Inform came closest. It unified space, objects, rules, and narrative in a
             single system, and it did it thirty years ago. But the world it describes
-            is inseparable from the Inform runtime. You cannot hand an Inform world to
-            Unity, to Godot, to a browser, to an AI. The world model and the execution
-            engine are the same thing.
+            is tightly coupled to the Inform runtime. Handing an Inform world to
+            Unity, to Godot, to a browser, or to an AI means working around the
+            format, not with it. (Inform 10 has made strides here, but the world
+            model and the execution engine remain deeply intertwined.)
           </p>
           <p class="pres-reveal">
             ink solved the portability problem, but only for dialogue. It compiles to a clean JSON
@@ -498,14 +502,14 @@
             no rooms, no objects, no containment.
           </p>
           <p class="pres-reveal">
-            What is missing is the combination: <span class="hl">a portable, structured
+            The combination has not been done: <span class="hl">a portable, structured
             data format</span>, like ink's JSON contract, <span class="hl">but for
             entire worlds</span>, like Inform's model. A format that describes space, objects,
             characters, rules, <em>and</em> narrative in one file that any runtime can execute
             without custom glue code.
           </p>
           <p class="pres-aside pres-reveal">
-            The unification has been done. The portability has been done. Never at the same time.
+            That is the hypothesis this project is testing.
           </p>
         </section>
 
@@ -521,7 +525,7 @@
           <p class="pres-reveal">
             The tools in that lineage were built for a world where a single author, or a
             small team, typed every word, placed every object, wrote every rule by hand.
-            That world is changing. Worlds are getting bigger, teams larger, and <span class="hl">AI is becoming a creative
+            That world is changing. <span class="hl">AI is becoming a creative
             collaborator</span> — not a replacement for human vision, but an amplifier of it.
             A writer who once spent hours hand-placing furniture in forty rooms can now
             describe what they want and let an AI fill in the details. A designer sketching
@@ -555,6 +559,14 @@
             will be — the world it is helping to build should be described in a language
             it can actually understand. Not prose. Not markup hacks. A schema.
           </p>
+
+          <p class="pres-reveal">
+            This project is itself the first test of that thesis. The specifications,
+            this site, and eventually the compiler are being built with AI as the primary
+            workforce — iterating against the spec, challenging its own output, and
+            failing in instructive ways. It is an experiment in spec-driven AI development
+            as much as it is a schema design.
+          </p>
         </section>
 
         <!-- ═══ IV — THE IDEA ═══ -->
@@ -578,10 +590,64 @@
           </p>
         </section>
 
-        <!-- ═══ V — TWO HALVES ═══ -->
-        <section class="pres-section" id="pres-pair">
+        <!-- ═══ V — THE PROOF ═══ -->
+        <section class="pres-section" id="pres-proof">
           <div class="pres-divider pres-reveal">
             <span class="pres-numeral">V</span>
+          </div>
+          <h2 class="pres-heading pres-reveal">The proof</h2>
+          <p class="pres-reveal">
+            Ideas are cheap. Here is a concrete one. The Monty Hall problem — three
+            doors, a car, two goats, and a host who knows the secret — defined
+            entirely in Urd:
+          </p>
+
+          <div class="pres-code pres-reveal">
+            <div class="pres-code-header">
+              <span class="pres-code-filename">monty-hall.urd.md</span>
+              <span class="pres-code-badge">Schema Markdown</span>
+            </div>
+            <pre class="pres-code-block"><code>types:
+  Door [interactable]:
+    <span class="code-hidden">~</span>prize: enum(goat, car)
+    state: enum(closed, open) = closed
+    chosen: bool = false
+
+entities:
+  <span class="code-entity">@door_1</span>: Door &#123; prize: car &#125;
+  <span class="code-entity">@door_2</span>: Door &#123; prize: goat &#125;
+  <span class="code-entity">@door_3</span>: Door &#123; prize: goat &#125;
+  <span class="code-entity">@monty</span>: Host &#123; name: "Monty Hall" &#125;
+
+rule monty_reveals:
+  <span class="code-entity">@monty</span> selects target from [<span class="code-entity">@door_1</span>, <span class="code-entity">@door_2</span>, <span class="code-entity">@door_3</span>]
+  where target.prize != car
+  where target.chosen == false
+  where target.state == closed
+  <span class="code-effect">&gt;</span> target.state = open</code></pre>
+          </div>
+
+          <p class="pres-reveal">
+            The <span class="code-hidden">~</span> before <code>prize</code> means
+            it is hidden — the player cannot see it. Monty's rule constrains him: he
+            can only open a door that hides a goat and that the player did not choose.
+          </p>
+
+          <div class="pres-callout pres-reveal">
+            <span class="pres-callout-label">What to notice</span>
+            <p>
+              No probability is specified anywhere. Run this world 10,000 times and
+              switching wins two thirds of the time. The 2/3 advantage is not
+              coded — it <span class="hl">emerges from the structure</span>. That is
+              what declarative world description means in practice.
+            </p>
+          </div>
+        </section>
+
+        <!-- ═══ VI — TWO HALVES ═══ -->
+        <section class="pres-section" id="pres-pair">
+          <div class="pres-divider pres-reveal">
+            <span class="pres-numeral">VI</span>
           </div>
           <h2 class="pres-heading pres-reveal">Two halves of a whole</h2>
           <p class="pres-reveal">
@@ -621,10 +687,10 @@
           </div>
         </section>
 
-        <!-- ═══ VI — HOW IT WORKS ═══ -->
+        <!-- ═══ VII — HOW IT WORKS ═══ -->
         <section class="pres-section" id="pres-how">
           <div class="pres-divider pres-reveal">
-            <span class="pres-numeral">VI</span>
+            <span class="pres-numeral">VII</span>
           </div>
           <h2 class="pres-heading pres-reveal">How it works</h2>
           <p class="pres-reveal">
@@ -680,17 +746,18 @@
           </div>
         </section>
 
-        <!-- ═══ VII — WHAT MAKES IT DIFFERENT ═══ -->
+        <!-- ═══ VIII — WHAT MAKES IT DIFFERENT ═══ -->
         <section class="pres-section" id="pres-different">
           <div class="pres-divider pres-reveal">
-            <span class="pres-numeral">VII</span>
+            <span class="pres-numeral">VIII</span>
           </div>
           <h2 class="pres-heading pres-reveal">What makes it different</h2>
           <p class="pres-reveal">
             <span class="hl">Declarative, not imperative.</span> You describe what the
             world <em>is</em>, not what it <em>does</em>. A door is locked. A guard reveals
             information under certain conditions. The runtime figures out when and how.
-            Outcomes emerge from structure, not scripted sequences.
+            Outcomes emerge from structure, not scripted sequences — as the Monty Hall
+            example demonstrates.
           </p>
           <p class="pres-reveal">
             <span class="hl">One spatial primitive.</span> A room holds a sword. A chest
@@ -711,26 +778,70 @@
           </p>
         </section>
 
-        <!-- ═══ VIII — WHERE WE ARE ═══ -->
+        <!-- ═══ IX — WHERE IT BREAKS ═══ -->
+        <section class="pres-section" id="pres-limits">
+          <div class="pres-divider pres-reveal">
+            <span class="pres-numeral">IX</span>
+          </div>
+          <h2 class="pres-heading pres-reveal">Where it breaks</h2>
+          <p class="pres-reveal">
+            A declarative schema can describe a locked door, a hidden prize, a
+            conversation that branches on trust. But the interesting parts of
+            interactive fiction have always been the parts that are <em>not</em>
+            built in — the custom mechanic, the unexpected verb, the interaction
+            nobody anticipated.
+          </p>
+          <p class="pres-reveal">
+            This is a well-known problem. It has been called "database-driven IF"
+            and it has been tried before, going back to the 1980s. Systems that
+            delegate all behaviour to a runtime tend to produce worlds that feel
+            generic. The things players remember most are almost never the
+            standard library.
+          </p>
+          <p class="pres-reveal">
+            Urd's answer — not yet built, but designed — is a
+            <span class="hl">lambda extension host</span>: a way for authors to
+            attach custom logic to entities and rules without leaving the schema.
+            The runtime provides guardrails; the lambda provides the behaviour
+            the declarative layer cannot express. Whether that boundary is in the
+            right place is one of the things this project exists to find out.
+          </p>
+          <p class="pres-aside pres-reveal">
+            If your first reaction is scepticism, good. That is the correct reaction
+            to an unproven claim. The spec is public. The test cases are defined. The
+            failures will be too.
+          </p>
+        </section>
+
+        <!-- ═══ X — WHERE WE ARE ═══ -->
         <section class="pres-section" id="pres-status">
           <div class="pres-divider pres-reveal">
-            <span class="pres-numeral">VIII</span>
+            <span class="pres-numeral">X</span>
           </div>
           <h2 class="pres-heading pres-reveal">Where we are</h2>
           <p class="pres-reveal">
-            Urd is being built in the open. The v1 specification is complete — it defines
-            the schema, the markdown syntax, the compiler contract, and the runtime
-            semantics. The schema is at v0.1, intentionally minimal, covering the
-            primitives needed to validate the first test cases and establishing the
-            extension patterns for everything that follows. The project is now in
-            <span class="hl">formalisation</span>: turning prose specifications into
-            machine-enforceable JSON schemas and beginning compiler development.
+            The specification design is complete. It defines the schema, the markdown
+            syntax, the compiler contract, and the runtime semantics. The implementation
+            has not started. No compiler exists. No runtime exists. The schema is a
+            design, not a product.
           </p>
           <p class="pres-reveal">
-            This site, <span class="pres-gold">urd.dev</span>, is the development journal. Every
-            design document, architectural decision, and progress update is published here
-            as it happens. Full transparency — including the backlog, the active work, and
-            the completed milestones.
+            What does exist: a schema specification, a markdown syntax specification, an
+            architecture document, a runtime specification, a test case strategy, and a
+            pain points report sourced from developer forums. These are the design
+            documents for an experiment, published as they were written.
+          </p>
+          <p class="pres-reveal">
+            The next milestone is concrete: <span class="hl">compile the Monty Hall
+            problem to JSON and run it 10,000 times</span>. If the switching advantage
+            converges to 2/3, the declarative thesis holds for at least one interesting
+            case. Then the key puzzle. Then dialogue. Each milestone either validates the
+            design or forces it to change.
+          </p>
+          <p class="pres-reveal">
+            This site, <span class="pres-gold">urd.dev</span>, is the development journal.
+            Every design document, architectural decision, and progress update is published
+            here as it happens — including the parts that do not work.
           </p>
         </section>
 
@@ -739,7 +850,7 @@
           <h2 class="pres-heading pres-heading-closing pres-reveal">Take a look around</h2>
           <p class="pres-closing-text pres-reveal">
             You are welcome here. Read the specifications, explore the design documents,
-            or simply watch the project take shape.
+            or simply watch the experiment unfold.
           </p>
           <div class="pres-closing-links pres-reveal">
             <button class="pres-closing-link pres-closing-primary" onclick={close} aria-label="Close presentation">
@@ -790,6 +901,7 @@
   .pres-reveal:nth-child(4) { transition-delay: 0.18s; }
   .pres-reveal:nth-child(5) { transition-delay: 0.24s; }
   .pres-reveal:nth-child(6) { transition-delay: 0.30s; }
+  .pres-reveal:nth-child(7) { transition-delay: 0.36s; }
 
   @media (prefers-reduced-motion: reduce) {
     .pres-wrapper {
@@ -1390,6 +1502,73 @@
     margin-bottom: 0;
   }
 
+  /* ── Code block ── */
+  .pres-code {
+    margin: 32px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--deep);
+  }
+
+  .pres-code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--raise);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .pres-code-filename {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--dim);
+  }
+
+  .pres-code-badge {
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold-dim);
+    background: color-mix(in srgb, var(--gold) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+
+  .pres-code-block {
+    padding: 20px 16px;
+    margin: 0;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.65;
+    color: var(--dim);
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 2;
+  }
+
+  .pres-code-block code {
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .code-hidden {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .code-entity {
+    color: var(--gold-dim);
+  }
+
+  .code-effect {
+    color: var(--purple);
+  }
+
   /* ── Symbols ── */
   .pres-symbols {
     display: flex;
@@ -1546,6 +1725,10 @@
       gap: 10px;
     }
 
+    .pres-code-block {
+      font-size: 11px;
+      padding: 16px 12px;
+    }
   }
 
   @media (max-width: 840px) {
