@@ -32,6 +32,9 @@
 
   let scrollProgress = $state(0);
 
+  // Set to true to re-enable the audio companion player
+  const audioEnabled = false;
+
   let audioEl: HTMLAudioElement | undefined = $state(undefined);
   let isPlaying = $state(false);
   let audioProgress = $state(0);
@@ -297,11 +300,13 @@
 >
   <div class="pres-outer">
     {#if hasBeenOpened}
-      <audio
-        bind:this={audioEl}
-        src="/audio/introduction.m4a"
-        preload="none"
-      ></audio>
+      {#if audioEnabled}
+        <audio
+          bind:this={audioEl}
+          src="/audio/introduction.m4a"
+          preload="none"
+        ></audio>
+      {/if}
 
       <!-- Sticky header — outside the overflow container so sticky works -->
       <div
@@ -328,27 +333,29 @@
             {sections[currentSection].shortLabel}
           </span>
 
-          <div class="pres-audio-slot">
-            {#if audioDuration > 0}
-              <button class="pres-audio-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
-                <span aria-hidden="true">◂◂</span>
-              </button>
-              <button class="pres-audio-toggle" onclick={toggleAudio} aria-label={isPlaying ? 'Pause' : 'Play'}>
-                <span aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
-              </button>
-              <button class="pres-audio-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
-                <span aria-hidden="true">▸▸</span>
-              </button>
-              <!-- svelte-ignore a11y_click_events_have_key_events -->
-              <div class="pres-audio-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
-                <div class="pres-audio-bar-fill" style="width: {audioProgress * 100}%"></div>
-              </div>
-              <span class="pres-audio-time">{formatTime(audioCurrentTime)}</span>
-              <button class="pres-audio-rate" onclick={cyclePlaybackRate} aria-label="Playback speed {playbackRate}x">
-                {playbackRate}x
-              </button>
-            {/if}
-          </div>
+          {#if audioEnabled}
+            <div class="pres-audio-slot">
+              {#if audioDuration > 0}
+                <button class="pres-audio-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
+                  <span aria-hidden="true">◂◂</span>
+                </button>
+                <button class="pres-audio-toggle" onclick={toggleAudio} aria-label={isPlaying ? 'Pause' : 'Play'}>
+                  <span aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
+                </button>
+                <button class="pres-audio-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
+                  <span aria-hidden="true">▸▸</span>
+                </button>
+                <!-- svelte-ignore a11y_click_events_have_key_events -->
+                <div class="pres-audio-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+                  <div class="pres-audio-bar-fill" style="width: {audioProgress * 100}%"></div>
+                </div>
+                <span class="pres-audio-time">{formatTime(audioCurrentTime)}</span>
+                <button class="pres-audio-rate" onclick={cyclePlaybackRate} aria-label="Playback speed {playbackRate}x">
+                  {playbackRate}x
+                </button>
+              {/if}
+            </div>
+          {/if}
 
           <button
             class="pres-nav-btn"
@@ -376,34 +383,36 @@
             interactive worlds and hand it to AI to build? What follows is
             the lineage, the thesis, and an honest account of where we are.
           </p>
-          <div class="pres-listen-controls pres-reveal">
-            {#if audioDuration > 0}
-              <button class="pres-listen-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
-                <span class="pres-listen-skip-icon" aria-hidden="true">↺</span>
-                <span class="pres-listen-skip-label">10s</span>
+          {#if audioEnabled}
+            <div class="pres-listen-controls pres-reveal">
+              {#if audioDuration > 0}
+                <button class="pres-listen-skip" onclick={() => skipAudio(-10)} aria-label="Back 10 seconds">
+                  <span class="pres-listen-skip-icon" aria-hidden="true">↺</span>
+                  <span class="pres-listen-skip-label">10s</span>
+                </button>
+              {/if}
+              <button class="pres-listen-btn" onclick={toggleAudio} aria-label={isPlaying ? 'Pause narration' : 'Listen to narration'}>
+                <span class="pres-listen-icon" aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
               </button>
-            {/if}
-            <button class="pres-listen-btn" onclick={toggleAudio} aria-label={isPlaying ? 'Pause narration' : 'Listen to narration'}>
-              <span class="pres-listen-icon" aria-hidden="true">{isPlaying ? '❚❚' : '▶'}</span>
-            </button>
-            {#if audioDuration > 0}
-              <button class="pres-listen-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
-                <span class="pres-listen-skip-icon" aria-hidden="true">↻</span>
-                <span class="pres-listen-skip-label">10s</span>
-              </button>
-            {/if}
-          </div>
-          <div class="pres-listen-scrub" class:pres-listen-scrub-visible={audioDuration > 0}>
-            <span class="pres-listen-time">{formatTime(audioCurrentTime)}</span>
-            <!-- svelte-ignore a11y_click_events_have_key_events -->
-            <div class="pres-listen-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
-              <div class="pres-listen-bar-fill" style="width: {audioProgress * 100}%"></div>
+              {#if audioDuration > 0}
+                <button class="pres-listen-skip" onclick={() => skipAudio(10)} aria-label="Forward 10 seconds">
+                  <span class="pres-listen-skip-icon" aria-hidden="true">↻</span>
+                  <span class="pres-listen-skip-label">10s</span>
+                </button>
+              {/if}
             </div>
-            <span class="pres-listen-time">−{formatTime(audioDuration - audioCurrentTime)}</span>
-          </div>
-          <span class="pres-listen-label pres-reveal">{isPlaying ? 'Listening' : audioCurrentTime > 0 ? 'Resume' : 'Listen along'}{#if audioDuration > 0}
-            <button class="pres-listen-rate" onclick={cyclePlaybackRate} aria-label="Playback speed {playbackRate}x">{playbackRate}x</button>
-          {/if}</span>
+            <div class="pres-listen-scrub" class:pres-listen-scrub-visible={audioDuration > 0}>
+              <span class="pres-listen-time">{formatTime(audioCurrentTime)}</span>
+              <!-- svelte-ignore a11y_click_events_have_key_events -->
+              <div class="pres-listen-bar" onclick={seekAudio} onkeydown={seekAudioKey} role="slider" tabindex="0" aria-label="Audio progress" aria-valuenow={Math.round(audioProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+                <div class="pres-listen-bar-fill" style="width: {audioProgress * 100}%"></div>
+              </div>
+              <span class="pres-listen-time">−{formatTime(audioDuration - audioCurrentTime)}</span>
+            </div>
+            <span class="pres-listen-label pres-reveal">{isPlaying ? 'Listening' : audioCurrentTime > 0 ? 'Resume' : 'Listen along'}{#if audioDuration > 0}
+              <button class="pres-listen-rate" onclick={cyclePlaybackRate} aria-label="Playback speed {playbackRate}x">{playbackRate}x</button>
+            {/if}</span>
+          {/if}
           <span class="pres-welcome-hint pres-reveal" aria-hidden="true">Take your time ↓</span>
         </section>
 
