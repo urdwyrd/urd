@@ -28,14 +28,35 @@
   let navHeight = $state(0);
   let reducedMotion = $state(false);
 
+  let scrollProgress = $state(0);
+
   let wrapperEl: HTMLElement | undefined = $state(undefined);
   let headerEl: HTMLElement | undefined = $state(undefined);
 
   let observer: IntersectionObserver | null = null;
+  let revealObserver: IntersectionObserver | null = null;
 
   function measureNav(): void {
     const nav = document.getElementById('nav-bar');
     if (nav) navHeight = nav.offsetHeight;
+  }
+
+  function updateScrollProgress(): void {
+    if (!isOpen) return;
+    const first = document.getElementById(sections[0].id);
+    if (!first) return;
+    const headerHeight = headerEl?.offsetHeight ?? 48;
+    const offset = navHeight + headerHeight;
+    const start = first.getBoundingClientRect().top + window.scrollY - offset;
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+    if (maxScroll <= start) { scrollProgress = 1; return; }
+    const progress = (window.scrollY - start) / (maxScroll - start);
+    scrollProgress = Math.max(0, Math.min(1, progress));
+
+    // Sync section indicator when scrolled to the very end
+    if (scrollProgress >= 0.98) {
+      currentSection = sections.length - 1;
+    }
   }
 
   function open(): void {
@@ -52,11 +73,13 @@
 
     // After transition, scroll to presentation
     if (wrapperEl) {
-      const onEnd = () => {
+      const onEnd = async () => {
         wrapperEl?.removeEventListener('transitionend', onEnd);
         headerEl?.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'start' });
         headerEl?.focus();
         setupObserver();
+        await tick();
+        setupRevealObserver();
       };
       wrapperEl.addEventListener('transitionend', onEnd, { once: true });
       // Fallback if transition doesn't fire (e.g. reduced motion)
@@ -115,6 +138,34 @@
       observer.disconnect();
       observer = null;
     }
+    if (revealObserver) {
+      revealObserver.disconnect();
+      revealObserver = null;
+    }
+  }
+
+  function setupRevealObserver(): void {
+    if (reducedMotion) {
+      // Show everything immediately
+      for (const el of document.querySelectorAll('.pres-reveal')) {
+        el.classList.add('visible');
+      }
+      return;
+    }
+    revealObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            revealObserver?.unobserve(entry.target);
+          }
+        }
+      },
+      { rootMargin: '0px 0px -60px 0px', threshold: 0.01 }
+    );
+    for (const el of document.querySelectorAll('.pres-reveal')) {
+      revealObserver.observe(el);
+    }
   }
 
   function navigateToSection(index: number): void {
@@ -131,7 +182,7 @@
     reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     measureNav();
 
-    const scrollHandler = () => measureNav();
+    const scrollHandler = () => { measureNav(); updateScrollProgress(); };
     window.addEventListener('scroll', scrollHandler, { passive: true });
     window.addEventListener('resize', measureNav, { passive: true });
 
@@ -196,6 +247,9 @@
 
           <div class="pres-audio-slot"></div>
         </div>
+        <div class="pres-progress" role="progressbar" aria-valuenow={Math.round(scrollProgress * 100)} aria-valuemin={0} aria-valuemax={100}>
+          <div class="pres-progress-fill" style="width: {scrollProgress * 100}%"></div>
+        </div>
       </div>
 
       <!-- Content -->
@@ -203,28 +257,28 @@
 
         <!-- ═══ WELCOME ═══ -->
         <section class="pres-section pres-section-welcome" id="pres-welcome">
-          <span class="pres-welcome-eyebrow">A quiet introduction</span>
-          <h2 class="pres-welcome-heading">Welcome to Urd</h2>
-          <p class="pres-welcome-subtitle">
+          <span class="pres-welcome-eyebrow pres-reveal">A quiet introduction</span>
+          <h2 class="pres-welcome-heading pres-reveal">Welcome to Urd</h2>
+          <p class="pres-welcome-subtitle pres-reveal">
             A brief walk through the lineage, purpose, and architecture of a
             project that aims to give interactive worlds a common language.
           </p>
-          <span class="pres-welcome-hint" aria-hidden="true">Take your time ↓</span>
+          <span class="pres-welcome-hint pres-reveal" aria-hidden="true">Take your time ↓</span>
         </section>
 
         <!-- ═══ I — A LONG TRADITION ═══ -->
         <section class="pres-section" id="pres-tradition">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">I</span>
           </div>
-          <h2 class="pres-heading">A long tradition</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">A long tradition</h2>
+          <p class="pres-reveal">
             People have been building interactive worlds with text for decades,
             and the tools they have created are remarkable — each one solving a
             real part of the puzzle.
           </p>
 
-          <div class="pres-timeline">
+          <div class="pres-timeline pres-reveal">
             <div class="pres-timeline-entry">
               <div class="pres-timeline-marker"></div>
               <div class="pres-timeline-body">
@@ -288,44 +342,44 @@
 
         <!-- ═══ II — THE GAP ═══ -->
         <section class="pres-section" id="pres-gap">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">II</span>
           </div>
-          <h2 class="pres-heading">The gap</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">The gap</h2>
+          <p class="pres-reveal">
             Inform came closest. It unified space, objects, rules, and narrative in a
             single system, and it did it thirty years ago. But the world it describes
             is inseparable from the Inform runtime. You cannot hand an Inform world to
             Unity, to Godot, to a browser, to an AI. The world model and the execution
             engine are the same thing.
           </p>
-          <p>
+          <p class="pres-reveal">
             ink solved the portability problem, but only for dialogue. It compiles to a clean JSON
             format that any engine can consume. But it deliberately stops at conversation —
             no rooms, no objects, no containment.
           </p>
-          <p>
+          <p class="pres-reveal">
             What is missing is the combination: <span class="hl">a portable, structured
             data format</span>, like ink's JSON contract, <span class="hl">but for
             entire worlds</span>, like Inform's model. A format that describes space, objects,
             characters, rules, <em>and</em> narrative in one file that any runtime can execute
             without custom glue code.
           </p>
-          <p class="pres-aside">
+          <p class="pres-aside pres-reveal">
             The unification has been done. The portability has been done. Never at the same time.
           </p>
         </section>
 
         <!-- ═══ III — A NEW COLLABORATOR ═══ -->
         <section class="pres-section" id="pres-collaborator">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">III</span>
           </div>
-          <h2 class="pres-heading">A new collaborator at the table</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">A new collaborator at the table</h2>
+          <p class="pres-reveal">
             There is another reason this matters now in a way it did not a decade ago.
           </p>
-          <p>
+          <p class="pres-reveal">
             The tools in that lineage were built for a world where a single author, or a
             small team, typed every word, placed every object, wrote every rule by hand.
             That world is changing. Worlds are getting bigger, teams larger, and <span class="hl">AI is becoming a creative
@@ -335,7 +389,7 @@
             a quest line can have an AI generate the supporting NPCs, their dialogue, their
             behavioural rules — all consistent with the world's existing structure.
           </p>
-          <p>
+          <p class="pres-reveal">
             But here is the problem: most existing formats were not designed to be read
             by machines in any meaningful way. Twine stores its state in HTML passages.
             Inform's world model is embedded in natural-language source code. Game engine
@@ -343,7 +397,7 @@
             systems, but it is working <em>around</em> the format, not <em>with</em> it.
           </p>
 
-          <div class="pres-callout">
+          <div class="pres-callout pres-reveal">
             <span class="pres-callout-label">The insight</span>
             <p>
               If a world is described as <span class="hl">typed, structured,
@@ -356,7 +410,7 @@
             </p>
           </div>
 
-          <p>
+          <p class="pres-reveal">
             This does not mean AI is required. Every Urd world works perfectly without it.
             But when an AI <em>is</em> part of the creative process — and increasingly it
             will be — the world it is helping to build should be described in a language
@@ -366,37 +420,37 @@
 
         <!-- ═══ IV — THE IDEA ═══ -->
         <section class="pres-section" id="pres-idea">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">IV</span>
           </div>
-          <h2 class="pres-heading">The idea</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">The idea</h2>
+          <p class="pres-reveal">
             Urd starts from a simple premise: <span class="hl">what if you could describe
             an entire interactive world as structured data?</span>
           </p>
-          <p>
+          <p class="pres-reveal">
             Not code. Not a script tied to an engine. Just a clear, typed description of
             what exists, where things are, what the rules are, and what can happen. A
             description that any runtime — whether a browser, a game engine, a text terminal,
             or an AI — could pick up and execute.
           </p>
-          <p>
+          <p class="pres-reveal">
             A universal contract for interactive worlds.
           </p>
         </section>
 
         <!-- ═══ V — TWO HALVES ═══ -->
         <section class="pres-section" id="pres-pair">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">V</span>
           </div>
-          <h2 class="pres-heading">Two halves of a whole</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">Two halves of a whole</h2>
+          <p class="pres-reveal">
             The project has two parts, named from Norse mythology. They are
             complementary — one defines, the other executes.
           </p>
 
-          <div class="pres-pair-grid">
+          <div class="pres-pair-grid pres-reveal">
             <div class="pres-pair-card pres-pair-urd">
               <h3>Urd</h3>
               <span class="pres-pair-etymology">Old Norse Ur&#240;r — "that which has become"</span>
@@ -417,7 +471,7 @@
             </div>
           </div>
 
-          <div class="pres-callout">
+          <div class="pres-callout pres-reveal">
             <span class="pres-callout-label">In practice</span>
             <p>
               Writers describe worlds in a clean markdown syntax. The compiler produces a
@@ -430,16 +484,16 @@
 
         <!-- ═══ VI — HOW IT WORKS ═══ -->
         <section class="pres-section" id="pres-how">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">VI</span>
           </div>
-          <h2 class="pres-heading">How it works</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">How it works</h2>
+          <p class="pres-reveal">
             Writers author worlds using <span class="hl">Schema Markdown</span>, a
             syntax designed to feel like writing prose. The entire vocabulary is seven symbols.
           </p>
 
-          <div class="pres-symbols">
+          <div class="pres-symbols pres-reveal">
             <div class="pres-symbol">
               <span class="pres-symbol-glyph">@</span>
               <span class="pres-symbol-label">Entity</span>
@@ -470,13 +524,13 @@
             </div>
           </div>
 
-          <p>
+          <p class="pres-reveal">
             That is it. A character is <span class="pres-gold">@halvard</span>. A condition
             checks state. An effect changes it. Choices branch. Jumps navigate. If the syntax
             forces a writer to touch type definitions or JSON, the tooling has failed.
           </p>
 
-          <div class="pres-flow">
+          <div class="pres-flow pres-reveal">
             <span class="pres-flow-step pres-flow-write">.urd.md</span>
             <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
             <span class="pres-flow-step pres-flow-compile">compiler</span>
@@ -489,29 +543,29 @@
 
         <!-- ═══ VII — WHAT MAKES IT DIFFERENT ═══ -->
         <section class="pres-section" id="pres-different">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">VII</span>
           </div>
-          <h2 class="pres-heading">What makes it different</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">What makes it different</h2>
+          <p class="pres-reveal">
             <span class="hl">Declarative, not imperative.</span> You describe what the
             world <em>is</em>, not what it <em>does</em>. A door is locked. A guard reveals
             information under certain conditions. The runtime figures out when and how.
             Outcomes emerge from structure, not scripted sequences.
           </p>
-          <p>
+          <p class="pres-reveal">
             <span class="hl">One spatial primitive.</span> A room holds a sword. A chest
             holds a sword. A player's inventory holds a sword. It is all containment. One
             mechanism replaces three separate systems. Moving, picking up, and storing are
             the same operation.
           </p>
-          <p>
+          <p class="pres-reveal">
             <span class="hl">Engine agnostic.</span> The <span class="pres-gold">.urd.json</span>
             contract carries no rendering instructions. No pixel coordinates, no audio references,
             no UI layouts. A Unity plugin, a Godot addon, a browser, or a plain terminal can
             all consume the same file.
           </p>
-          <p>
+          <p class="pres-reveal">
             <span class="hl">AI native.</span> Every element is typed and unambiguous.
             An AI reading an Urd world does not need to guess what anything means. It is a
             formal contract, not documentation. But every world works perfectly without AI.
@@ -520,11 +574,11 @@
 
         <!-- ═══ VIII — WHERE WE ARE ═══ -->
         <section class="pres-section" id="pres-status">
-          <div class="pres-divider">
+          <div class="pres-divider pres-reveal">
             <span class="pres-numeral">VIII</span>
           </div>
-          <h2 class="pres-heading">Where we are</h2>
-          <p>
+          <h2 class="pres-heading pres-reveal">Where we are</h2>
+          <p class="pres-reveal">
             Urd is being built in the open. The v1 specification is complete — it defines
             the schema, the markdown syntax, the compiler contract, and the runtime
             semantics. The schema is at v0.1, intentionally minimal, covering the
@@ -533,7 +587,7 @@
             <span class="hl">formalisation</span>: turning prose specifications into
             machine-enforceable JSON schemas and beginning compiler development.
           </p>
-          <p>
+          <p class="pres-reveal">
             This site, <span class="pres-gold">urd.dev</span>, is the development journal. Every
             design document, architectural decision, and progress update is published here
             as it happens. Full transparency — including the backlog, the active work, and
@@ -543,12 +597,12 @@
 
         <!-- ═══ CLOSING ═══ -->
         <section class="pres-section pres-section-closing" id="pres-closing">
-          <h2 class="pres-heading pres-heading-closing">Take a look around</h2>
-          <p class="pres-closing-text">
+          <h2 class="pres-heading pres-heading-closing pres-reveal">Take a look around</h2>
+          <p class="pres-closing-text pres-reveal">
             You are welcome here. Read the specifications, explore the design documents,
             or simply watch the project take shape.
           </p>
-          <div class="pres-closing-links">
+          <div class="pres-closing-links pres-reveal">
             <button class="pres-closing-link pres-closing-primary" onclick={close} aria-label="Close presentation">
               <span aria-hidden="true">✕</span>
             </button>
@@ -579,9 +633,38 @@
     min-height: 0;
   }
 
+  /* ── Scroll reveal ── */
+  .pres-reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+
+  .pres-reveal:global(.visible) {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger siblings within a section */
+  .pres-reveal:nth-child(2) { transition-delay: 0.06s; }
+  .pres-reveal:nth-child(3) { transition-delay: 0.12s; }
+  .pres-reveal:nth-child(4) { transition-delay: 0.18s; }
+  .pres-reveal:nth-child(5) { transition-delay: 0.24s; }
+  .pres-reveal:nth-child(6) { transition-delay: 0.30s; }
+
   @media (prefers-reduced-motion: reduce) {
     .pres-wrapper {
       transition-duration: 0.01ms;
+    }
+
+    .pres-progress-fill {
+      animation: none;
+    }
+
+    .pres-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
     }
   }
 
@@ -653,6 +736,24 @@
 
   .pres-audio-slot {
     /* Reserved for future audio controls */
+  }
+
+  /* ── Progress bar ── */
+  .pres-progress {
+    height: 2px;
+    background: var(--border);
+  }
+
+  .pres-progress-fill {
+    height: 100%;
+    background: var(--gold-dark);
+    box-shadow: 0 0 6px color-mix(in srgb, var(--gold) 30%, transparent);
+    animation: pres-bar-breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes pres-bar-breathe {
+    0%, 100% { box-shadow: 0 0 4px color-mix(in srgb, var(--gold) 20%, transparent); }
+    50% { box-shadow: 0 0 8px color-mix(in srgb, var(--gold) 45%, transparent); }
   }
 
   /* ── Content ── */
