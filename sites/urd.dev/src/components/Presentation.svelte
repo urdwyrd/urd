@@ -31,6 +31,8 @@
   let reducedMotion = $state(false);
 
   let scrollProgress = $state(0);
+  let isNavigating = $state(false);
+  let navTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Set to true to re-enable the audio companion player
   const audioEnabled = false;
@@ -68,7 +70,7 @@
     scrollProgress = Math.max(0, Math.min(1, progress));
 
     // Sync section indicator when scrolled to the very end
-    if (scrollProgress >= 0.98) {
+    if (scrollProgress >= 0.98 && !isNavigating) {
       currentSection = sections.length - 1;
     }
   }
@@ -136,6 +138,7 @@
     const headerHeight = headerEl?.offsetHeight ?? 48;
     observer = new IntersectionObserver(
       (entries) => {
+        if (isNavigating) return;
         for (const entry of entries) {
           if (entry.isIntersecting) {
             const index = sections.findIndex(s => s.id === entry.target.id);
@@ -247,6 +250,13 @@
     if (index < 0 || index >= sections.length) return;
     const el = document.getElementById(sections[index].id);
     if (!el) return;
+
+    // Lock navigation so the observer doesn't fight the scroll
+    isNavigating = true;
+    currentSection = index;
+    if (navTimer) clearTimeout(navTimer);
+    navTimer = setTimeout(() => { isNavigating = false; }, 800);
+
     const headerHeight = headerEl?.offsetHeight ?? 48;
     const offset = navHeight + headerHeight + 16;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
@@ -944,6 +954,7 @@ rule monty_reveals:
     padding: 10px 32px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 12px;
     position: relative;
   }
