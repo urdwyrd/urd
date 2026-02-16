@@ -6,6 +6,7 @@ const updates = defineCollection({
   schema: z.object({
     title: z.string(),
     date: z.string(),
+    link: z.string().optional(),
   }),
 });
 
@@ -50,6 +51,16 @@ const timeline = defineCollection({
   }),
 });
 
+const articles = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: '../../content/articles' }),
+  schema: z.object({
+    title: z.string(),
+    slug: z.string(),
+    description: z.string(),
+    date: z.string(),
+  }),
+});
+
 const documentReviews = defineCollection({
   loader: glob({ pattern: '**/*.md', base: '../../content/document-reviews' }),
   schema: z.object({
@@ -62,4 +73,4 @@ const documentReviews = defineCollection({
   }),
 });
 
-export const collections = { designDocs, reviews, updates, timeline, documentReviews };
+export const collections = { articles, designDocs, reviews, updates, timeline, documentReviews };

@@ -1,0 +1,218 @@
+---
+import Base from "./base.astro";
+import Nav from "../components/Nav.astro";
+import RuneCanvas from "../components/RuneCanvas.astro";
+
+interface Props {
+  title: string;
+  description: string;
+  date: string;
+}
+
+const { title, description, date } = Astro.props;
+
+const MONTHS: Record<string, string> = {
+  "01": "Jan", "02": "Feb", "03": "Mar", "04": "Apr",
+  "05": "May", "06": "Jun", "07": "Jul", "08": "Aug",
+  "09": "Sep", "10": "Oct", "11": "Nov", "12": "Dec",
+};
+const [year, month] = date ? date.split("-") : ["", ""];
+const displayDate = year && month ? `${MONTHS[month] ?? month} ${year}` : "";
+---
+
+<Base title={`${title} · Urd`} description={description}>
+  <Nav />
+  <RuneCanvas />
+
+  <div class="article-page">
+    <article class="article-content">
+      <nav class="article-breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span aria-hidden="true">→</span>
+        <span>Articles</span>
+        <span aria-hidden="true">→</span>
+        <span class="article-breadcrumb-current">{title}</span>
+      </nav>
+
+      <header class="article-header">
+        <div class="article-header-accent"></div>
+        {displayDate && <span class="article-date">{displayDate}</span>}
+        <h1 class="article-title">{title}</h1>
+        {description && <p class="article-description">{description}</p>}
+      </header>
+
+      <div class="prose">
+        <slot />
+      </div>
+
+      <footer class="article-footer">
+        <div class="article-footer-rule"></div>
+        <div class="article-footer-actions">
+          <a href="/" class="article-footer-link">
+            <span aria-hidden="true">←</span> Home
+          </a>
+          <button class="article-footer-link" id="back-to-top">
+            <span aria-hidden="true">↑</span> Back to top
+          </button>
+        </div>
+      </footer>
+    </article>
+  </div>
+
+  <script>
+    document.getElementById('back-to-top')?.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+</Base>
+
+<style>
+  .article-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 0 32px 96px;
+  }
+
+  .article-content {
+    min-width: 0;
+  }
+
+  /* ── Breadcrumb ── */
+  .article-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 0;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.02em;
+  }
+
+  .article-breadcrumb a {
+    color: var(--faint);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .article-breadcrumb a:hover {
+    color: var(--gold);
+  }
+
+  .article-breadcrumb-current {
+    color: var(--dim);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 300px;
+  }
+
+  /* ── Header ── */
+  .article-header {
+    margin-bottom: 48px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .article-header-accent {
+    width: 48px;
+    height: 3px;
+    background: var(--gold-dim);
+    border-radius: 2px;
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+
+  .article-date {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--faint);
+    letter-spacing: 0.06em;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  .article-title {
+    font-family: var(--display);
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 14px;
+  }
+
+  .article-description {
+    font-family: var(--body);
+    font-size: 19px;
+    color: var(--dim);
+    line-height: 1.6;
+  }
+
+  /* ── Footer ── */
+  .article-footer {
+    margin-top: 64px;
+    padding-top: 32px;
+  }
+
+  .article-footer-rule {
+    width: 48px;
+    height: 3px;
+    background: var(--gold-dim);
+    border-radius: 2px;
+    margin-bottom: 24px;
+    opacity: 0.5;
+  }
+
+  .article-footer-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .article-footer-link {
+    font-family: var(--display);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--faint);
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+
+  .article-footer-link:hover {
+    color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold) 30%, transparent);
+  }
+
+  .article-footer-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 640px) {
+    .article-page {
+      padding: 0 18px 64px;
+    }
+
+    .article-breadcrumb {
+      padding: 16px 0;
+    }
+
+    .article-title {
+      font-size: clamp(24px, 6vw, 32px);
+    }
+
+    .article-footer-actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

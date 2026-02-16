@@ -19,9 +19,9 @@
   }
 
   let {
-    label = 'Peer Review',
+    label = 'Sycophancy Corner',
     title = 'What the Machines Think',
-    subtitle = 'We asked leading AI systems to review the specification. They had opinions.',
+    subtitle = 'We asked AI systems to review the specification. They were suspiciously enthusiastic.',
   }: Props = $props();
 
   let reviews: Review[] = $state([]);
@@ -51,28 +51,30 @@
     <div class="peer-review-grid">
       {#each reviews as review}
         <article class="review-card" style="--accent: {review.colour}">
-          <div class="review-stars">
-            {#each { length: stars(review.rating).filled } as _}
-              <span class="star filled">★</span>
-            {/each}
-            {#each { length: stars(review.rating).empty } as _}
-              <span class="star empty">★</span>
-            {/each}
-          </div>
           <blockquote class="review-quote">
             {review.quote}
           </blockquote>
-          <div class="review-attribution">
-            <img
-              class="review-avatar"
-              src={review.icon}
-              alt={review.model}
-              width="32"
-              height="32"
-            />
-            <div class="review-meta">
-              <span class="review-model">{review.model}</span>
-              <span class="review-company">{review.company} · {review.date}</span>
+          <div class="review-footer">
+            <div class="review-attribution">
+              <img
+                class="review-avatar"
+                src={review.icon}
+                alt={review.model}
+                width="32"
+                height="32"
+              />
+              <div class="review-meta">
+                <span class="review-model">{review.model}</span>
+                <span class="review-company">{review.company} · {review.date}</span>
+              </div>
+            </div>
+            <div class="review-stars">
+              {#each { length: stars(review.rating).filled } as _}
+                <span class="star filled">★</span>
+              {/each}
+              {#each { length: stars(review.rating).empty } as _}
+                <span class="star empty">★</span>
+              {/each}
             </div>
           </div>
         </article>
@@ -148,10 +150,18 @@
     background: var(--surface);
   }
 
+  .review-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+  }
+
   .review-stars {
     display: flex;
     gap: 2px;
-    align-self: flex-end;
+    flex-shrink: 0;
   }
 
   .star {
@@ -182,7 +192,6 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-top: auto;
   }
 
   .review-avatar {

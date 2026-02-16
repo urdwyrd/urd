@@ -5,6 +5,7 @@
     title: string;
     date: string;
     description: string;
+    link: string | null;
   }
 
   interface Props {
@@ -53,7 +54,14 @@
         <article class="log-entry">
           <span class="log-date">{formatDate(update.date)}</span>
           <div class="log-content">
-            <h3 class="log-entry-title">{update.title}</h3>
+            {#if update.link}
+              <h3 class="log-entry-title">
+                <a href={update.link} class="log-entry-link">{update.title}</a>
+                <span class="log-entry-pill">Article</span>
+              </h3>
+            {:else}
+              <h3 class="log-entry-title">{update.title}</h3>
+            {/if}
             <p class="log-entry-description">{update.description}</p>
           </div>
         </article>
@@ -133,6 +141,31 @@
     color: var(--text);
     line-height: 1.3;
     margin-bottom: 6px;
+  }
+
+  .log-entry-link {
+    color: var(--text);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .log-entry-link:hover {
+    color: var(--gold);
+  }
+
+  .log-entry-pill {
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--gold-dim);
+    background: color-mix(in srgb, var(--gold-dim) 10%, transparent);
+    border-radius: 20px;
+    padding: 2px 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+    line-height: 1.6;
   }
 
   .log-entry-description {
