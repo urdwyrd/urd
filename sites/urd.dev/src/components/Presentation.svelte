@@ -617,20 +617,28 @@
           <h2 class="pres-heading pres-reveal">The proof</h2>
           <p class="pres-reveal">
             Ideas are cheap. Here is a concrete one. The Monty Hall problem — three
-            doors, a car, two goats, and a host who knows the secret — defined
-            entirely in Urd:
+            doors, a car, two goats, and a host who knows the secret — split across
+            two files. One defines what the world <em>is</em>. The other defines
+            what the player <em>does</em>.
           </p>
 
           <div class="pres-code pres-reveal">
             <div class="pres-code-header">
-              <span class="pres-code-filename">monty-hall.urd.md</span>
-              <span class="pres-code-badge">Schema Markdown</span>
+              <span class="pres-code-filename">world.urd.md</span>
+              <span class="pres-code-badge">World Model</span>
             </div>
-            <pre class="pres-code-block"><code>types:
+            <pre class="pres-code-block"><code>world: monty-hall
+start: stage
+entry: game
+
+types:
   Door [interactable]:
     <span class="code-hidden">~</span>prize: enum(goat, car)
     state: enum(closed, open) = closed
     chosen: bool = false
+
+  Host:
+    name: string
 
 entities:
   <span class="code-entity">@door_1</span>: Door &#123; prize: car &#125;
@@ -647,9 +655,54 @@ rule monty_reveals:
           </div>
 
           <p class="pres-reveal">
+            The engineer owns this file — types, entities, and rules. Now the
+            designer writes the player-facing flow:
+          </p>
+
+          <div class="pres-code pres-reveal">
+            <div class="pres-code-header">
+              <span class="pres-code-filename">monty-hall.urd.md</span>
+              <span class="pres-code-badge">Narrative Flow</span>
+            </div>
+            <pre class="pres-code-block"><code>import: ./world.urd.md
+
+# Stage
+
+A game show stage with three closed doors.
+
+[<span class="code-entity">@door_1</span>, <span class="code-entity">@door_2</span>, <span class="code-entity">@door_3</span>, <span class="code-entity">@monty</span>]
+
+## Game
+
+### Choose
+Pick a door.
+* Pick a door -&gt; any Door
+  ? target.state == closed
+  ? target.chosen == false
+  <span class="code-effect">&gt;</span> target.chosen = true
+
+### Reveal (auto)
+<span class="code-entity">@monty</span> opens a door that hides a goat.
+
+### Switch or Stay
+Monty opened a door with a goat. Switch or stay?
+* Switch to the other closed door -&gt; any Door
+  ? target.state == closed
+  ? target.chosen == false
+  <span class="code-effect">&gt;</span> target.chosen = true
+* Stay with your current choice
+
+### Resolve (auto)
+<span class="code-effect">&gt;</span> reveal <span class="code-entity">@door_1</span>.prize
+<span class="code-effect">&gt;</span> reveal <span class="code-entity">@door_2</span>.prize
+<span class="code-effect">&gt;</span> reveal <span class="code-entity">@door_3</span>.prize</code></pre>
+          </div>
+
+          <p class="pres-reveal">
             The <span class="code-hidden">~</span> before <code>prize</code> means
-            it is hidden — the player cannot see it. Monty's rule constrains him: he
-            can only open a door that hides a goat and that the player did not choose.
+            it is hidden — the player cannot see it. The <code>(auto)</code> beats
+            run without player input. Monty's rule constrains him: he can only open
+            a door that hides a goat and that the player did not choose.
           </p>
 
           <div class="pres-callout pres-reveal">
