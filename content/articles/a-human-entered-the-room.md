@@ -81,7 +81,7 @@ This is not something that can be automated. It is not a failure of current mode
 
 ### The Inform 10 correction
 
-The community pointed out that Inform 10 has made progress on the portability problem Urd claims to address. The assertion that "you cannot hand an Inform world to Unity, to Godot, to a browser" is no longer entirely accurate. The project's documentation has been updated to acknowledge this, but the broader lesson is important: claims about the limitations of existing tools must be current, not based on the AI's training data snapshot.
+The community pointed out that Inform 10, open-sourced in 2022, has made progress on the portability problem Urd claims to address. The Glulx VM can be embedded in Unity or Godot, which means Inform worlds *can* run inside modern engines. The original assertion that "you cannot hand an Inform world to Unity, to Godot, to a browser" was too strong. But the distinction Urd draws is more specific than embeddability: Inform's output is bytecode for a virtual machine, not a typed data contract that external tools or AI can inspect, query, or reason about. There is no `.json` you can hand to a different system and say "here is what this world contains." The project's documentation has been updated to acknowledge Inform 10's progress and to draw the distinction more precisely. The broader lesson remains: claims about the limitations of existing tools must be current, specific, and defensible, not based on the AI's training data snapshot.
 
 ## What changed
 
