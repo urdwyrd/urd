@@ -58,6 +58,8 @@ fn assert_invalid(path: &str, expected_line: usize, expected_col: usize) {
     match parse(&input) {
         Ok(_) => panic!("Expected {} to fail parsing, but it succeeded", path),
         Err(e) => {
+            // Print the full error so --nocapture shows what pest reported
+            println!("✗ {} → rejected (expected):\n{}", path, e);
             // Extract line and column from pest error
             let (line, col) = match e.line_col {
                 pest::error::LineColLocation::Pos((l, c)) => (l, c),
@@ -94,9 +96,10 @@ fn invalid_unclosed_frontmatter() {
         .unwrap_or_else(|e| panic!("Failed to read {}: {}", path, e));
     match parse(&input) {
         Ok(_) => panic!("Expected {} to fail parsing, but it succeeded", path),
-        Err(_) => {
+        Err(e) => {
             // Parse failure is sufficient — exact position depends on
             // how far the parser gets before failing.
+            println!("✗ {} → rejected (expected):\n{}", path, e);
         }
     }
 }
