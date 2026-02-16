@@ -15,7 +15,7 @@ On 15 February 2026, Urd was posted to an online community for people who build,
 
 The community responded. Not with polite interest. With expertise.
 
-Within hours, the thread had contributions from people who know this domain deeply. They read the specifications, visited the site, inspected the claims, and told us what they found.
+Within hours, the thread had contributions from people who know this domain deeply. They visited the site, inspected the claims, and told us what they found.
 
 This document records what they said, what it exposed, and what the project is doing about it.
 
