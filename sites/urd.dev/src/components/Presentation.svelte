@@ -953,6 +953,7 @@ Monty opened a door with a goat. Switch or stay?
   .pres-outer {
     overflow: clip;
     min-height: 0;
+    min-width: 0;
   }
 
   /* ── Scroll reveal ── */
