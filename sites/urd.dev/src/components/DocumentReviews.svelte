@@ -21,9 +21,9 @@
 
   let {
     slug,
-    label = 'Peer Review',
+    label = 'Sycophancy Corner',
     heading = 'What the Machines Think',
-    subtitle = 'AI systems reviewed this document. Here is what they had to say.',
+    subtitle = 'We asked AI systems to review this document. They were suspiciously enthusiastic.',
   }: Props = $props();
 
   let reviews: Review[] = $state([]);

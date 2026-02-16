@@ -68,16 +68,16 @@ import Presentation from "../components/Presentation.svelte";
   <Presentation client:idle />
 
   <div class="content">
+    <section id="updates">
+      <ProjectLog client:visible />
+    </section>
+
     <section id="timeline">
       <ProjectTimeline client:visible />
     </section>
 
     <section id="documents">
       <DocumentExplorer client:visible />
-    </section>
-
-    <section id="updates">
-      <ProjectLog client:visible />
     </section>
 
     <section id="architecture">
