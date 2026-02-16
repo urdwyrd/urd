@@ -55,7 +55,6 @@ The community also acknowledged several things:
 
 - The problem Urd is trying to solve, the fragmentation tax, the glue code between narrative tools and game engines, is real.
 - The experimental framing, once explained, was more interesting than the product framing the site presented.
-- The willingness to accept harsh feedback publicly and respond to it constructively was noted positively.
 - The question of whether AI-driven development can produce real systems from formal specifications is genuinely worth asking, regardless of whether Urd specifically succeeds.
 
 ## What it revealed
