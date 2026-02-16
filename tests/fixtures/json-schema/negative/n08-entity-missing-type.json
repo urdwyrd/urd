@@ -1,0 +1,11 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "entities": {
+    "foo": {
+      "properties": {}
+    }
+  }
+}

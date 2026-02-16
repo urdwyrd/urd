@@ -1,0 +1,136 @@
+{
+  "world": {
+    "name": "tavern-dialogue",
+    "urd": "1",
+    "description": "A dialogue exercise set in a tavern."
+  },
+  "dialogue": {
+    "tavern/topics": {
+      "id": "tavern/topics",
+      "prompt": {
+        "speaker": "arina",
+        "text": "What'll it be, stranger?"
+      },
+      "choices": [
+        {
+          "id": "tavern/topics/ask-about-the-harbor",
+          "label": "Ask about the harbor",
+          "sticky": true,
+          "response": {
+            "speaker": "arina",
+            "text": "Quiet today. Too quiet."
+          },
+          "effects": [
+            { "set": "arina.trust", "to": "arina.trust + 5" }
+          ],
+          "goto": "tavern/topics"
+        },
+        {
+          "id": "tavern/topics/buy-a-drink",
+          "label": "Buy a drink",
+          "sticky": false,
+          "response": {
+            "speaker": "arina",
+            "text": "Coming right up. That'll be two coppers."
+          },
+          "effects": [
+            { "set": "player.coins", "to": "player.coins - 2" }
+          ],
+          "conditions": [
+            "player.coins >= 2"
+          ]
+        },
+        {
+          "id": "tavern/topics/ask-about-rumors",
+          "label": "Ask about rumors",
+          "sticky": true,
+          "conditions": [
+            "arina.trust >= 10"
+          ],
+          "response": {
+            "speaker": "arina",
+            "text": "You didn't hear this from me..."
+          },
+          "choices": [
+            {
+              "id": "tavern/topics/ask-about-rumors/press-for-details",
+              "label": "Press for details",
+              "sticky": false,
+              "response": {
+                "speaker": "arina",
+                "text": "There's a smuggler ship arriving at midnight."
+              },
+              "effects": [
+                { "set": "player.knows_smuggler", "to": true }
+              ]
+            },
+            {
+              "id": "tavern/topics/ask-about-rumors/change-subject",
+              "label": "Change the subject",
+              "sticky": true,
+              "response": {
+                "speaker": "arina",
+                "text": "Suit yourself."
+              },
+              "goto": "tavern/topics"
+            }
+          ]
+        },
+        {
+          "id": "tavern/topics/threaten",
+          "label": "Threaten the barkeep",
+          "sticky": false,
+          "conditions": [
+            "player.reputation < 20"
+          ],
+          "response": {
+            "speaker": "arina",
+            "text": "You'll regret that."
+          },
+          "effects": [
+            { "set": "arina.trust", "to": "0" }
+          ],
+          "goto": "tavern/farewell"
+        }
+      ],
+      "on_exhausted": {
+        "text": "Suit yourself."
+      }
+    },
+    "tavern/farewell": {
+      "id": "tavern/farewell",
+      "description": "Arina turns away, clearly done talking.",
+      "prompt": {
+        "speaker": "arina",
+        "text": "I think we're done here."
+      },
+      "choices": [
+        {
+          "id": "tavern/farewell/apologise",
+          "label": "Apologise",
+          "sticky": false,
+          "response": {
+            "speaker": "arina",
+            "text": "Words are cheap. Prove it."
+          },
+          "effects": [
+            { "set": "arina.trust", "to": "5" }
+          ],
+          "goto": "tavern/topics"
+        },
+        {
+          "id": "tavern/farewell/leave",
+          "label": "Leave",
+          "sticky": true,
+          "response": {
+            "text": "You walk away from the bar."
+          }
+        }
+      ],
+      "on_exhausted": {
+        "speaker": "arina",
+        "text": "The door's that way."
+      }
+    }
+  }
+}

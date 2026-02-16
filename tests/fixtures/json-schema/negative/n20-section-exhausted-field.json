@@ -1,0 +1,12 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "dialogue": {
+    "test/section": {
+      "id": "test/section",
+      "exhausted": true
+    }
+  }
+}

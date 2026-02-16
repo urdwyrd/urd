@@ -1,0 +1,21 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "rules": {
+    "r": {
+      "trigger": "always",
+      "select": {
+        "from": [],
+        "as": "t"
+      },
+      "effects": [
+        {
+          "set": "x.y",
+          "to": 1
+        }
+      ]
+    }
+  }
+}

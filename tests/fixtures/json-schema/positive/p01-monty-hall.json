@@ -1,0 +1,150 @@
+{
+  "world": {
+    "name": "monty-hall",
+    "urd": "1",
+    "description": "The classic Monty Hall problem.",
+    "start": "stage",
+    "entry": "game"
+  },
+  "types": {
+    "Door": {
+      "traits": ["interactable"],
+      "properties": {
+        "prize": {
+          "type": "enum",
+          "values": ["goat", "car"],
+          "visibility": "hidden"
+        },
+        "state": {
+          "type": "enum",
+          "values": ["closed", "open"],
+          "default": "closed"
+        },
+        "chosen": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "Host": {
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "entities": {
+    "door_1": {
+      "type": "Door",
+      "properties": {
+        "prize": "car"
+      }
+    },
+    "door_2": {
+      "type": "Door",
+      "properties": {
+        "prize": "goat"
+      }
+    },
+    "door_3": {
+      "type": "Door",
+      "properties": {
+        "prize": "goat"
+      }
+    },
+    "monty": {
+      "type": "Host",
+      "properties": {
+        "name": "Monty Hall"
+      }
+    }
+  },
+  "locations": {
+    "stage": {
+      "description": "A game show stage with three closed doors.",
+      "contains": ["door_1", "door_2", "door_3", "monty"]
+    }
+  },
+  "rules": {
+    "monty_reveals": {
+      "description": "Monty opens a door that hides a goat.",
+      "actor": "monty",
+      "trigger": "phase_is reveal",
+      "select": {
+        "from": ["door_1", "door_2", "door_3"],
+        "as": "target",
+        "where": [
+          "target.prize != car",
+          "target.chosen == false",
+          "target.state == closed"
+        ]
+      },
+      "effects": [
+        { "set": "target.state", "to": "open" }
+      ]
+    }
+  },
+  "actions": {
+    "choose_door": {
+      "description": "Pick a door",
+      "target_type": "Door",
+      "conditions": [
+        "target.state == closed",
+        "target.chosen == false"
+      ],
+      "effects": [
+        { "set": "target.chosen", "to": true }
+      ]
+    },
+    "switch_door": {
+      "description": "Switch to the other closed door",
+      "target_type": "Door",
+      "conditions": [
+        "target.state == closed",
+        "target.chosen == false"
+      ],
+      "effects": [
+        { "set": "target.chosen", "to": true }
+      ]
+    },
+    "stay": {
+      "description": "Stay with your current choice",
+      "effects": []
+    }
+  },
+  "sequences": {
+    "game": {
+      "phases": [
+        {
+          "id": "choose",
+          "prompt": "Pick a door.",
+          "action": "choose_door",
+          "advance": "on_action"
+        },
+        {
+          "id": "reveal",
+          "auto": true,
+          "rule": "monty_reveals",
+          "advance": "on_rule"
+        },
+        {
+          "id": "switch_or_stay",
+          "prompt": "Monty opened a door with a goat. Switch or stay?",
+          "actions": ["switch_door", "stay"],
+          "advance": "on_action"
+        },
+        {
+          "id": "resolve",
+          "auto": true,
+          "effects": [
+            { "reveal": "door_1.prize" },
+            { "reveal": "door_2.prize" },
+            { "reveal": "door_3.prize" }
+          ],
+          "advance": "end"
+        }
+      ]
+    }
+  }
+}

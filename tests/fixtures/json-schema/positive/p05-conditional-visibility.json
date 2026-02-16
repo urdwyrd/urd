@@ -1,0 +1,51 @@
+{
+  "world": {
+    "name": "conditional-visibility",
+    "urd": "1",
+    "description": "Exercises the conditional visibility object form on a property."
+  },
+  "types": {
+    "Inscription": {
+      "traits": ["interactable"],
+      "properties": {
+        "secret_message": {
+          "type": "string",
+          "default": "The key is under the stone",
+          "visibility": {
+            "type": "conditional",
+            "condition": "magnifying_glass.container == player"
+          }
+        },
+        "surface_text": {
+          "type": "string",
+          "default": "An ancient stone tablet covered in dust."
+        }
+      }
+    },
+    "Tool": {
+      "traits": ["portable"],
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "entities": {
+    "tablet": {
+      "type": "Inscription"
+    },
+    "magnifying_glass": {
+      "type": "Tool",
+      "properties": {
+        "name": "Magnifying Glass"
+      }
+    }
+  },
+  "locations": {
+    "study": {
+      "description": "A dusty study filled with old books.",
+      "contains": ["tablet", "magnifying_glass"]
+    }
+  }
+}

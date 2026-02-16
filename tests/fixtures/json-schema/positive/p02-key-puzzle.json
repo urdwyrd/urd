@@ -1,0 +1,135 @@
+{
+  "world": {
+    "name": "two-room-key",
+    "urd": "1",
+    "description": "Find the key, unlock the door, escape.",
+    "start": "cell"
+  },
+  "types": {
+    "Key": {
+      "traits": ["portable"],
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "LockedDoor": {
+      "traits": ["interactable"],
+      "properties": {
+        "locked": {
+          "type": "boolean",
+          "default": true
+        },
+        "requires": {
+          "type": "ref",
+          "ref_type": "Key"
+        }
+      }
+    },
+    "Guard": {
+      "traits": ["interactable", "mobile", "container"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "mood": {
+          "type": "enum",
+          "values": ["hostile", "neutral", "helpful"],
+          "default": "hostile"
+        },
+        "hint_given": {
+          "type": "boolean",
+          "default": false,
+          "visibility": "owner"
+        }
+      }
+    }
+  },
+  "entities": {
+    "rusty_key": {
+      "type": "Key",
+      "properties": {
+        "name": "Rusty Key"
+      }
+    },
+    "cell_door": {
+      "type": "LockedDoor",
+      "properties": {
+        "requires": "rusty_key"
+      }
+    },
+    "guard": {
+      "type": "Guard",
+      "properties": {
+        "name": "Halvard"
+      }
+    }
+  },
+  "locations": {
+    "cell": {
+      "description": "A dim stone cell. A guard watches from the corner.",
+      "contains": ["rusty_key", "guard", "cell_door"],
+      "exits": {
+        "north": {
+          "to": "corridor",
+          "condition": "cell_door.locked == false",
+          "blocked_message": "The iron door is locked."
+        }
+      }
+    },
+    "corridor": {
+      "description": "A long corridor. Daylight leaks from the far end.",
+      "exits": {
+        "south": {
+          "to": "cell"
+        }
+      }
+    }
+  },
+  "actions": {
+    "offer_patience": {
+      "description": "Wait quietly and show respect",
+      "target": "guard",
+      "conditions": [
+        "guard.mood == hostile"
+      ],
+      "effects": [
+        { "set": "guard.mood", "to": "neutral" }
+      ]
+    },
+    "talk_to_guard": {
+      "description": "Talk to the guard",
+      "target": "guard",
+      "conditions": [
+        "guard.mood == neutral",
+        "guard.hint_given == false"
+      ],
+      "effects": [
+        { "set": "guard.hint_given", "to": true }
+      ]
+    },
+    "pick_up_key": {
+      "description": "Pick up the rusty key",
+      "target": "rusty_key",
+      "conditions": [
+        "rusty_key.container == player.container"
+      ],
+      "effects": [
+        { "move": "rusty_key", "to": "player" }
+      ]
+    },
+    "unlock_door": {
+      "description": "Use the key on the door",
+      "target": "cell_door",
+      "conditions": [
+        "rusty_key.container == player",
+        "cell_door.locked == true"
+      ],
+      "effects": [
+        { "set": "cell_door.locked", "to": false },
+        { "destroy": "rusty_key" }
+      ]
+    }
+  }
+}

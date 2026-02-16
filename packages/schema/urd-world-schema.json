@@ -1,0 +1,548 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://urd.dev/schema/v1/urd-world-schema.json",
+  "title": "Urd World Schema v1",
+  "description": "Validates compiled .urd.json world files. Structural validation only — cross-reference integrity is the compiler's responsibility.",
+  "type": "object",
+  "required": ["world"],
+  "additionalProperties": false,
+  "properties": {
+    "world": {
+      "type": "object",
+      "required": ["name", "urd"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]*$",
+          "description": "Unique world identifier. Lowercase, hyphens allowed, starts with letter."
+        },
+        "urd": {
+          "type": "string",
+          "enum": ["1"],
+          "description": "Schema version. Always '1' for v1. Set by compiler."
+        },
+        "version": { "type": "string" },
+        "description": { "type": "string" },
+        "author": { "type": "string" },
+        "start": {
+          "type": "string",
+          "description": "Starting location reference."
+        },
+        "entry": {
+          "type": "string",
+          "description": "Entry sequence reference."
+        },
+        "seed": {
+          "type": "integer",
+          "description": "Random seed for deterministic replay."
+        }
+      }
+    },
+    "types": { "$ref": "#/$defs/typesBlock" },
+    "entities": { "$ref": "#/$defs/entitiesBlock" },
+    "locations": { "$ref": "#/$defs/locationsBlock" },
+    "rules": { "$ref": "#/$defs/rulesBlock" },
+    "actions": { "$ref": "#/$defs/actionsBlock" },
+    "sequences": { "$ref": "#/$defs/sequencesBlock" },
+    "dialogue": { "$ref": "#/$defs/dialogueBlock" }
+  },
+  "$defs": {
+    "visibility": {
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["visible", "hidden", "owner"]
+        },
+        {
+          "type": "object",
+          "required": ["type", "condition"],
+          "additionalProperties": false,
+          "properties": {
+            "type": { "const": "conditional" },
+            "condition": { "type": "string", "minLength": 1 }
+          }
+        }
+      ],
+      "default": "visible"
+    },
+
+    "propertySchema": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["boolean", "integer", "number", "string", "enum", "ref", "list"]
+        },
+        "default": {
+          "description": "Default value. Type-constrained by if/then rules keyed on the type field."
+        },
+        "visibility": { "$ref": "#/$defs/visibility" },
+        "description": { "type": "string" },
+        "values": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "ref_type": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "enum" } }
+          },
+          "then": { "required": ["values"] }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "boolean" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "boolean" },
+              "values": false,
+              "min": false,
+              "max": false,
+              "ref_type": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "integer" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "integer" },
+              "min": { "type": "integer" },
+              "max": { "type": "integer" },
+              "values": false,
+              "ref_type": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "number" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "number" },
+              "values": false,
+              "ref_type": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "string" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "string" },
+              "values": false,
+              "min": false,
+              "max": false,
+              "ref_type": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "ref" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "string" },
+              "values": false,
+              "min": false,
+              "max": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "list" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "array" },
+              "values": false,
+              "min": false,
+              "max": false,
+              "ref_type": false
+            }
+          }
+        },
+        {
+          "if": {
+            "required": ["type"],
+            "properties": { "type": { "const": "enum" } }
+          },
+          "then": {
+            "properties": {
+              "default": { "type": "string" },
+              "min": false,
+              "max": false,
+              "ref_type": false
+            }
+          }
+        }
+      ]
+    },
+
+    "effect": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["set", "to"],
+          "additionalProperties": false,
+          "properties": {
+            "set": { "type": "string", "minLength": 1 },
+            "to": {
+              "description": "New value. May be a literal or an expression string."
+            }
+          },
+          "description": "Set a property to a new value."
+        },
+        {
+          "type": "object",
+          "required": ["move", "to"],
+          "additionalProperties": false,
+          "properties": {
+            "move": { "type": "string", "minLength": 1 },
+            "to": { "type": "string", "minLength": 1 }
+          },
+          "description": "Move an entity into a different container."
+        },
+        {
+          "type": "object",
+          "required": ["reveal"],
+          "additionalProperties": false,
+          "properties": {
+            "reveal": { "type": "string", "minLength": 1 }
+          },
+          "description": "Change a hidden property's visibility to visible."
+        },
+        {
+          "type": "object",
+          "required": ["destroy"],
+          "additionalProperties": false,
+          "properties": {
+            "destroy": { "type": "string", "minLength": 1 }
+          },
+          "description": "Remove an entity from the world."
+        },
+        {
+          "type": "object",
+          "required": ["spawn"],
+          "additionalProperties": false,
+          "properties": {
+            "spawn": {
+              "type": "object",
+              "required": ["id", "type", "in"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "type": { "type": "string", "minLength": 1 },
+                "in": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "description": "Create a new entity at runtime."
+        }
+      ]
+    },
+
+    "conditionExpr": {
+      "oneOf": [
+        {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "description": "AND list. All conditions must be true."
+        },
+        {
+          "type": "object",
+          "required": ["any"],
+          "additionalProperties": false,
+          "properties": {
+            "any": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "minItems": 1,
+              "description": "OR list. Any one condition being true validates the block."
+            }
+          }
+        }
+      ]
+    },
+
+    "speech": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "speaker": { "type": "string" },
+        "text": { "type": "string", "minLength": 1 }
+      }
+    },
+
+    "exit": {
+      "type": "object",
+      "required": ["to"],
+      "additionalProperties": false,
+      "properties": {
+        "to": { "type": "string", "minLength": 1 },
+        "condition": { "type": "string" },
+        "blocked_message": { "type": "string" },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" }
+        }
+      }
+    },
+
+    "select": {
+      "type": "object",
+      "required": ["from", "as"],
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "as": { "type": "string", "minLength": 1 },
+        "where": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "Simple condition strings. Each is evaluated against the bound variable."
+        }
+      }
+    },
+
+    "phase": {
+      "type": "object",
+      "required": ["id", "advance"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "prompt": { "type": "string" },
+        "auto": { "type": "boolean" },
+        "action": { "type": "string", "minLength": 1 },
+        "actions": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1
+        },
+        "rule": { "type": "string", "minLength": 1 },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" }
+        },
+        "advance": {
+          "type": "string",
+          "pattern": "^(on_action|on_rule|on_condition \\S+|end)$"
+        },
+        "condition": { "type": "string" }
+      },
+      "not": { "required": ["action", "actions"] }
+    },
+
+    "choice": {
+      "type": "object",
+      "required": ["id", "label", "sticky"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "label": { "type": "string", "minLength": 1 },
+        "sticky": { "type": "boolean" },
+        "conditions": { "$ref": "#/$defs/conditionExpr" },
+        "response": { "$ref": "#/$defs/speech" },
+        "effects": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/effect" }
+        },
+        "goto": { "type": "string", "minLength": 1 },
+        "choices": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/choice" },
+          "minItems": 1
+        }
+      }
+    },
+
+    "typesBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "traits": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["container", "portable", "mobile", "interactable"]
+            },
+            "uniqueItems": true
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/propertySchema" }
+          }
+        }
+      }
+    },
+
+    "entitiesBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["type"],
+        "additionalProperties": false,
+        "properties": {
+          "type": { "type": "string", "minLength": 1 },
+          "properties": {
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" },
+                { "type": "boolean" },
+                { "type": "null" },
+                {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      { "type": "string" },
+                      { "type": "number" },
+                      { "type": "boolean" },
+                      { "type": "null" }
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+
+    "locationsBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "contains": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "exits": {
+            "type": "object",
+            "additionalProperties": { "$ref": "#/$defs/exit" }
+          }
+        }
+      }
+    },
+
+    "rulesBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["trigger", "effects"],
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "actor": { "type": "string", "minLength": 1 },
+          "trigger": {
+            "type": "string",
+            "pattern": "^(phase_is \\S+|action \\S+|enter \\S+|state_change \\S+|always)$"
+          },
+          "conditions": { "$ref": "#/$defs/conditionExpr" },
+          "select": { "$ref": "#/$defs/select" },
+          "effects": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/effect" },
+            "minItems": 1,
+            "description": "At least one effect. A rule with no effects is invalid."
+          }
+        }
+      }
+    },
+
+    "actionsBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["effects"],
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "actor": { "type": "string", "minLength": 1 },
+          "target": { "type": "string", "minLength": 1 },
+          "target_type": { "type": "string", "minLength": 1 },
+          "conditions": { "$ref": "#/$defs/conditionExpr" },
+          "effects": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/effect" }
+          }
+        },
+        "not": { "required": ["target", "target_type"] }
+      }
+    },
+
+    "sequencesBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["phases"],
+        "additionalProperties": false,
+        "properties": {
+          "description": { "type": "string" },
+          "phases": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/phase" },
+            "minItems": 1
+          }
+        }
+      }
+    },
+
+    "dialogueBlock": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["id"],
+        "additionalProperties": false,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "prompt": { "$ref": "#/$defs/speech" },
+          "description": { "type": "string" },
+          "choices": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/choice" },
+            "minItems": 1
+          },
+          "conditions": { "$ref": "#/$defs/conditionExpr" },
+          "on_exhausted": { "$ref": "#/$defs/speech" }
+        }
+      }
+    }
+  }
+}

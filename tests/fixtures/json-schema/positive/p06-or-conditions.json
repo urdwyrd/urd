@@ -1,0 +1,44 @@
+{
+  "world": {
+    "name": "or-conditions",
+    "urd": "1",
+    "description": "Exercises the any (OR) condition block on an action."
+  },
+  "types": {
+    "NPC": {
+      "traits": ["interactable"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "willing_to_talk": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    }
+  },
+  "entities": {
+    "merchant": {
+      "type": "NPC",
+      "properties": {
+        "name": "Gregor"
+      }
+    }
+  },
+  "actions": {
+    "bribe_merchant": {
+      "description": "Convince the merchant to cooperate",
+      "target": "merchant",
+      "conditions": {
+        "any": [
+          "player.reputation > 50",
+          "bribe_gold.container == player"
+        ]
+      },
+      "effects": [
+        { "set": "merchant.willing_to_talk", "to": true }
+      ]
+    }
+  }
+}

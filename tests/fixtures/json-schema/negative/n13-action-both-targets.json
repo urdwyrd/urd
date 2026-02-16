@@ -1,0 +1,13 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "actions": {
+    "act": {
+      "target": "foo",
+      "target_type": "Foo",
+      "effects": []
+    }
+  }
+}

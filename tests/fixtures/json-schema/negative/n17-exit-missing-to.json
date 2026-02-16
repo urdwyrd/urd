@@ -1,0 +1,15 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "locations": {
+    "room": {
+      "exits": {
+        "north": {
+          "condition": "true"
+        }
+      }
+    }
+  }
+}

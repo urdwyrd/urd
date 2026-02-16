@@ -1,0 +1,12 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "rules": {
+    "r": {
+      "trigger": "always",
+      "effects": []
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "world": {
+    "name": "spawn-effect",
+    "urd": "1",
+    "description": "Exercises the spawn effect to create an entity at runtime."
+  },
+  "types": {
+    "Chest": {
+      "traits": ["interactable", "container"],
+      "properties": {
+        "opened": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "Treasure": {
+      "traits": ["portable"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "type": "integer",
+          "default": 0,
+          "min": 0,
+          "max": 1000
+        }
+      }
+    }
+  },
+  "entities": {
+    "treasure_chest": {
+      "type": "Chest"
+    }
+  },
+  "locations": {
+    "vault": {
+      "description": "A hidden vault beneath the castle.",
+      "contains": ["treasure_chest"]
+    }
+  },
+  "actions": {
+    "open_chest": {
+      "description": "Open the treasure chest",
+      "target": "treasure_chest",
+      "conditions": [
+        "treasure_chest.opened == false"
+      ],
+      "effects": [
+        { "set": "treasure_chest.opened", "to": true },
+        {
+          "spawn": {
+            "id": "gold_crown",
+            "type": "Treasure",
+            "in": "treasure_chest"
+          }
+        }
+      ]
+    }
+  }
+}

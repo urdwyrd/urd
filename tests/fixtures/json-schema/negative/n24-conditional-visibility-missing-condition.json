@@ -1,0 +1,18 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "types": {
+    "Foo": {
+      "properties": {
+        "bar": {
+          "type": "string",
+          "visibility": {
+            "type": "conditional"
+          }
+        }
+      }
+    }
+  }
+}

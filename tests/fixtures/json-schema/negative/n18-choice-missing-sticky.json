@@ -1,0 +1,17 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "dialogue": {
+    "test/section": {
+      "id": "test/section",
+      "choices": [
+        {
+          "id": "test/section/go",
+          "label": "Go"
+        }
+      ]
+    }
+  }
+}

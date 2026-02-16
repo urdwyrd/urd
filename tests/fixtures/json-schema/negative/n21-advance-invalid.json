@@ -1,0 +1,16 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "sequences": {
+    "seq": {
+      "phases": [
+        {
+          "id": "p1",
+          "advance": "on_time 30s"
+        }
+      ]
+    }
+  }
+}

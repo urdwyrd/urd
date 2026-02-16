@@ -1,0 +1,17 @@
+{
+  "world": {
+    "name": "test",
+    "urd": "1"
+  },
+  "rules": {
+    "r": {
+      "trigger": "on_timer 30",
+      "effects": [
+        {
+          "set": "x.y",
+          "to": 1
+        }
+      ]
+    }
+  }
+}
