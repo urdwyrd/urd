@@ -5,7 +5,7 @@ export const GET: APIRoute = async () => {
   const entries = await getCollection('updates');
 
   const updates = entries
-    .sort((a, b) => b.data.date.localeCompare(a.data.date))
+    .sort((a, b) => b.data.date.localeCompare(a.data.date) || b.id.localeCompare(a.id))
     .map((entry) => ({
       title: entry.data.title,
       date: entry.data.date,
