@@ -21,7 +21,6 @@ File = { SOI ~ (Frontmatter ~ Content ~ SP* ~ EOI | !("---" ~ NEWLINE) ~ Content
 Frontmatter = { "---" ~ NEWLINE ~ FrontmatterBody ~ "---" ~ NEWLINE }
 
 // Opaque stub: consume lines until closing '---'. Tabs rejected.
-// pest-specific: uses NEWLINE built-in instead of custom EOL.
 FrontmatterBody = { FrontmatterLine* }
 FrontmatterLine = _{ !("---" ~ (NEWLINE | EOI)) ~ (!"\t" ~ !NEWLINE ~ ANY)* ~ NEWLINE }
 
@@ -35,8 +34,11 @@ BlankLine = _{ SP* ~ NEWLINE }
 // LEXICAL TOKENS
 // ════════════════════════════════════════════════════════════════════
 
-SP     = _{ " " }
-INDENT = _{ "  " }  // exactly two spaces
+SP      = _{ " " }
+// Explicit NEWLINE to match the .peg definition: '\r\n' / '\n'.
+// pest's built-in NEWLINE may differ; defining it here ensures parity.
+NEWLINE = _{ "\r\n" | "\n" }
+INDENT  = _{ "  " }  // exactly two spaces
 
 // Char: any character except tab and newline.
 Char = _{ !"\t" ~ !NEWLINE ~ ANY }
@@ -146,10 +148,9 @@ BlockedMessage = { INDENT* ~ "!" ~ SP+ ~ Text ~ NEWLINE }
 LineComment = { INDENT* ~ "//" ~ TextRaw? ~ NEWLINE }
 
 // ── Prose ──
-// pest-specific: SigilPrefix guard prevents Prose from catching malformed
-// sigil lines. If a line looks like a sigil construct (sigil + space) but
-// fails its specific rule, it must be an error, not silent prose.
-// This diverges from the .peg where Prose is an unrestricted fallback.
+// SigilPrefix guard prevents Prose from catching malformed sigil lines.
+// If a line looks like a sigil construct (sigil + space) but fails its
+// specific rule, it must be an error, not silent prose.
 SigilPrefix = _{ INDENT* ~ ( "###" ~ SP | "##" ~ SP | "#" ~ SP | "==" ~ SP
                             | ("*" | "+") ~ SP | "?" ~ SP | ">" ~ SP
                             | "->" ~ SP | "!" ~ SP | "//" | "rule " | "@" | "[" ) }
