@@ -18,7 +18,8 @@ design/           Design system — read before any visual work
   themes/gloaming/  Dark theme (current default)
   themes/parchment/ Light theme (future)
 docs/             Design documents (clean markdown, no frontmatter — for GitHub/download)
-packages/         Shared packages (future — compiler, runtime, etc.)
+packages/         Shared packages
+  grammar/          PEG grammar reference + pest parser + validation corpus
 sites/urd.dev/    Astro 5 static site — development journal
 ```
 
@@ -30,6 +31,7 @@ pnpm monorepo. Workspaces: `sites/*`, `packages/*`.
 pnpm dev          # Astro dev server (urd.dev)
 pnpm build        # Production build → sites/urd.dev/dist/
 pnpm preview      # Preview production build
+cargo test --manifest-path packages/grammar/Cargo.toml  # Run grammar validation corpus
 ```
 
 ## Tech stack
@@ -38,6 +40,7 @@ pnpm preview      # Preview production build
 - **Tailwind CSS v4** via `@tailwindcss/vite` (not `@astrojs/tailwind` — it doesn't support v4)
 - **Svelte 5** interactive islands (DocumentExplorer, PeerReview, ProjectLog) hydrated client-side
 - **Cloudflare Pages** deployment via GitHub Actions (path-filtered to `sites/urd.dev/**`)
+- **Rust** with pest for the formal PEG grammar and parser (`packages/grammar/`)
 - **pnpm 10** — never use npm or yarn
 
 ## Design system

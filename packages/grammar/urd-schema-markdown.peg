@@ -1,0 +1,268 @@
+// Urd Schema Markdown Grammar v0.1
+// Conforms to: Schema Markdown Syntax Specification v0.1
+// Date: February 2026
+//
+// This is the reference grammar in standard PEG notation.
+// The .pest implementation file is a mechanical translation of this file.
+// If the two diverge, this .peg file is normative.
+//
+// Notation:
+//   ←  defines a rule
+//   /  ordered choice (first match wins)
+//   *  zero or more
+//   +  one or more
+//   ?  optional
+//   !  not predicate (negative lookahead)
+//   &  and predicate (positive lookahead)
+//   .  any character
+//   'x' literal string
+//   [a-z] character class
+
+// ════════════════════════════════════════════════════════════════════
+// FILE STRUCTURE
+// ════════════════════════════════════════════════════════════════════
+//
+// A .urd.md file has two regions: optional frontmatter, then narrative
+// content. Every line-level rule owns its own line ending (EOL).
+
+// If the file starts with '---' followed by a newline, it MUST be valid
+// frontmatter (with a closing '---'). This prevents unclosed frontmatter
+// from silently falling through as prose content.
+File        ← Frontmatter Content EOF / !('---' EOL) Content EOF
+
+Frontmatter ← '---' EOL FrontmatterBody '---' EOL
+
+// FrontmatterBody is an opaque rule. The formal grammar treats frontmatter
+// content as an unstructured blob consumed until the closing '---' line.
+// The compiler's frontmatter parser module is the normative implementation
+// of the frontmatter sub-grammar (types, entities, imports, etc.).
+// Processes line by line. Each line must not start with '---' (closing delimiter).
+// Tabs are rejected inside frontmatter (consistent with narrative content).
+FrontmatterBody ← FrontmatterLine*
+FrontmatterLine ← !('---' (EOL / EOF)) (!'\t' !NEWLINE .)* EOL
+
+Content     ← Line*
+Line        ← Block / BlankLine
+BlankLine   ← SP* EOL
+
+// ════════════════════════════════════════════════════════════════════
+// LEXICAL TOKENS
+// ════════════════════════════════════════════════════════════════════
+
+SP      ← ' '
+EOL     ← NEWLINE
+NEWLINE ← '\r\n' / '\n'
+EOF     ← !.
+INDENT  ← '  '    // exactly two spaces
+
+// Char: any character except tab and newline.
+// Tab rejection is grammar-level: tabs are never valid anywhere.
+Char               ← !'\t' !NEWLINE .
+
+InlineCommentStart ← SP+ '//'
+
+// Text: one or more characters, stopping before inline comments.
+// Requires at least one character (no empty headings, choices, etc.).
+Text               ← (!InlineCommentStart Char)+ InlineComment?
+
+// TextRaw: one or more characters without inline comment detection.
+// Used inside comments where // should not trigger nested parsing.
+TextRaw            ← Char+
+
+InlineComment      ← InlineCommentStart TextRaw
+
+// String literals (in frontmatter values and condition/effect values)
+StringChar         ← '\\"' / '\\\\' / !('"' / NEWLINE) .
+String             ← '"' StringChar* '"'
+
+Number             ← '-'? [0-9]+ ('.' [0-9]+)?
+Boolean            ← 'true' / 'false'
+
+// ════════════════════════════════════════════════════════════════════
+// TERMINAL RULES
+// ════════════════════════════════════════════════════════════════════
+
+// Identifier: lowercase start, then lowercase/digits/underscores.
+// This is intentional style enforcement at the grammar level.
+Identifier  ← [a-z] [a-z0-9_]*
+EntityRef   ← '@' Identifier
+SectionName ← Identifier
+TypeName    ← [A-Z] [a-zA-Z0-9]*
+
+// ════════════════════════════════════════════════════════════════════
+// WRITER-FACING RULES — Narrative Content
+// ════════════════════════════════════════════════════════════════════
+//
+// The Block rule is the core dispatch for narrative content. PEG ordered
+// choice means alternatives are tried left to right; first match wins.
+//
+// Multi-line blocks (OrConditionBlock, RuleBlock) come first because they
+// consume multiple lines and must not be pre-empted by single-line rules.
+// Prose is always last — it is the fallback for any unmatched line.
+//
+// INDENT* on all block rules: any construct can appear indented under
+// choices. The grammar accepts any indentation depth; depth enforcement
+// is a compiler diagnostic (Phase 4), not a syntax constraint.
+
+Block ← OrConditionBlock
+      / RuleBlock
+      / Heading
+      / SectionLabel
+      / EntityLine
+      / ArrowLine
+      / ConditionLine
+      / EffectLine
+      / ChoiceLine
+      / BlockedMessage
+      / EntityPresence
+      / LineComment
+      / Prose
+
+// ── Headings ──
+// Ambiguity: ###, ##, # must be tried longest-match-first.
+// If LocationHeading were first, '## Game' would match '#' and leave '# Game'.
+Heading         ← PhaseHeading / SequenceHeading / LocationHeading
+PhaseHeading    ← INDENT* '###' SP+ Text AutoMarker? EOL
+SequenceHeading ← INDENT* '##' SP+ Text EOL
+LocationHeading ← INDENT* '#' SP+ Text EOL
+
+AutoMarker ← SP+ '(auto)'
+
+// ── Section Label ──
+SectionLabel ← INDENT* '==' SP+ Identifier InlineComment? EOL
+
+// ── Entity Lines ──
+// Ambiguity: EntitySpeech vs StageDirection. Both start with @identifier.
+// EntitySpeech must come first — the colon distinguishes speech from direction.
+// If StageDirection were first, '@arina: text' would consume ': text' as prose.
+// Text already includes InlineComment handling.
+EntityLine     ← EntitySpeech / StageDirection
+EntitySpeech   ← INDENT* '@' Identifier ':' SP+ Text EOL
+StageDirection ← INDENT* '@' Identifier SP+ Text EOL
+
+// ── Entity Presence ──
+EntityPresence ← INDENT* '[' EntityRef (',' SP* EntityRef)* ']' InlineComment? EOL
+
+// ── Choices ──
+// Ambiguity: Choice vs Prose. PEG ordered choice resolves this —
+// OneShotChoice and StickyChoice are tried before Prose, so a line
+// starting with * or + after indentation is always a choice.
+ChoiceLine   ← INDENT* ChoiceSigil SP+ ChoiceLabel ChoiceTarget? EOL
+ChoiceSigil  ← '*' / '+'
+ChoiceLabel  ← Text
+ChoiceTarget ← SP+ '->' SP+ TargetRef
+TargetRef    ← '@' Identifier
+             / 'any' SP+ TypeName
+             / Identifier
+
+// ── Conditions ──
+// Ambiguity: OrConditionBlock vs Condition. Both start with '?'.
+// OrConditionBlock must come first because 'any:' would otherwise be
+// consumed as the start of a condition expression, failing at the colon.
+// InlineComment? on condition lines: conditions can end with // comment.
+ConditionLine    ← OrConditionBlock / Condition
+OrConditionBlock ← INDENT* '?' SP+ 'any:' EOL OrConditionLine+
+OrConditionLine  ← INDENT+ ConditionExpr InlineComment? EOL
+Condition        ← INDENT* '?' SP+ ConditionExpr InlineComment? EOL
+
+// ── Effects ──
+EffectLine ← INDENT* '>' SP+ Effect InlineComment? EOL
+
+// ── Arrow Lines (Jumps, Exits) ──
+// Ambiguity: ExitDeclaration vs ExitJump vs Jump. All start with '->'.
+// ExitDeclaration (with colon after identifier) must be tried before Jump,
+// otherwise '-> north: Corridor' would parse as jump to 'north:'.
+// ExitJump uses 'exit:' as reserved prefix with no space before target.
+// ExitDeclaration uses Text (inherits InlineComment). Others get InlineComment?.
+ArrowLine       ← ExitDeclaration / ExitJump / Jump
+ExitDeclaration ← INDENT* '->' SP+ Identifier ':' SP+ Text EOL
+ExitJump        ← INDENT* '->' SP+ 'exit:' Identifier InlineComment? EOL
+Jump            ← INDENT* '->' SP+ Identifier InlineComment? EOL
+
+// ── Blocked Message ──
+BlockedMessage ← INDENT* '!' SP+ Text EOL
+
+// ── Comments ──
+// LineComment is a Block alternative. Inline comments are handled by Text.
+LineComment ← INDENT* '//' TextRaw? EOL
+
+// ── Prose ──
+// Fallback for any line that doesn't match a sigil.
+// SigilPrefix guard prevents Prose from catching malformed sigil lines.
+// If a line starts with a sigil-then-space pattern but fails its specific
+// rule, it must be a parse error, not silent prose.
+SigilPrefix ← INDENT* ('###' SP / '##' SP / '#' SP / '==' SP
+             / ('*' / '+') SP / '?' SP / '>' SP / '->' SP / '!' SP
+             / '//' / 'rule ' / '@' / '[')
+Prose ← !SigilPrefix Text EOL
+
+// ════════════════════════════════════════════════════════════════════
+// SUB-RULES — Condition Expressions
+// ════════════════════════════════════════════════════════════════════
+//
+// SP+ between all tokens. Exceptions: @ binds tightly to identifier,
+// dot binds tightly in property access, colon in exit:name.
+
+ConditionExpr    ← NarrativePropRef SP+ CompOp SP+ Value
+                 / EntityRef SP+ 'in' SP+ ContainerRef
+                 / EntityRef SP+ 'not' SP+ 'in' SP+ ContainerRef
+                 / SectionName '.exhausted'
+
+CompOp           ← '==' / '!=' / '>=' / '<=' / '>' / '<'
+
+// NarrativePropRef: entity property access in narrative scope.
+// Accepts @entity.prop (standard) and player.prop / target.prop (reserved).
+NarrativePropRef ← EntityProp / ReservedPropRef
+EntityProp       ← '@' Identifier '.' Identifier
+ReservedPropRef  ← ('player' / 'target') '.' Identifier
+
+ContainerRef     ← EntityRef / 'here' / 'player'
+Value            ← String / Number / Boolean / Identifier
+
+// ════════════════════════════════════════════════════════════════════
+// SUB-RULES — Effect Declarations
+// ════════════════════════════════════════════════════════════════════
+
+Effect        ← SetEffect / MoveEffect / RevealEffect / DestroyEffect
+SetEffect     ← NarrativePropRef SP+ '=' SP+ Value
+              / NarrativePropRef SP+ ('+' / '-') SP+ Number
+MoveEffect    ← 'move' SP+ EntityRef SP+ '->' SP+ ContainerRef
+RevealEffect  ← 'reveal' SP+ NarrativePropRef
+DestroyEffect ← 'destroy' SP+ EntityRef
+
+// ════════════════════════════════════════════════════════════════════
+// ENGINEER-FACING RULES — Rule Blocks
+// ════════════════════════════════════════════════════════════════════
+//
+// Rule blocks define constrained NPC behaviour. Multi-line construct:
+// the header and each body line consume their own EOL.
+
+RuleBlock      ← INDENT* 'rule' SP+ Identifier ':' EOL RuleBody
+RuleBody       ← RuleActorLine RuleWhereLine* RuleEffectLine+
+RuleActorLine  ← INDENT EntityRef (SP+ 'selects' SP+ Identifier SP+ 'from' SP+ EntityIdList)? InlineComment? EOL
+RuleWhereLine  ← INDENT 'where' SP+ RuleCondition InlineComment? EOL
+RuleEffectLine ← INDENT '>' SP+ RuleEffect InlineComment? EOL
+
+EntityIdRef  ← '@' Identifier
+EntityIdList ← '[' EntityIdRef (',' SP* EntityIdRef)* ']'
+
+// Rule-scoped conditions: extends LHS to accept bare dotted identifiers
+// (bound variables like target.prize) alongside @entity.prop.
+RulePropRef   ← Identifier '.' Identifier
+RuleLHS       ← EntityProp / RulePropRef
+RuleCondition ← RuleLHS SP+ CompOp SP+ Value
+              / EntityRef SP+ 'in' SP+ ContainerRef
+              / EntityRef SP+ 'not' SP+ 'in' SP+ ContainerRef
+              / SectionName '.exhausted'
+
+// Rule-scoped effects: accepts RuleLHS for property access and
+// RuleRef for entity/variable references.
+RuleRef           ← EntityRef / Identifier
+RuleEffect        ← RuleSetEffect / RuleMoveEffect / RuleRevealEffect / RuleDestroyEffect
+RuleSetEffect     ← RuleLHS SP+ '=' SP+ Value
+                  / RuleLHS SP+ ('+' / '-') SP+ Number
+RuleMoveEffect    ← 'move' SP+ RuleRef SP+ '->' SP+ ContainerRef
+RuleRevealEffect  ← 'reveal' SP+ RuleLHS
+RuleDestroyEffect ← 'destroy' SP+ RuleRef
+
+// End of Grammar

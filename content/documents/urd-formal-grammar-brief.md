@@ -173,7 +173,7 @@ Block ← OrConditionBlock
 Heading    ← PhaseHeading / SequenceHeading / LocationHeading
 EntityLine ← EntitySpeech / StageDirection
 ArrowLine  ← ExitDeclaration / ExitJump / Jump
-EffectLine ← INDENT* '>' SP Effect EOL
+EffectLine ← INDENT* '>' SP+ Effect EOL
 ```
 
 Multi-line blocks (`OrConditionBlock`, `RuleBlock`) come first because they consume multiple lines and must not be pre-empted by single-line rules that match their opening sigil. `Prose` is always last — it is the fallback for any line that does not match a sigil. Sub-groups (`Heading`, `EntityLine`, `ArrowLine`) encode the internal ordering documented in the Ambiguity Resolution section.
@@ -187,17 +187,19 @@ Several constructs have internal structure that the grammar must parse:
 #### Condition Expressions
 
 ```
-ConditionExpr   ← EntityProp CompOp Value
-              / EntityRef 'in' ContainerRef
-              / EntityRef 'not in' ContainerRef
-              / SectionName '.exhausted'
-CompOp          ← '==' / '!=' / '>' / '>=' / '<' / '<='
-EntityProp      ← '@' Identifier '.' Identifier
-ContainerRef    ← EntityRef / 'here' / 'player'
-Value           ← String / Number / Boolean / Identifier
+ConditionExpr    ← NarrativePropRef SP+ CompOp SP+ Value
+               / EntityRef SP+ 'in' SP+ ContainerRef
+               / EntityRef SP+ 'not' SP+ 'in' SP+ ContainerRef
+               / SectionName '.exhausted'
+CompOp           ← '==' / '!=' / '>' / '>=' / '<' / '<='
+NarrativePropRef ← EntityProp / ReservedPropRef
+EntityProp       ← '@' Identifier '.' Identifier
+ReservedPropRef  ← ('player' / 'target') '.' Identifier
+ContainerRef     ← EntityRef / 'here' / 'player'
+Value            ← String / Number / Boolean / Identifier
 ```
 
-Note: `EntityProp` requires the `@` prefix in narrative content conditions. Bare identifiers without `@` (e.g., `guard.mood`) are not valid in conditions — the `@` is what distinguishes an entity property access from prose text. Inside frontmatter, property references in type definitions use bare names (e.g., `requires: rusty_key`), but that is the frontmatter grammar, not the condition expression grammar.
+Note: `EntityProp` requires the `@` prefix in narrative content conditions. The `@` is what distinguishes an entity property access from prose text. Two reserved words — `player` and `target` — are accepted without `@` via `ReservedPropRef`. This covers `player.knows_cell` in narrative conditions/effects and `target.state`, `target.chosen` in action target contexts (`-> any Type`). Generalised bare identifiers (e.g., `guard.mood`) are not valid — the `@` sigil remains the primary mechanism. Inside frontmatter, property references in type definitions use bare names (e.g., `requires: rusty_key`), but that is the frontmatter grammar, not the condition expression grammar. `NarrativePropRef` replaces `EntityProp` in all narrative-scope sub-rules: `ConditionExpr`, `SetEffect`, and `RevealEffect`. Rule-scoped sub-rules (`RuleCondition`, `RuleEffect`) use their own `RuleLHS` which already handles bare dotted identifiers.
 
 #### Terminal Rules
 
@@ -242,7 +244,7 @@ Note: `FrontmatterBody` is part of the grammar artifact but is specified separat
 The `? any:` opener introduces a block of indented condition expressions. The inner lines are bare `ConditionExpr` without a leading `?` sigil. Any single inner condition being true validates the entire block.
 
 ```
-OrConditionBlock ← INDENT* '?' SP 'any:' EOL OrConditionLine+
+OrConditionBlock ← INDENT* '?' SP+ 'any:' EOL OrConditionLine+
 OrConditionLine  ← INDENT+ ConditionExpr EOL
 ```
 
@@ -254,11 +256,11 @@ Note: `OrConditionLine` uses `ConditionExpr`, not the full `Condition` rule. The
 
 ```
 Effect         ← SetEffect / MoveEffect / RevealEffect / DestroyEffect
-SetEffect      ← EntityProp '=' Value
-             / EntityProp ('+' / '-') Number
-MoveEffect     ← 'move' EntityRef '->' ContainerRef
-RevealEffect   ← 'reveal' EntityProp
-DestroyEffect  ← 'destroy' EntityRef
+SetEffect      ← NarrativePropRef SP+ '=' SP+ Value
+             / NarrativePropRef SP+ ('+' / '-') SP+ Number
+MoveEffect     ← 'move' SP+ EntityRef SP+ '->' SP+ ContainerRef
+RevealEffect   ← 'reveal' SP+ NarrativePropRef
+DestroyEffect  ← 'destroy' SP+ EntityRef
 ```
 
 #### Rule Block
@@ -268,11 +270,11 @@ Rule blocks define constrained NPC behaviour. They are engineer-authored constru
 The rule block body reuses existing sub-rules (entity references, conditions, effects) in a structured sequence: an actor performs a `selects ... from ... where` query, and the matching target receives effects.
 
 ```
-RuleBlock      ← 'rule' SP Identifier ':' EOL RuleBody
+RuleBlock      ← 'rule' SP+ Identifier ':' EOL RuleBody
 RuleBody       ← RuleActorLine RuleWhereLine* RuleEffectLine+
-RuleActorLine  ← INDENT EntityRef (SP 'selects' SP Identifier SP 'from' SP EntityIdList)? EOL
-RuleWhereLine  ← INDENT 'where' SP RuleCondition EOL
-RuleEffectLine ← INDENT '>' SP RuleEffect EOL
+RuleActorLine  ← INDENT EntityRef (SP+ 'selects' SP+ Identifier SP+ 'from' SP+ EntityIdList)? EOL
+RuleWhereLine  ← INDENT 'where' SP+ RuleCondition EOL
+RuleEffectLine ← INDENT '>' SP+ RuleEffect EOL
 EntityIdRef    ← '@' Identifier
 EntityIdList   ← '[' EntityIdRef (',' SP? EntityIdRef)* ']'
 ```
@@ -290,9 +292,9 @@ The `selects` clause is optional on `RuleActorLine`. When absent, the rule has n
 ```
 RulePropRef    ← Identifier '.' Identifier
 RuleLHS        ← EntityProp / RulePropRef
-RuleCondition  ← RuleLHS CompOp Value
-              / EntityRef 'in' ContainerRef
-              / EntityRef 'not in' ContainerRef
+RuleCondition  ← RuleLHS SP+ CompOp SP+ Value
+              / EntityRef SP+ 'in' SP+ ContainerRef
+              / EntityRef SP+ 'not' SP+ 'in' SP+ ContainerRef
               / SectionName '.exhausted'
 ```
 
@@ -303,11 +305,11 @@ RuleCondition  ← RuleLHS CompOp Value
 ```
 RuleRef            ← EntityRef / Identifier
 RuleEffect         ← RuleSetEffect / RuleMoveEffect / RuleRevealEffect / RuleDestroyEffect
-RuleSetEffect      ← RuleLHS '=' Value
-                  / RuleLHS ('+' / '-') Number
-RuleMoveEffect     ← 'move' RuleRef '->' ContainerRef
-RuleRevealEffect   ← 'reveal' RuleLHS
-RuleDestroyEffect  ← 'destroy' RuleRef
+RuleSetEffect      ← RuleLHS SP+ '=' SP+ Value
+                  / RuleLHS SP+ ('+' / '-') SP+ Number
+RuleMoveEffect     ← 'move' SP+ RuleRef SP+ '->' SP+ ContainerRef
+RuleRevealEffect   ← 'reveal' SP+ RuleLHS
+RuleDestroyEffect  ← 'destroy' SP+ RuleRef
 ```
 
 `RuleRef` accepts either an `@`-prefixed entity reference or a bare identifier (the bound variable). This allows `> move target -> here` and `> destroy target` inside rule blocks. `RuleLHS` handles dotted property access (`target.state`, `@entity.prop`) for set and reveal effects. `ContainerRef` is unchanged — move destinations are always concrete (`@entity`, `here`, `player`), never bound variables. `RuleRevealEffect` takes `RuleLHS` because reveal operates on properties (e.g., `> reveal target.prize`), not on entities directly.
@@ -332,16 +334,16 @@ Parses as: `RuleBlock` with identifier `monty_reveals`, containing a `RuleActorL
 Choice targets appear at the end of the choice label line, not as separate jump lines. The full choice line grammar:
 
 ```
-ChoiceLine     ← INDENT* ChoiceSigil SP ChoiceLabel ChoiceTarget?
+ChoiceLine     ← INDENT* ChoiceSigil SP+ ChoiceLabel ChoiceTarget? EOL
 ChoiceSigil    ← '*' / '+'
 ChoiceLabel    ← Text
-ChoiceTarget   ← SP '->' SP TargetRef
+ChoiceTarget   ← SP+ '->' SP+ TargetRef
 TargetRef      ← '@' Identifier              // specific entity target
-             / 'any' SP TypeName             // type target
+             / 'any' SP+ TypeName            // type target
              / Identifier                     // section or exit target
 ```
 
-A choice with no target (e.g., `* Back off`) has its content nested as indented lines below it. A choice with a target (e.g., `* Pick a door -> any Door`) compiles to an action with `target_type`. Note: `EOL` is not included here because `ChoiceLine` is a single-line construct parsed as part of a `Block` inside `Line`, which appends `EOL?` after the block. Multi-line blocks like `RuleBlock` and `OrConditionBlock` handle `EOL` internally.
+A choice with no target (e.g., `* Back off`) has its content nested as indented lines below it. A choice with a target (e.g., `* Pick a door -> any Door`) compiles to an action with `target_type`. Like all single-line `Block` rules, `ChoiceLine` consumes its own `EOL` at the end of the line, following the uniform convention that every line-level rule owns its own line ending.
 
 #### Indentation
 
@@ -385,7 +387,7 @@ LineComment   ← INDENT* '//' TextRaw? EOL
 The `(auto)` suffix on phase headings compiles to `auto: true`. It requires a space before the opening parenthesis and uses the exact string `auto`.
 
 ```
-AutoMarker ← SP '(auto)'
+AutoMarker ← SP+ '(auto)'
 ```
 
 `AutoMarker` is only valid on `PhaseHeading` (`###`). If `(auto)` appears on a `LocationHeading` (`#`) or `SequenceHeading` (`##`), the grammar should accept it as part of the heading text (it will be caught as a semantic warning in a later phase). This keeps the grammar simple and avoids making `(auto)` a globally reserved token.
@@ -587,21 +589,21 @@ PEG's ordered choice operator (`/`) resolves ambiguity by trying alternatives le
 
 ```
 EntityLine ← EntitySpeech / StageDirection
-EntitySpeech  ← '@' Identifier ':' SP Text
-StageDirection ← '@' Identifier SP Text
+EntitySpeech  ← '@' Identifier ':' SP+ Text
+StageDirection ← '@' Identifier SP+ Text
 ```
 
 `EntitySpeech` must come first. If the parser tried `StageDirection` first, it would match `@arina` followed by a space and consume `: What'll it be?` as prose, producing an incorrect AST. The colon check in `EntitySpeech` prevents this.
 
 ### Choice vs Prose
 
-A line starting with `*` could be a one-shot choice or prose containing an asterisk (for example, an italicised word in some markdown dialects). The grammar resolves this by context: inside a choice-accepting scope (under a section, heading, or another choice), `*` at the start of a line (possibly indented) is always a choice sigil. Outside such scope, it is prose.
+A line starting with `*` could be a one-shot choice or prose containing an asterisk. PEG ordered choice resolves this: `OneShotChoice` and `StickyChoice` are tried before `Prose` in the `Block` rule, so a line starting with `*` or `+` after indentation is always a choice. There is no context-dependent scope tracking.
 
 ```
 Block ← OneShotChoice / StickyChoice / ... / Prose
 ```
 
-`Prose` is the final fallback. Any line that doesn't match a sigil rule is prose. This means choice rules must be ordered before prose in the `Block` rule.
+`Prose` is the final fallback. Any line that doesn't match a sigil rule is prose.
 
 ### Jump vs Exit Declaration
 
@@ -609,9 +611,9 @@ Block ← OneShotChoice / StickyChoice / ... / Prose
 
 ```
 ArrowLine ← ExitDeclaration / ExitJump / Jump
-ExitDeclaration ← '->' SP Identifier ':' SP Text
-ExitJump        ← '->' SP 'exit:' Identifier       // no space after colon
-Jump            ← '->' SP Identifier
+ExitDeclaration ← '->' SP+ Identifier ':' SP+ Text
+ExitJump        ← '->' SP+ 'exit:' Identifier       // no space after colon
+Jump            ← '->' SP+ Identifier
 ```
 
 `ExitDeclaration` (with colon after a freeform identifier) must be tried before `Jump` (without colon), otherwise `-> north: Corridor` would be parsed as a jump to `north:` which is not a valid identifier. All three forms require a single space after `->`, consistent with every other arrow construct. `ExitJump` uses `exit:` as a reserved prefix with no space before the target name. Note: the target in `ExitJump` is an `Identifier`, which requires lowercase. `-> exit:harbor` is valid; `-> exit:Harbor` is a parse error. This is consistent with exit names being identifiers, not display names.
@@ -622,9 +624,9 @@ Jump            ← '->' SP Identifier
 
 ```
 ConditionLine    ← OrConditionBlock / Condition
-OrConditionBlock ← INDENT* '?' SP 'any:' EOL OrConditionLine+
+OrConditionBlock ← INDENT* '?' SP+ 'any:' EOL OrConditionLine+
 OrConditionLine  ← INDENT+ ConditionExpr EOL
-Condition        ← INDENT* '?' SP ConditionExpr
+Condition        ← INDENT* '?' SP+ ConditionExpr
 ```
 
 `OrConditionBlock` must come first because `any:` would otherwise be consumed as the start of a condition expression, failing at the colon. Note that the inner lines of the OR block use bare `ConditionExpr` without a `?` prefix, matching the syntax spec exactly.
@@ -635,9 +637,9 @@ Condition        ← INDENT* '?' SP ConditionExpr
 
 ```
 Heading ← PhaseHeading / SequenceHeading / LocationHeading
-PhaseHeading    ← '###' SP Text
-SequenceHeading ← '##' SP Text
-LocationHeading ← '#' SP Text
+PhaseHeading    ← '###' SP+ Text AutoMarker? EOL
+SequenceHeading ← '##' SP+ Text EOL
+LocationHeading ← '#' SP+ Text EOL
 ```
 
 If `LocationHeading` were tried first, `## The Game` would match `#` and leave `# The Game` as text.

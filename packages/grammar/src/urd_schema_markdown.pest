@@ -1,0 +1,217 @@
+// Urd Schema Markdown Grammar v0.1 — pest implementation
+// Conforms to: Schema Markdown Syntax Specification v0.1
+// Date: February 2026
+//
+// Translated from urd-schema-markdown.peg (the normative reference).
+// Any pest-specific adaptations are documented with comments explaining
+// what differs from the .peg file and why.
+//
+// IMPORTANT: No WHITESPACE or COMMENT rules are defined because
+// Schema Markdown whitespace is significant and must be explicit.
+
+// ════════════════════════════════════════════════════════════════════
+// FILE STRUCTURE
+// ════════════════════════════════════════════════════════════════════
+
+// pest-specific: uses SOI/EOI instead of implicit start/EOF.
+// If file starts with '---' + newline, it MUST have valid frontmatter.
+// Trailing SP* before EOI allows files ending without a final newline after spaces.
+File = { SOI ~ (Frontmatter ~ Content ~ SP* ~ EOI | !("---" ~ NEWLINE) ~ Content ~ SP* ~ EOI) }
+
+Frontmatter = { "---" ~ NEWLINE ~ FrontmatterBody ~ "---" ~ NEWLINE }
+
+// Opaque stub: consume lines until closing '---'. Tabs rejected.
+// pest-specific: uses NEWLINE built-in instead of custom EOL.
+FrontmatterBody = { FrontmatterLine* }
+FrontmatterLine = _{ !("---" ~ (NEWLINE | EOI)) ~ (!"\t" ~ !NEWLINE ~ ANY)* ~ NEWLINE }
+
+Content  = { Line* }
+Line     = _{ Block | BlankLine }
+// pest-specific: requires NEWLINE (not NEWLINE | EOI) to avoid non-progressing
+// repetition in Content's Line*. Trailing whitespace at EOF handled by File rule.
+BlankLine = _{ SP* ~ NEWLINE }
+
+// ════════════════════════════════════════════════════════════════════
+// LEXICAL TOKENS
+// ════════════════════════════════════════════════════════════════════
+
+SP     = _{ " " }
+INDENT = _{ "  " }  // exactly two spaces
+
+// Char: any character except tab and newline.
+Char = _{ !"\t" ~ !NEWLINE ~ ANY }
+
+InlineCommentStart = _{ SP+ ~ "//" }
+
+// Text: one or more characters, stopping before inline comments.
+Text    = { (!InlineCommentStart ~ Char)+ ~ InlineComment? }
+
+// TextRaw: one or more characters without inline comment detection.
+TextRaw = { Char+ }
+
+InlineComment = { InlineCommentStart ~ TextRaw }
+
+// String literals
+StringChar = _{ "\\\"" | "\\\\" | !("\"" | NEWLINE) ~ ANY }
+String     = @{ "\"" ~ StringChar* ~ "\"" }
+
+Number  = @{ "-"? ~ ASCII_DIGIT+ ~ ("." ~ ASCII_DIGIT+)? }
+Boolean = @{ "true" | "false" }
+
+// ════════════════════════════════════════════════════════════════════
+// TERMINAL RULES
+// ════════════════════════════════════════════════════════════════════
+
+// Identifier: lowercase start, then lowercase/digits/underscores.
+Identifier  = @{ ('a'..'z') ~ ('a'..'z' | '0'..'9' | "_")* }
+EntityRef   = @{ "@" ~ Identifier }
+SectionName = @{ Identifier }
+TypeName    = @{ ('A'..'Z') ~ ('a'..'z' | 'A'..'Z' | '0'..'9')* }
+
+// ════════════════════════════════════════════════════════════════════
+// WRITER-FACING RULES — Narrative Content
+// ════════════════════════════════════════════════════════════════════
+
+// Block dispatch: ordered choice, first match wins.
+// Multi-line blocks first, Prose last (fallback).
+Block = _{ OrConditionBlock
+         | RuleBlock
+         | Heading
+         | SectionLabel
+         | EntityLine
+         | ArrowLine
+         | ConditionLine
+         | EffectLine
+         | ChoiceLine
+         | BlockedMessage
+         | EntityPresence
+         | LineComment
+         | Prose }
+
+// ── Headings ──
+// Ambiguity: ###, ##, # must be tried longest-match-first.
+// INDENT* on all block rules: indented content under choices is valid.
+Heading         = _{ PhaseHeading | SequenceHeading | LocationHeading }
+PhaseHeading    =  { INDENT* ~ "###" ~ SP+ ~ Text ~ AutoMarker? ~ NEWLINE }
+SequenceHeading =  { INDENT* ~ "##" ~ SP+ ~ Text ~ NEWLINE }
+LocationHeading =  { INDENT* ~ "#" ~ SP+ ~ Text ~ NEWLINE }
+
+AutoMarker = { SP+ ~ "(auto)" }
+
+// ── Section Label ──
+SectionLabel = { INDENT* ~ "==" ~ SP+ ~ Identifier ~ InlineComment? ~ NEWLINE }
+
+// ── Entity Lines ──
+// Ambiguity: EntitySpeech must come before StageDirection.
+// The colon after identifier distinguishes speech from stage direction.
+// Text already includes InlineComment handling.
+EntityLine     = _{ EntitySpeech | StageDirection }
+EntitySpeech   =  { INDENT* ~ "@" ~ Identifier ~ ":" ~ SP+ ~ Text ~ NEWLINE }
+StageDirection =  { INDENT* ~ "@" ~ Identifier ~ SP+ ~ Text ~ NEWLINE }
+
+// ── Entity Presence ──
+EntityPresence = { INDENT* ~ "[" ~ EntityRef ~ ("," ~ SP* ~ EntityRef)* ~ "]" ~ InlineComment? ~ NEWLINE }
+
+// ── Choices ──
+// Ambiguity: Choice lines are tried before Prose in Block.
+ChoiceLine   = { INDENT* ~ ChoiceSigil ~ SP+ ~ ChoiceLabel ~ ChoiceTarget? ~ NEWLINE }
+ChoiceSigil  = { "*" | "+" }
+ChoiceLabel  = { Text }
+ChoiceTarget = { SP+ ~ "->" ~ SP+ ~ TargetRef }
+TargetRef    = { "@" ~ Identifier | "any" ~ SP+ ~ TypeName | Identifier }
+
+// ── Conditions ──
+// Ambiguity: OrConditionBlock must come before Condition.
+// InlineComment? added: conditions can end with // comment.
+ConditionLine    = _{ OrConditionBlock | Condition }
+OrConditionBlock =  { INDENT* ~ "?" ~ SP+ ~ "any:" ~ NEWLINE ~ OrConditionLine+ }
+OrConditionLine  =  { INDENT+ ~ ConditionExpr ~ InlineComment? ~ NEWLINE }
+Condition        =  { INDENT* ~ "?" ~ SP+ ~ ConditionExpr ~ InlineComment? ~ NEWLINE }
+
+// ── Effects ──
+EffectLine = { INDENT* ~ ">" ~ SP+ ~ Effect ~ InlineComment? ~ NEWLINE }
+
+// ── Arrow Lines ──
+// Ambiguity: ExitDeclaration > ExitJump > Jump (colon distinguishes).
+// ExitDeclaration uses Text (inherits InlineComment). Others get InlineComment?.
+ArrowLine       = _{ ExitDeclaration | ExitJump | Jump }
+ExitDeclaration =  { INDENT* ~ "->" ~ SP+ ~ Identifier ~ ":" ~ SP+ ~ Text ~ NEWLINE }
+ExitJump        =  { INDENT* ~ "->" ~ SP+ ~ "exit:" ~ Identifier ~ InlineComment? ~ NEWLINE }
+Jump            =  { INDENT* ~ "->" ~ SP+ ~ Identifier ~ InlineComment? ~ NEWLINE }
+
+// ── Blocked Message ──
+BlockedMessage = { INDENT* ~ "!" ~ SP+ ~ Text ~ NEWLINE }
+
+// ── Comments ──
+LineComment = { INDENT* ~ "//" ~ TextRaw? ~ NEWLINE }
+
+// ── Prose ──
+// pest-specific: SigilPrefix guard prevents Prose from catching malformed
+// sigil lines. If a line looks like a sigil construct (sigil + space) but
+// fails its specific rule, it must be an error, not silent prose.
+// This diverges from the .peg where Prose is an unrestricted fallback.
+SigilPrefix = _{ INDENT* ~ ( "###" ~ SP | "##" ~ SP | "#" ~ SP | "==" ~ SP
+                            | ("*" | "+") ~ SP | "?" ~ SP | ">" ~ SP
+                            | "->" ~ SP | "!" ~ SP | "//" | "rule " | "@" | "[" ) }
+Prose = { !SigilPrefix ~ Text ~ NEWLINE }
+
+// ════════════════════════════════════════════════════════════════════
+// SUB-RULES — Condition Expressions
+// ════════════════════════════════════════════════════════════════════
+
+ConditionExpr = { NarrativePropRef ~ SP+ ~ CompOp ~ SP+ ~ Value
+               | EntityRef ~ SP+ ~ "not" ~ SP+ ~ "in" ~ SP+ ~ ContainerRef
+               | EntityRef ~ SP+ ~ "in" ~ SP+ ~ ContainerRef
+               | SectionName ~ ".exhausted" }
+
+// pest-specific: '>=' and '<=' must come before '>' and '<' in ordered choice.
+// This matches the .peg file ordering.
+CompOp = { "==" | "!=" | ">=" | "<=" | ">" | "<" }
+
+NarrativePropRef = { EntityProp | ReservedPropRef }
+EntityProp       = @{ "@" ~ Identifier ~ "." ~ Identifier }
+ReservedPropRef  = @{ ("player" | "target") ~ "." ~ Identifier }
+
+ContainerRef = { EntityRef | "here" | "player" }
+Value        = { String | Number | Boolean | Identifier }
+
+// ════════════════════════════════════════════════════════════════════
+// SUB-RULES — Effect Declarations
+// ════════════════════════════════════════════════════════════════════
+
+Effect        = { SetEffect | MoveEffect | RevealEffect | DestroyEffect }
+SetEffect     = { NarrativePropRef ~ SP+ ~ "=" ~ SP+ ~ Value
+               | NarrativePropRef ~ SP+ ~ ("+" | "-") ~ SP+ ~ Number }
+MoveEffect    = { "move" ~ SP+ ~ EntityRef ~ SP+ ~ "->" ~ SP+ ~ ContainerRef }
+RevealEffect  = { "reveal" ~ SP+ ~ NarrativePropRef }
+DestroyEffect = { "destroy" ~ SP+ ~ EntityRef }
+
+// ════════════════════════════════════════════════════════════════════
+// ENGINEER-FACING RULES — Rule Blocks
+// ════════════════════════════════════════════════════════════════════
+
+RuleBlock      = { INDENT* ~ "rule" ~ SP+ ~ Identifier ~ ":" ~ NEWLINE ~ RuleBody }
+RuleBody       = { RuleActorLine ~ RuleWhereLine* ~ RuleEffectLine+ }
+RuleActorLine  = { INDENT ~ EntityRef ~ (SP+ ~ "selects" ~ SP+ ~ Identifier ~ SP+ ~ "from" ~ SP+ ~ EntityIdList)? ~ InlineComment? ~ NEWLINE }
+RuleWhereLine  = { INDENT ~ "where" ~ SP+ ~ RuleCondition ~ InlineComment? ~ NEWLINE }
+RuleEffectLine = { INDENT ~ ">" ~ SP+ ~ RuleEffect ~ InlineComment? ~ NEWLINE }
+
+EntityIdRef  = @{ "@" ~ Identifier }
+EntityIdList = { "[" ~ EntityIdRef ~ ("," ~ SP* ~ EntityIdRef)* ~ "]" }
+
+RulePropRef   = @{ Identifier ~ "." ~ Identifier }
+RuleLHS       = { EntityProp | RulePropRef }
+RuleCondition = { RuleLHS ~ SP+ ~ CompOp ~ SP+ ~ Value
+               | EntityRef ~ SP+ ~ "not" ~ SP+ ~ "in" ~ SP+ ~ ContainerRef
+               | EntityRef ~ SP+ ~ "in" ~ SP+ ~ ContainerRef
+               | SectionName ~ ".exhausted" }
+
+RuleRef           = { EntityRef | Identifier }
+RuleEffect        = { RuleSetEffect | RuleMoveEffect | RuleRevealEffect | RuleDestroyEffect }
+RuleSetEffect     = { RuleLHS ~ SP+ ~ "=" ~ SP+ ~ Value
+                   | RuleLHS ~ SP+ ~ ("+" | "-") ~ SP+ ~ Number }
+RuleMoveEffect    = { "move" ~ SP+ ~ RuleRef ~ SP+ ~ "->" ~ SP+ ~ ContainerRef }
+RuleRevealEffect  = { "reveal" ~ SP+ ~ RuleLHS }
+RuleDestroyEffect = { "destroy" ~ SP+ ~ RuleRef }
+
+// End of Grammar

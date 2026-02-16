@@ -4,16 +4,34 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:** Backlog
+**Date completed:** 2026-02-16
+**Status:** Done
 
 ### What was done
 
-_To be filled on completion._
+1. **Reconciled spec conflicts** in `docs/urd-formal-grammar-brief.md`: added `NarrativePropRef` and `ReservedPropRef` rules for `player.property` and `target.property` access; added explicit `SP+` between all expression tokens; removed contradictory ChoiceLine EOL note; softened Choice vs Prose context sensitivity language.
+2. **Created `packages/grammar/`** — first Rust crate in the monorepo with `Cargo.toml` (pest 2.7, pest_derive 2.7).
+3. **Extracted positive test corpus** — 4 locked test cases from syntax spec (tavern, monty-hall, key-puzzle, interrogation) plus 3 edge-case files (frontmatter, comments, structure). 7 files total.
+4. **Created negative test corpus** — 5 invalid files (bad-tabs, bad-unclosed-frontmatter, bad-malformed-entity, bad-empty-choice, bad-empty-heading).
+5. **Wrote reference PEG grammar** — `urd-schema-markdown.peg` with all rules, ambiguity comments, writer/engineer separation, version header.
+6. **Translated to pest** — `src/urd_schema_markdown.pest` with pest-specific adaptations (SOI/EOI, atomic/silent rules, NEWLINE built-in).
+7. **Implemented parser** — `src/lib.rs` with `#[derive(Parser)]` and public `parse()` function.
+8. **Wrote test runner** — `tests/corpus.rs` with 12 tests (7 positive, 5 negative) with line/column assertions.
+9. **Iterated to green** — 3 iterations to pass all 12 tests. Key fixes: BlankLine non-progressing repetition, INDENT* on all block rules, InlineComment on structured rules, SigilPrefix guard on Prose, File rule enforcement for unclosed frontmatter.
+10. **Back-ported all fixes** to the `.peg` reference file.
+11. **Created validation script** — `scripts/validate.sh`.
+12. **Updated root files** — `package.json` (grammar:test script), `CLAUDE.md` (layout, commands, tech stack), `.gitignore` verified.
+13. **Synced** `content/documents/urd-formal-grammar-brief.md` with reconciled docs version.
 
 ### What changed from the brief
 
-_To be filled on completion._
+- **`bad-empty-heading.urd.md` added** as a 5th negative test (brief specified 5 but only listed 4 non-deferred tests; empty heading was a natural complement to empty choice).
+- **Edge cases split into 3 files** instead of 1 (`edge-cases-frontmatter`, `edge-cases-comments`, `edge-cases-structure`) per the brief's own recommendation for easier debugging.
+- **Validation script simplified** — outputs cargo test results directly rather than per-fixture status lines. The 12/12 summary is still printed.
+- **File rule changed** from `Frontmatter? Content EOF` to `Frontmatter Content EOF / !('---' EOL) Content EOF` — if a file starts with `---`, it MUST have valid frontmatter. This was necessary for `bad-unclosed-frontmatter` to fail correctly.
+- **SigilPrefix guard added to Prose** — prevents malformed sigil lines (e.g., `* \n`, `# \n`) from silently falling through as prose. Not in original brief but essential for negative test correctness.
+- **FrontmatterLine rejects tabs** — `FrontmatterLine ← !('---' (EOL / EOF)) (!'\t' !NEWLINE .)* EOL` ensures the tab ban is global, not just narrative content.
+- **Cargo.lock not committed** per brief's locked convention (no root workspace Cargo.toml yet).
 
 ---
 

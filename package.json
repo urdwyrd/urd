@@ -5,6 +5,7 @@
     "dev": "pnpm --filter urd.dev dev",
     "build": "pnpm --filter urd.dev build",
     "preview": "pnpm --filter urd.dev preview",
+    "grammar:test": "cargo test --manifest-path packages/grammar/Cargo.toml",
     "prepare": "husky"
   },
   "pnpm": {
