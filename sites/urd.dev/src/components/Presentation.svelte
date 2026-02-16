@@ -87,13 +87,12 @@
     const btn = document.getElementById('presentation-trigger');
     if (btn) btn.setAttribute('aria-expanded', 'true');
 
-    // After transition, scroll to top of presentation
+    // After transition, scroll to presentation
     if (wrapperEl) {
       const onEnd = async () => {
         wrapperEl?.removeEventListener('transitionend', onEnd);
-        window.scrollTo({ top: 0, behavior: reducedMotion ? 'instant' : 'smooth' });
+        headerEl?.scrollIntoView({ behavior: reducedMotion ? 'instant' : 'smooth', block: 'start' });
         headerEl?.focus();
-        currentSection = 0;
         setupObserver();
         await tick();
         setupRevealObserver();
@@ -945,7 +944,6 @@ Monty opened a door with a goat. Switch or stay?
     display: grid;
     grid-template-rows: 0fr;
     transition: grid-template-rows 0.5s ease-out;
-    overflow-x: hidden;
   }
 
   .pres-wrapper.open {
@@ -1162,6 +1160,7 @@ Monty opened a door with a goat. Switch or stay?
     max-width: 680px;
     margin: 0 auto;
     padding: 0 32px 64px;
+    overflow-x: hidden;
   }
 
   .pres-section {
