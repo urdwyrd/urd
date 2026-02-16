@@ -4,16 +4,24 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-15
+**Status:** Done
 
 ### What was done
 
-_(To be filled on completion.)_
+- Created `content/document-reviews/` with 39 review files across all 13 documents (3 reviewers each: Gemini 3, DeepSeek-R1, GPT-5.2)
+- Registered `documentReviews` collection in `content.config.ts` with Zod schema
+- Created parameterised endpoint `src/pages/document-reviews/[slug].json.ts` generating per-slug JSON via `getStaticPaths`
+- Built `DocumentReviews.svelte` island component with single-column card grid, stars, avatar, attribution, and accent border
+- Integrated into `document.astro` layout with `client:load` between prose and footer
+- Documents with no reviews render nothing — no empty state
 
 ### What changed from the brief
 
-_(To be filled on completion.)_
+- Used `client:load` instead of `client:visible` for hydration
+- Seeded reviews for all 13 documents (3 per document) rather than the minimum one or two suggested in the brief
+- Icon path uses `icon` field from frontmatter referencing PNGs in `public/images/reviews/` as planned
+- Default section heading and subtitle were later aligned with the homepage PeerReview wording ("Sycophancy Corner" / "What the Machines Think")
 
 ---
 
@@ -167,9 +175,9 @@ In `sites/urd.dev/src/layouts/document.astro`:
 
 | Step | Status | Notes |
 |------|--------|-------|
-| Create `content/document-reviews/` with seed review files | — | |
-| Register `documentReviews` collection in content.config.ts | — | |
-| Create `document-reviews/[slug].json.ts` endpoint | — | |
-| Build `DocumentReviews.svelte` island | — | |
-| Integrate into `document.astro` layout | — | |
-| Verify build passes | — | |
+| Create `content/document-reviews/` with seed review files | Done | 39 files across 13 documents (3 reviewers each) |
+| Register `documentReviews` collection in content.config.ts | Done | |
+| Create `document-reviews/[slug].json.ts` endpoint | Done | |
+| Build `DocumentReviews.svelte` island | Done | |
+| Integrate into `document.astro` layout | Done | Using `client:load` |
+| Verify build passes | Done | |
