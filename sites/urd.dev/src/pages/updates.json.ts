@@ -11,6 +11,7 @@ export const GET: APIRoute = async () => {
       date: entry.data.date,
       description: (entry.body ?? '').trim(),
       link: entry.data.link ?? null,
+      milestone: entry.data.milestone ?? false,
     }));
 
   return new Response(JSON.stringify(updates, null, 2), {

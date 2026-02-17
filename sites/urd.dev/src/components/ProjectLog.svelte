@@ -6,6 +6,7 @@
     date: string;
     description: string;
     link: string | null;
+    milestone: boolean;
   }
 
   interface Props {
@@ -66,13 +67,17 @@
     {#key page}
     <div class="log-entries">
       {#each visibleUpdates as update, i}
-        <article class="log-entry log-entry-appear" style="animation-delay: {i * 60}ms">
-          <span class="log-date">{formatDate(update.date)}</span>
+        <article class="log-entry log-entry-appear{update.milestone ? ' log-entry-milestone' : ''}" style="animation-delay: {i * 60}ms">
+          <span class="log-date">{#if update.milestone}<span class="log-milestone-mark">◆</span>{/if}{formatDate(update.date)}</span>
           <div class="log-content">
             {#if update.link}
               <h3 class="log-entry-title">
                 <a href={update.link} class="log-entry-link">{update.title}</a>
-                <span class="log-entry-pill">Article</span>
+                {#if update.milestone}
+                  <span class="log-entry-pill log-entry-pill-milestone">Milestone</span>
+                {:else}
+                  <span class="log-entry-pill">Article</span>
+                {/if}
               </h3>
             {:else}
               <h3 class="log-entry-title">{update.title}</h3>
@@ -204,6 +209,26 @@
     margin-left: 8px;
     vertical-align: middle;
     line-height: 1.6;
+  }
+
+  .log-entry-milestone {
+    background: color-mix(in srgb, var(--gold) 5%, transparent);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 4px -20px;
+    border-top: none;
+  }
+
+  .log-milestone-mark {
+    color: var(--gold);
+    font-size: 8px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .log-entry-pill-milestone {
+    color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 12%, transparent);
   }
 
   .log-entry-description {

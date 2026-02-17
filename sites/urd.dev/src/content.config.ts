@@ -7,6 +7,7 @@ const updates = defineCollection({
     title: z.string(),
     date: z.string(),
     link: z.string().optional(),
+    milestone: z.boolean().optional(),
   }),
 });
 
