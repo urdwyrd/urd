@@ -1,6 +1,6 @@
 ---
 title: Validation
-status: next
+status: active
 subtitle: "Compiler and the proof loop."
 order: 4
 ---
