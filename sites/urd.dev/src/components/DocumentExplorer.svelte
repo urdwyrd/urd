@@ -434,18 +434,6 @@
             <span class="doc-compact-format">{doc.format}</span>
             <span class="doc-compact-time">{formatReadingTimeShort(doc.readingTime)}</span>
             <span class="doc-compact-date">{formatDate(doc.date)}</span>
-            {#if doc.rating !== null}
-              <span
-                class="doc-compact-rating"
-                title="{doc.rating} / 5 from {doc.reviewCount} reviews — click for details"
-                role="link"
-                onclick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = `${doc.url}#reviews`; }}
-                onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); window.location.href = `${doc.url}#reviews`; } }}
-                tabindex="0"
-              >
-                <span class="star-inline filled">★</span> {doc.rating}
-              </span>
-            {/if}
           </a>
         {/each}
       </div>
@@ -1104,26 +1092,7 @@
     opacity: 0.8;
   }
 
-  .doc-compact-rating {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--faint);
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-    width: 42px;
-    text-align: right;
-    cursor: pointer;
-    transition: color 0.15s ease;
-  }
-
-  .doc-compact-rating:hover {
-    color: var(--gold);
-  }
-
-  .doc-grid-rating {
+.doc-grid-rating {
     display: inline-flex;
     align-items: center;
     gap: 3px;

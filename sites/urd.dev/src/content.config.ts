@@ -49,6 +49,8 @@ const timeline = defineCollection({
     status: z.enum(['complete', 'active', 'next']),
     subtitle: z.string(),
     order: z.number(),
+    link: z.string().optional(),
+    linkLabel: z.string().optional(),
   }),
 });
 

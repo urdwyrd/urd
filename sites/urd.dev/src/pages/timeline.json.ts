@@ -12,6 +12,8 @@ export const GET: APIRoute = async () => {
       subtitle: entry.data.subtitle,
       order: entry.data.order,
       description: (entry.body ?? '').trim(),
+      link: entry.data.link ?? null,
+      linkLabel: entry.data.linkLabel ?? null,
     }));
 
   return new Response(JSON.stringify(phases, null, 2), {

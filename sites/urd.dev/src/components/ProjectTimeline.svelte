@@ -7,6 +7,8 @@
     subtitle: string;
     order: number;
     description: string;
+    link: string | null;
+    linkLabel: string | null;
   }
 
   interface Props {
@@ -61,6 +63,9 @@
           <h3 class="phase-title">{phase.title}</h3>
           <p class="phase-subtitle">{phase.subtitle}</p>
           <p class="phase-desc">{phase.description}</p>
+          {#if phase.link}
+            <a class="phase-link" href={phase.link}>{phase.linkLabel ?? 'Learn more →'}</a>
+          {/if}
         </div>
       {/each}
     </div>
@@ -195,6 +200,26 @@
     color: var(--faint);
     line-height: 1.55;
     margin-top: 4px;
+  }
+
+  .phase-link {
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gold-dim);
+    text-decoration: none;
+    margin-top: 6px;
+    transition: color 0.15s ease;
+  }
+
+  .phase-link:hover {
+    color: var(--gold);
+  }
+
+  .phase-link:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 
   /* ── Callout note ── */
