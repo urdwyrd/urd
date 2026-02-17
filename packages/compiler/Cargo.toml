@@ -1,0 +1,10 @@
+[package]
+name = "urd-compiler"
+version = "0.1.0"
+edition = "2021"
+description = "Five-phase compiler for Urd Schema Markdown (.urd.md → .urd.json)"
+
+[dependencies]
+indexmap = "2"
+
+[dev-dependencies]
