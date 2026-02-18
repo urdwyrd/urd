@@ -10,16 +10,27 @@ February 2026 | Engineering Phase
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** *(fill in)*
-**Status:** *(fill in)*
+**Date completed:** 2026-02-18
+**Status:** Complete. Test runner script, benchmark harness, and JSON schema all implemented and producing correct output.
 
 ### What was done
 
-*(fill in)*
+- Created `scripts/compiler-test-report.mjs` — zero-dependency Node.js script that runs `cargo test`, parses stdout into structured phase/category/test data, runs the benchmark harness, and writes `packages/compiler/test-report.json`.
+- Created `scripts/compiler-test-report.schema.json` — JSON Schema defining the report format.
+- Created `packages/compiler/src/bin/bench.rs` — Rust binary that compiles a `.urd.md` file through all five phases with per-phase timing via `std::time::Instant`, outputting a JSON line to stdout.
+- Added `compiler:test`, `compiler:test:raw`, `compiler:report:copy`, and `build:full` scripts to root `package.json`.
+- Phase detection maps test binary names (`parse_tests`, `import_tests`, etc.) to phases. Unit tests from `src/lib.rs` are sub-classified by module prefix (`slugify::` → LINK, rest → scaffolding).
+- Category detection groups tests by first underscore-delimited word in the test name.
+- Static compliance and diagnostic code arrays included in the report.
+- Benchmarks run in release mode against four canonical fixture files (two_room_key_puzzle, tavern_scene, monty_hall, interrogation).
+- Added `--color never` flag and ANSI-stripping safety net after discovering that pnpm's `FORCE_COLOR=1` on CI caused cargo to emit escape codes that broke regex parsing.
+- Ultimately switched to committing the report statically rather than generating on CI, removing the Rust toolchain requirement from the deploy workflow.
 
 ### What changed from the brief
 
-*(fill in)*
+- **Script extension.** Brief specified `.js`, implemented as `.mjs` (ES modules with `import` syntax).
+- **CI generation removed.** Originally the report was generated on CI via Rust toolchain steps in `deploy.yml`. After ANSI colour issues on GitHub Actions, switched to committing the report statically. The script still works locally via `pnpm compiler:test`.
+- **Test count.** Brief estimated 347 tests; actual count is 390 (additional tests added during e2e integration phase).
 
 ---
 

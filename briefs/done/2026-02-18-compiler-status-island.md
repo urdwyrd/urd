@@ -4,16 +4,25 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** *(fill in)*
-**Status:** *(fill in)*
+**Date completed:** 2026-02-18
+**Status:** Complete. Island component live on the homepage with all three tabs functional.
 
 ### What was done
 
-*(fill in)*
+- Created `sites/urd.dev/src/pages/compiler.json.ts` — JSON endpoint that reads the test report from `src/data/compiler-test-report.json` using `process.cwd()` for reliable path resolution during Astro's static build.
+- Created `sites/urd.dev/src/components/CompilerStatus.svelte` — ~900-line Svelte 5 island with three tabs (Phases, Compliance, Benchmarks), summary stats row, expandable phase cards with category/test-level drill-down, compliance checklist, and per-file benchmark cards with phase timing bars.
+- Added the island to `sites/urd.dev/src/pages/index.astro` with `client:visible` hydration, positioned between the Timeline and Updates sections.
+- Followed all Gloaming design tokens: `--raise` card backgrounds, `--green` pass indicators, `--gold-dim` section label, `--mono`/`--display`/`--body` fonts, text-only icons (✓ ✗ ▸ ▾).
+- Phase cards made compact and interactive: entire top area is a `<button>`, inline pass count (`42/42`), chevron indicator, hover highlight.
+- Responsive at 980px and 640px breakpoints.
+- Empty state message when no report is available.
 
 ### What changed from the brief
 
-*(fill in)*
+- **Placement.** Brief specified between Architecture and Reviews. User requested it above Updates instead. Final order: Timeline → Compiler Status → Updates → Documents → Architecture → Reviews.
+- **Section label colour.** Brief specified `--amber-dim`. Changed to `--gold-dim` to match all other section labels on the homepage.
+- **Phase count display.** Brief used dynamic `phaseCount` from the phases array. Changed to hardcoded "5 phases" since e2e is end-to-end integration testing, not a compiler phase.
+- **Path resolution in endpoint.** Tried `import.meta.dirname` and `fileURLToPath(import.meta.url)` before settling on `process.cwd()` which works reliably because pnpm filters to the urd.dev workspace during build.
 
 ---
 
