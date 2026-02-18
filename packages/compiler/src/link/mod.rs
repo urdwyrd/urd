@@ -182,7 +182,7 @@ pub(crate) fn find_suggestion<V>(name: &str, namespace: &IndexMap<String, V>) ->
 /// Parse a property type string into a `PropertyType` enum.
 pub(crate) fn parse_property_type(s: &str) -> PropertyType {
     match s {
-        "boolean" => PropertyType::Boolean,
+        "bool" | "boolean" => PropertyType::Boolean,
         "integer" => PropertyType::Integer,
         "number" => PropertyType::Number,
         "string" => PropertyType::String,

@@ -222,7 +222,21 @@ fn collect_frontmatter_entry(
             // Already processed by IMPORT.
         }
 
-        // Other frontmatter values (maps, lists, scalars) are not declarations.
+        // Map values (from `types:` / `entities:` blocks) — recurse into entries.
+        FrontmatterValue::Map(entries) => {
+            for entry in entries {
+                collect_frontmatter_entry(
+                    &entry.value,
+                    _file_stem,
+                    _file_path,
+                    symbol_table,
+                    world_config,
+                    diagnostics,
+                );
+            }
+        }
+
+        // Other frontmatter values (lists, scalars) are not declarations.
         _ => {}
     }
 }

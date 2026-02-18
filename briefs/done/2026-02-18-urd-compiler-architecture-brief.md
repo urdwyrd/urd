@@ -11,32 +11,45 @@ February 2026 | Engineering Phase
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
 **Date completed:** 2026-02-18
-**Status:** Done — project scaffolding complete, all types defined, compiles clean
+**Status:** Done — all five phases implemented, 390 tests passing (6 slugify + 76 parse + 55 import + 72 link + 70 validate + 68 emit + 43 e2e), end-to-end pipeline operational.
 
 ### What was done
 
-- Created `packages/compiler/` as a Rust library crate (`urd-compiler`, edition 2021, `indexmap` dependency)
-- Defined all shared types in dedicated modules:
-  - `span.rs` — `Span` (file + start/end line/col, 1-indexed, byte-offset columns), `FilePath` type alias
-  - `ast.rs` — all 28+ AST node types: `FileAst`, `Frontmatter`, `FrontmatterEntry`, `FrontmatterValue` (8 variants), `Scalar`, `ImportDecl`, `WorldBlock`, `TypeDef`, `PropertyDef`, `EntityDecl`, `ContentNode` (17 variants + `ErrorNode`), `RuleBlock`, `SelectClause`, `ConditionExpr` (3 variants), `EffectType` (4 variants), `Annotation`
-  - `symbol_table.rs` — `SymbolTable` (7 `IndexMap`s), `TypeSymbol`, `PropertySymbol`, `EntitySymbol`, `SectionSymbol`, `ChoiceSymbol`, `LocationSymbol`, `ExitSymbol`, `ActionSymbol`, `RuleSymbol`, `SequenceSymbol`, `PhaseSymbol`, `SelectDef`, `AstNodeRef`, `PropertyType`, `Visibility`, `Value`
-  - `diagnostics.rs` — `DiagnosticCollector`, `Diagnostic`, `Severity`, `RelatedInfo`
-  - `graph.rs` — `DependencyGraph`, `FileNode`, `file_stem()`, all limit constants
-  - `slugify.rs` — `slugify()` with 6 passing unit tests
-- Created phase modules with stub signatures: `parse::parse()`, `import::resolve_imports()`, `link::collect_declarations()`, `link::resolve_references()`, `link::LinkedWorld`, `validate::validate()`, `emit::emit()`
-- Created `lib.rs` with `CompilationResult` and `compile()` orchestrator matching the brief's pseudocode
-- Created 6 test files: one per phase + integration, with placeholder test categories from the brief
-- All 7 tests pass, zero warnings
+**Scaffolding (initial pass):**
+- Created `packages/compiler/` as a Rust library crate (`urd-compiler`, edition 2021, `indexmap` + `serde_json` dependencies).
+- Defined all shared types across dedicated modules: `span.rs` (`Span`, `FilePath`), `ast.rs` (28+ AST node types including `Annotation`), `symbol_table.rs` (`SymbolTable` with 7 `IndexMap`s and all symbol types), `diagnostics.rs` (`DiagnosticCollector`, `Diagnostic`, `Severity`), `graph.rs` (`DependencyGraph`, `FileNode`, limits), `slugify.rs`.
+- Created `lib.rs` with `CompilationResult` and `compile()` orchestrator chaining all five phases.
+
+**Phase implementation (five sequential briefs):**
+- **PARSE** (76 tests): Line-oriented parser producing `FileAst` with full span tracking. Handles frontmatter (world, types, entities, imports) and 17 content node types. Tab detection, BOM stripping, inline comments, error recovery via `ErrorNode`.
+- **IMPORT** (55 tests): Recursive import resolution with `FileReader` trait for testability. Cycle detection, depth limiting (64 levels), file stem collision detection, path validation, casing mismatch warnings.
+- **LINK** (72 tests): Two-pass architecture — collection pass registers all declarations into `SymbolTable`, resolve pass annotates AST nodes with resolved references. Scope enforcement via visible scope sets. Edit-distance suggestions for typos.
+- **VALIDATE** (70 tests): Type checking, range validation, trait enforcement (portable/interactable/container), containment checks, effect validation, sequence/phase constraints, nesting depth limits, cascading suppression.
+- **EMIT** (68 tests): 8-step JSON builder using `serde_json` with `preserve_order`. Condition lowering (6 types), effect lowering (4 types), Region A/B/C dialogue partitioning, deterministic output.
+
+**End-to-end integration tests (43 tests):**
+- Created 8 `.urd.md` fixture files exercising the full pipeline via `compile()`.
+- **Two Room Key Puzzle** (12 tests): types, entities, exits with conditions/blocked messages, actions, dialogue, effect lowering, determinism.
+- **Tavern Scene** (8 tests): enum/integer properties, entity speech prompts, sticky choices, arithmetic effects, on_exhausted.
+- **Monty Hall** (7 tests): hidden properties, sequences with auto phases, rules with actor/trigger/select, type-targeted actions.
+- **Interrogation** (10 tests): multi-file imports, OR conditions, nested choices, cross-section goto.
+- **Negative tests** (6 tests): unresolved entity → URD3xx, type mismatch → URD4xx, missing import → URD2xx.
+
+**Integration bugs discovered and fixed by e2e tests:**
+- `FrontmatterValue::Map` not recursed in LINK collect and resolve passes — parser wraps `types:` and `entities:` blocks in `Map(entries)` but LINK only handled `TypeDef`/`EntityDecl` directly. All unit tests passed because they build ASTs programmatically, bypassing the parser's wrapping.
+- `parse_property_type("bool")` fell through to `String` — LINK only accepted `"boolean"` but the parser outputs `"bool"`. Added `"bool"` as an alias.
 
 ### What changed from the brief
 
-- **Annotation fields store `Option<String>` IDs**, not direct symbol references. Rust ownership makes storing `&TypeSymbol` etc. impractical without `Arc`/indices. Phases look up the ID in the symbol table. Same data, different indirection. Every reference-bearing node has its annotation field.
+- **Annotation fields store `Option<String>` IDs**, not direct symbol references. Rust ownership makes storing `&TypeSymbol` etc. impractical without `Arc`/indices. Phases look up the ID in the symbol table. Same data, different indirection.
 - **`EffectType` uses Rust enum variants** with embedded fields (`Set { target_prop, value_expr }`) rather than the brief's generic `fields` map. More type-safe, same data.
-- **`FrontmatterValue` has a `WorldBlock` variant** not listed in the brief's table. The brief defines `WorldBlock` as a frontmatter-specific node; wrapping it in the value enum is necessary since it appears as a value for the `world:` key in frontmatter entries.
-- **`ExitSymbol.condition_node` and `blocked_message_node`** use `AstNodeRef { file, node_index }` — a lightweight struct — rather than a direct AST pointer, for the same ownership reasons as annotations.
-- **`DiagnosticCollector.sorted()`** currently sorts by file path alphabetically. The brief specifies topological import order. This will be corrected when IMPORT provides that order — the sort function will need the graph as input.
-- **Nesting depth constants** live in `graph.rs` alongside the other limit constants rather than in a separate module. Includes `MAX_CHOICE_NESTING_DEPTH` (4), `WARN_CHOICE_NESTING_DEPTH` (3), `MAX_FRONTMATTER_NESTING_DEPTH` (8).
+- **`FrontmatterValue` has a `WorldBlock` variant** not listed in the brief's table. Necessary since the world block appears as a value for the `world:` key in frontmatter entries.
+- **`ExitSymbol.condition_node` and `blocked_message_node`** use `AstNodeRef { file, node_index }` rather than direct AST pointers, for Rust ownership reasons.
+- **`DiagnosticCollector.sorted()`** sorts by file path alphabetically rather than topological import order. Sufficient for v1 where deterministic ordering is the primary requirement.
+- **Nesting depth constants** live in `graph.rs` alongside other limits rather than in a separate module.
 - **`SelectDef.where_clauses`** uses `where_clauses` instead of `where` since `where` is a Rust reserved keyword.
+- **Section compiled IDs use `file_stem/section_name`**, not `location_id/section_name` as one might expect. This is consistent within LINK but means section IDs are file-scoped, not location-scoped.
+- **EMIT calls `slugify()` in 3 places** to correlate AST nodes to symbols, despite the EMIT brief stating otherwise. Necessary because LINK does not annotate structural AST nodes with compiled_ids.
 
 ---
 

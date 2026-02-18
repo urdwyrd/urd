@@ -171,6 +171,19 @@ fn resolve_frontmatter_entry(
             }
         }
 
+        // Map values (from `types:` / `entities:` blocks) — recurse into entries.
+        FrontmatterValue::Map(entries) => {
+            for entry in entries {
+                resolve_frontmatter_entry(
+                    &mut entry.value,
+                    file_path,
+                    visible_scope,
+                    symbol_table,
+                    diagnostics,
+                );
+            }
+        }
+
         _ => {}
     }
 }
