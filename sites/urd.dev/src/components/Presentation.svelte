@@ -581,10 +581,11 @@
 
           <p class="pres-reveal">
             This project is itself the first test of that thesis. The specifications,
-            this site, and eventually the compiler are being built with AI as the primary
+            this site, and the compiler were built with AI as the primary
             workforce — iterating against the spec, challenging its own output, and
-            failing in instructive ways. It is an experiment in spec-driven AI development
-            as much as it is a schema design.
+            failing in instructive ways. The compiler was built entirely from
+            six engineering briefs without amending them once. It is an experiment
+            in spec-driven AI development as much as it is a schema design.
           </p>
         </section>
 
@@ -892,28 +893,33 @@ Monty opened a door with a goat. Switch or stay?
           </div>
           <h2 class="pres-heading pres-reveal">Where we are</h2>
           <p class="pres-reveal">
-            The specification design is complete. It defines the schema, the markdown
-            syntax, the compiler contract, and the runtime semantics. The implementation
-            has not started. No compiler exists. No runtime exists. The schema is a
-            design, not a product.
+            The specification is complete and formalised. A <span class="hl">PEG grammar</span>
+            with 75 rules defines what valid input looks like. A <span class="hl">JSON Schema</span>
+            with 9 sub-schemas defines what valid output looks like. Six engineering briefs
+            specify every data structure, every diagnostic code, every phase contract
+            between the two.
           </p>
           <p class="pres-reveal">
-            What does exist: a schema specification, a markdown syntax specification, an
-            architecture document, a runtime specification, a test case strategy, and a
-            pain points report sourced from developer forums. These are the design
-            documents for an experiment, published as they were written.
+            The <span class="hl">compiler is built</span>. Five phases — PARSE, IMPORT,
+            LINK, VALIDATE, EMIT — implemented in Rust with <span class="hl">390 tests
+            and a 100% pass rate</span>. Four canonical fixtures compile to valid
+            <span class="pres-gold">.urd.json</span>. The design documents were not
+            amended once during implementation. Human specification, AI implementation,
+            machine verification.
           </p>
           <p class="pres-reveal">
-            The next milestone is concrete: <span class="hl">compile the Monty Hall
-            problem to JSON and run it 10,000 times</span>. If the switching advantage
-            converges to 2/3, the declarative thesis holds for at least one interesting
-            case. Then the key puzzle. Then dialogue. Each milestone either validates the
-            design or forces it to change.
+            The next milestone is the <span class="hl">reference runtime: Wyrd</span>.
+            It loads <span class="pres-gold">.urd.json</span>, executes the world, and
+            produces events. The validation target: compile the Monty Hall problem, run
+            it ten thousand times, and prove the switching advantage converges to
+            two-thirds. The compiler is ready. Wyrd is next.
           </p>
           <p class="pres-reveal">
             This site, <span class="pres-gold">urd.dev</span>, is the development journal.
             Every design document, architectural decision, and progress update is published
-            here as it happens — including the parts that do not work.
+            here as it happens — including the parts that do not work. The test dashboard
+            on the homepage shows every test, every phase, every benchmark — live numbers,
+            not claims.
           </p>
         </section>
 
