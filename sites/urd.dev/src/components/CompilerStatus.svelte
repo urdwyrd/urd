@@ -165,7 +165,7 @@
       <span class="cs-label">Compiler <span class="cs-label-sep">·</span> Validation</span>
       <h2 class="cs-title">Test Suite</h2>
       <p class="cs-subtitle">
-        {report.summary.total_tests} tests across {phaseCount} phases
+        {report.summary.total_tests} tests across 5 phases
         <span class="cs-sep">·</span>
         {timestamp}
       </p>
