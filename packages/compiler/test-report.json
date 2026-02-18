@@ -1,0 +1,3278 @@
+{
+  "version": "1",
+  "timestamp": "2026-02-18T12:04:09.490Z",
+  "compiler": {
+    "name": "urd-compiler",
+    "version": "0.1.0",
+    "language": "rust"
+  },
+  "summary": {
+    "total_tests": 390,
+    "passed": 390,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 289,
+    "pass_rate": 1
+  },
+  "phases": [
+    {
+      "name": "parse",
+      "diagnostic_range": "100-199",
+      "tests": 76,
+      "passed": 76,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "categories": [
+        {
+          "name": "bad",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "bad_frontmatter_line",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "bad_line_in_content",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "block",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "block_style_lists_rejected",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "blocked",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "blocked_message",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "bom",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "bom_stripping",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "choice",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "choice_body_with_blank_lines",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_indent_level_tracking",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_with_entity_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_with_section_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_with_type_target",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "containment",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "containment_condition",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "destroy",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "destroy_effect",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "empty",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "empty_choice_label",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "empty_frontmatter",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "entity",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "entity_declaration",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "entity_presence",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "entity_speech",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "exhaustion",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "exhaustion_condition",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "exit",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "exit_children_with_blank_lines",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exit_declaration",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exit_non_child_content",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exit_qualified_jump",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exit_with_children",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exit_with_deep_children",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "file",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "file_size_limit",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "frontmatter",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "frontmatter_nesting_depth",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "heading",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "heading_inline_comment",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "import",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "import_declaration",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "increment",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "increment_effect",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "inline",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "inline_comment_entity_speech",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "interrogation",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "interrogation",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "invalid",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "invalid_identifier_character",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "line",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "line_comment",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "line_comment_under_heading",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "list",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "list_type_parsing",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "location",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "location_heading",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "missing",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "missing_space_after_condition_sigil",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "missing_space_after_heading",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "monty",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "monty_hall",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "move",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "move_effect",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "multiple",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "multiple_errors",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "multiple_imports",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "negated",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "negated_containment",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "no",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "no_frontmatter",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "one",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "one_shot_choice",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "or",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "or_condition_block",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "phase",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "phase_heading",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "phase_heading_auto",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "prose",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "prose",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "ref",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "ref_type_parsing",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "reveal",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "reveal_effect",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "rule",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "rule_block",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "section",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "section_jump",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "section_label",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "sequence",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "sequence_heading",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "set",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "set_effect",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "simple",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "simple_condition",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "span",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "span_after_frontmatter",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_entity_speech_at_line_5",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_first_line",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_indented_condition",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_multibyte_utf8",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_tab_at_indent_position",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "stage",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "stage_direction",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "sticky",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "sticky_choice",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "tab",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "tab_indentation",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "tavern",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "tavern_scene",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "two",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "two_room_key_puzzle",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "type_definition",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "unclosed",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "unclosed_frontmatter",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "uppercase",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "uppercase_entity_id",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "world",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "world_block",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "yaml",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "yaml_aliases_rejected",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "yaml_anchors_rejected",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "yaml_custom_tags_rejected",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "yaml_merge_keys_rejected",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": [
+        "URD100",
+        "URD101",
+        "URD102",
+        "URD103",
+        "URD104",
+        "URD105",
+        "URD106",
+        "URD107",
+        "URD108",
+        "URD109",
+        "URD110",
+        "URD111",
+        "URD112"
+      ]
+    },
+    {
+      "name": "import",
+      "diagnostic_range": "200-299",
+      "tests": 55,
+      "passed": 55,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "categories": [
+        {
+          "name": "casing",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "casing_mismatch_canonical_already_visited",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "casing_mismatch_warning",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "compilation",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "compilation_unit_asts_unmodified",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "compilation_unit_ordered_asts_matches_topo_order",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "cycle",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "cycle_message_format_arrow_separated",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "cycle_path_uses_normalised_paths",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "fs",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "fs_io_error",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "fs_permission_denied",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "graph",
+          "tests": 13,
+          "passed": 13,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "graph_cycle_a_b_a",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_deep_chain_65_levels",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_diamond_dependency",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_duplicate_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_empty_file",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_entry_dir_prepended_to_fs_path",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_file_too_large",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_linear_chain_a_b_c",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_longer_cycle_a_b_c_a",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_missing_file",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_no_frontmatter",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_single_file_no_imports",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "graph_stem_collision",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "integration",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "integration_multi_file_diamond",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_single_file_no_imports",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_two_file_import",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "multiple",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "multiple_path_validation_errors",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "path",
+          "tests": 14,
+          "passed": 14,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "path_absolute_unix",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_absolute_windows",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_absolute_windows_drive_relative",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_backslash_conversion",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_empty",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_missing_extension",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_nested_parent",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_no_leading_dot_slash",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_outside_project_root",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_parent_directory",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_self_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_simple_relative",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_subdirectory",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "path_whitespace_trimmed",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "recovery",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "recovery_cascading_missing_leaf",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_cycle_with_other_imports",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_invalid_utf8",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_one_bad_import_among_good",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_parse_failure_in_import",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "span",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "span_urd103_references_import_decl",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_urd201_references_import_decl",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_urd202_references_cycle_closing_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_urd206_references_import_decl",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "span_urd207_references_self_import",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "stem",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "stem_collision_reports_all_collisions",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "topo",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "topo_diamond_alphabetical_tie",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "topo_entry_always_last",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "topo_linear",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "topo_shared_dependency",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "topo_wide_fan",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": [
+        "URD201",
+        "URD202",
+        "URD203",
+        "URD204",
+        "URD205",
+        "URD206",
+        "URD207",
+        "URD208",
+        "URD209",
+        "URD210",
+        "URD211"
+      ]
+    },
+    {
+      "name": "link",
+      "diagnostic_range": "300-399",
+      "tests": 78,
+      "passed": 78,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "categories": [
+        {
+          "name": "already",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "already_slugified",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "basic",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "basic_slugification",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "choice",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "choice_action_id_matches_choice_id",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_generates_action",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_with_entity_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_with_no_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "choice_with_type_target_action",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "collapses",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "collapses_hyphens",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "collect",
+          "tests": 11,
+          "passed": 11,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "collect_duplicate_choice_slugs",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_duplicate_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_duplicate_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_duplicate_section_in_same_file",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_duplicate_type",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_error_node_skipped",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_location_from_heading",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_section_with_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_sequence_and_phase",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_single_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "collect_single_type",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "containment",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "containment_check_entity_container",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "containment_check_here_keyword",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "containment_check_location_container",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "containment_check_player_keyword",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "duplicate",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "duplicate_rule_detected",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "duplicate_sequence_detected",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "edit",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "edit_distance_basic",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "empty",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "empty_input",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "entity",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "entity_presence_outside_location_returns_early",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "id",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "id_choice",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "id_empty_slug",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "id_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "id_section",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "id_slugify_collapse",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "id_slugify_special_chars",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "integration",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "integration_jump_disambiguation",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_multi_file_project",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_two_room_key_puzzle",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "move",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "move_location_destination",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "move_player_destination",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "nested",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "nested_choice_generates_action",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "recovery",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "recovery_cascading_suppressed",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_duplicate_then_reference",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_error_node_among_valid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "recovery_one_bad_entity_among_good",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "resolve",
+          "tests": 22,
+          "passed": 22,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "resolve_containment_check",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_destroy_effect",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_entity_presence",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_entity_reference",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_exhaustion_check",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_exit_destination",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_explicit_exit_jump",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_jump_shadowing",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_jump_to_exit",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_jump_to_section",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_move_effect",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_property_access",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_scope_enforcement",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_set_effect",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_type_on_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unknown_property",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unknown_type_with_suggestion",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unresolved_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unresolved_entity_with_suggestion",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unresolved_exit_destination",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unresolved_explicit_exit",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "resolve_unresolved_jump",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "scope",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "scope_cross_file_with_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "scope_cross_file_without_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "scope_entity_presence_outside_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "scope_exit_outside_location_context",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "scope_explicit_exit_jump_outside_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "scope_forward_reference_within_file",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "strips",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "strips_special_characters",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "topological",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "topological_order_respected",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "trims",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "trims_leading_trailing_hyphens",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "type_not_visible_uses_suggestion_field",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "world",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "world_config_start_and_entry_stored",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_config_unresolved_not_stored",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": [
+        "URD301",
+        "URD302",
+        "URD303",
+        "URD304",
+        "URD305",
+        "URD306",
+        "URD307",
+        "URD308",
+        "URD309",
+        "URD310",
+        "URD311",
+        "URD312",
+        "URD313",
+        "URD314"
+      ]
+    },
+    {
+      "name": "validate",
+      "diagnostic_range": "400-499",
+      "tests": 70,
+      "passed": 70,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "categories": [
+        {
+          "name": "action",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "action_mutual_exclusion",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "advance",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "advance_mode_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "advance_mode_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "arithmetic",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "arithmetic_on_enum",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "arithmetic_on_integer",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "auto",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "auto_phase_with_actions",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "boolean",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "boolean_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "boolean_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "container",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "container_entity_without_trait",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "container_kind_null_skip",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "containment",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "containment_here_keyword_valid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "containment_player_keyword_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "default",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "default_invalid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "destination",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "destination_kind_keyword_here_despite_location",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "destroy",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "destroy_entity",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "empty",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "empty_enum",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "empty_sequence",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "enum",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "enum_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "enum_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "exhaustion",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "exhaustion_cross_file",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exhaustion_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "integer",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "integer_out_of_range",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integer_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "integration",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "integration_maximum_errors",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_monty_hall",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_multi_file",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_sequences_and_phases",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_two_room_key_puzzle",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "keyword",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "keyword_shadows_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "keyword_shadows_location_in_move",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "move",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "move_destination_keyword_here",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "move_destination_keyword_player",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "move_non_portable",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "move_to_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "move_to_non_container_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "move_valid_portable_to_player",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "nesting",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "nesting_depth_2_ok",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "nesting_depth_3_warns",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "nesting_depth_4_errors",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "no",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "no_world_entry_freeform",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "number",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "number_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "ordering",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "ordering_on_enum",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "phase",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "phase_action_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "phase_action_valid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "phase_rule_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "phase_rule_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "player",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "player_missing_trait",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "player_valid_traits",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "property",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "property_comparison_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "range",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "range_inverted",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "range_on_string",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "ref",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "ref_type_mismatch",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "ref_type_unknown",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "ref_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "reveal",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "reveal_hidden",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "reveal_visible_warns",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "set",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "set_type_mismatch",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "set_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "skip",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "skip_error_node",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "skip_unresolved_entity_in_condition",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "skip_unresolved_property_in_effect",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "skip_unresolved_type_on_entity",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "string",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "string_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "urd",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "urd_override_warning",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "value",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "value_type_mismatch_in_condition",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "world",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "world_entry_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_entry_valid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_start_invalid",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_start_shadowed_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_start_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": [
+        "URD401",
+        "URD402",
+        "URD404",
+        "URD405",
+        "URD406",
+        "URD407",
+        "URD408",
+        "URD409",
+        "URD410",
+        "URD411",
+        "URD412",
+        "URD413",
+        "URD414",
+        "URD415",
+        "URD416",
+        "URD417",
+        "URD418",
+        "URD419",
+        "URD420",
+        "URD422",
+        "URD423",
+        "URD424",
+        "URD425",
+        "URD426",
+        "URD427",
+        "URD428"
+      ]
+    },
+    {
+      "name": "emit",
+      "diagnostic_range": "500-599",
+      "tests": 68,
+      "passed": 68,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "categories": [
+        {
+          "name": "advance",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "advance_end",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "advance_on_action",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "advance_on_condition_space_free",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "advance_on_condition_with_here",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "condition",
+          "tests": 8,
+          "passed": 8,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "condition_and",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_containment_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_containment_here",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_containment_negated",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_containment_player",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_exhaustion",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_or",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "condition_property_comparison",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "determinism",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "determinism_byte_identical",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "determinism_cross_file_ordering",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "determinism_key_order_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "determinism_top_level_key_order",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "dialogue",
+          "tests": 18,
+          "passed": 18,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "dialogue_choice_with_conditions_and_effects",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_choice_with_entity_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_choice_with_goto",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_choice_with_goto_end",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_choice_with_type_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_multiple_prose_blocks",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_nested_choice_generates_action",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_nested_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_no_on_exhausted",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_omit_empty",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_on_exhausted_prose",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_on_exhausted_speech",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_on_exhausted_with_goto",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_section_description",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_section_prompt",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_section_with_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_section_with_prompt_and_description",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "dialogue_sticky_choice",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "effect",
+          "tests": 8,
+          "passed": 8,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "effect_arithmetic_add",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_destroy",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_move_to_here",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_move_to_location",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_move_to_player",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_reveal",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_set_boolean",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "effect_set_string",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "entity",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "entity_no_overrides",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "entity_ref_override",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "entity_with_overrides",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "exit",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "exit_with_blocked_message",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "exit_with_condition",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "explicit",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "explicit_player",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "integration",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "integration_empty_world",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_multi_file",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_trailing_newline",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "integration_two_room_key_puzzle",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "location",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "location_with_contains",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "location_with_description",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "location_with_exits",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "no",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "no_explicit_player",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "omit",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "omit_empty_locations_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "omit_empty_types_block",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "sequence",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "sequence_auto_phase",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "type",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "type_all_property_types",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "type_hidden_property",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "type_visible_property_default",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "type_with_no_traits",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "type_with_traits",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "world",
+          "tests": 4,
+          "passed": 4,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "world_absent_optional_fields",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_full_metadata",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_minimal",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "world_urd_override",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "name": "e2e",
+      "diagnostic_range": null,
+      "tests": 43,
+      "passed": 43,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 0,
+      "categories": [
+        {
+          "name": "e2e",
+          "tests": 43,
+          "passed": 43,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "e2e_interrogation_compiles_successfully",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_dialogue_sections",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_entities_from_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_goto_between_sections",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_locations",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_nested_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_or_conditions",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_types_from_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_interrogation_world_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_action_effects_lowered",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_actions_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_compiles_successfully",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_deterministic_output",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_dialogue_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_entities_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_exit_condition_lowered",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_json_has_urd_version",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_locations_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_top_level_keys",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_types_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_world_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_key_puzzle_zero_error_diagnostics",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_actions_with_type_target",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_compiles_successfully",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_has_rules",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_has_sequence",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_rule_has_actor",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_types_and_entities",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_monty_hall_world_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_missing_import",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_missing_import_has_import_error",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_type_mismatch",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_type_mismatch_has_validate_error",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_unresolved_entity",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_unresolved_entity_has_link_error",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_arithmetic_effect",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_compiles_successfully",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_dialogue_has_on_exhausted",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_dialogue_section",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_entities_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_locations_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_types_block",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_tavern_world_block",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": []
+    }
+  ],
+  "compliance": [
+    {
+      "label": "Deterministic output",
+      "status": "pass",
+      "note": "Fixed key order, topological sort"
+    },
+    {
+      "label": "Error recovery",
+      "status": "pass",
+      "note": "Mark & continue, no cascading"
+    },
+    {
+      "label": "Phase contracts",
+      "status": "pass",
+      "note": "Input/output types enforced"
+    },
+    {
+      "label": "Diagnostic ownership",
+      "status": "pass",
+      "note": "Each phase owns its code range"
+    },
+    {
+      "label": "ID derivation",
+      "status": "pass",
+      "note": "Slugify, file_stem/name"
+    },
+    {
+      "label": "Annotation model",
+      "status": "pass",
+      "note": "Option<String> IDs via symbol table"
+    }
+  ],
+  "benchmarks": {
+    "files": [
+      {
+        "name": "interrogation",
+        "source_bytes": 668,
+        "output_bytes": 3683,
+        "total_ms": 0.35,
+        "phases": {
+          "parse_ms": 0.061,
+          "import_ms": 0.129,
+          "link_ms": 0.058,
+          "validate_ms": 0.013,
+          "emit_ms": 0.088
+        },
+        "success": true,
+        "diagnostic_count": 0
+      },
+      {
+        "name": "monty_hall",
+        "source_bytes": 622,
+        "output_bytes": 2253,
+        "total_ms": 0.205,
+        "phases": {
+          "parse_ms": 0.062,
+          "import_ms": 0.017,
+          "link_ms": 0.052,
+          "validate_ms": 0.01,
+          "emit_ms": 0.062
+        },
+        "success": true,
+        "diagnostic_count": 0
+      },
+      {
+        "name": "tavern_scene",
+        "source_bytes": 545,
+        "output_bytes": 2139,
+        "total_ms": 0.199,
+        "phases": {
+          "parse_ms": 0.057,
+          "import_ms": 0.017,
+          "link_ms": 0.05,
+          "validate_ms": 0.009,
+          "emit_ms": 0.065
+        },
+        "success": true,
+        "diagnostic_count": 0
+      },
+      {
+        "name": "two_room_key_puzzle",
+        "source_bytes": 481,
+        "output_bytes": 1914,
+        "total_ms": 0.204,
+        "phases": {
+          "parse_ms": 0.057,
+          "import_ms": 0.02,
+          "link_ms": 0.05,
+          "validate_ms": 0.01,
+          "emit_ms": 0.065
+        },
+        "success": true,
+        "diagnostic_count": 0
+      }
+    ],
+    "aggregate": {
+      "total_source_bytes": 2316,
+      "total_output_bytes": 9989,
+      "total_ms": 0.96,
+      "files_compiled": 4,
+      "files_succeeded": 4,
+      "avg_ms_per_file": 0.24,
+      "bytes_per_ms": 2412.5
+    }
+  }
+}

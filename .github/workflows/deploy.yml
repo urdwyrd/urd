@@ -30,27 +30,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            packages/compiler/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('packages/compiler/Cargo.lock', 'packages/compiler/Cargo.toml') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
       - name: Install dependencies
         run: pnpm install
-
-      - name: Generate compiler test report
-        run: pnpm compiler:test
-
-      - name: Copy report to site data
-        run: pnpm compiler:report:copy
 
       - name: Build
         run: pnpm build
