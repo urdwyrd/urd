@@ -3,7 +3,7 @@
 
   interface Phase {
     title: string;
-    status: 'complete' | 'active' | 'next';
+    status: 'complete' | 'finalising' | 'active' | 'next';
     subtitle: string;
     order: number;
     description: string;
@@ -38,6 +38,7 @@
 
   function statusIndicator(status: string): string {
     if (status === 'complete') return '✓';
+    if (status === 'finalising') return '◆';
     if (status === 'active') return '◆';
     return '';
   }
@@ -162,6 +163,10 @@
     color: var(--green-light);
   }
 
+  .phase-finalising .phase-status {
+    color: var(--gold);
+  }
+
   .phase-active .phase-status {
     color: var(--gold);
   }
@@ -172,6 +177,10 @@
 
   .phase-indicator {
     font-size: 8px;
+  }
+
+  .phase-finalising .phase-indicator {
+    font-size: 9px;
   }
 
   .phase-active .phase-indicator {

@@ -1,6 +1,6 @@
 ---
 title: Validation
-status: active
+status: finalising
 subtitle: "Compiler and the proof loop."
 order: 4
 link: "/articles/compiler-briefs"

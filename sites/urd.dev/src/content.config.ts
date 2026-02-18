@@ -46,7 +46,7 @@ const timeline = defineCollection({
   loader: glob({ pattern: '**/*.md', base: '../../content/timeline' }),
   schema: z.object({
     title: z.string(),
-    status: z.enum(['complete', 'active', 'next']),
+    status: z.enum(['complete', 'finalising', 'active', 'next']),
     subtitle: z.string(),
     order: z.number(),
     link: z.string().optional(),
