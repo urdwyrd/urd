@@ -10,16 +10,28 @@ February 2026 | Engineering Phase
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:**
+**Date completed:** 2026-02-18
+**Status:** Complete
 
 ### What was done
 
--
+- Prerequisite: added `ContainerKind` and `DestinationKind` discriminator enums to `ast.rs` and extended `Annotation` with `container_kind` and `destination_kind` fields. Fixed LINK `resolve.rs` to use keyword-first resolution for `ContainmentCheck.container_ref` and `Move.destination_ref` (replacing the previous `resolve_entity_ref_value` calls that emitted false URD301 errors for `player`, `here`, and location names). Added 6 LINK tests for the new resolution paths.
+- Created `validate/helpers.rs` with shared type-checking logic: `check_value`, `parse_string_to_value`, `has_trait`, `format_value`, `format_property_type`, and a `CheckContext` enum (`Override`, `Default`, `ConditionOrEffect`) to control which diagnostic codes are emitted for enum mismatches.
+- Created `validate/types.rs` (Step 2): type definition validation — property defaults (URD413), empty enum values (URD414), ref type existence (URD415), range validity (URD416), range type compatibility (URD417).
+- Created `validate/entities.rs` (Step 3): entity property override validation — type check (URD401), enum value (URD402), range (URD418), ref type (URD419).
+- Created `validate/conditions.rs` (Step 4): condition validation — PropertyComparison operator compatibility (URD420) and value type (URD401), ContainmentCheck container trait via `container_kind` discriminator (URD422), ExhaustionCheck file-locality (URD423).
+- Created `validate/effects.rs` (Step 5): effect validation — Set value type and arithmetic operator (URD401, URD424), Move portable trait and destination kind (URD425, URD422), Reveal visibility (URD426), Destroy (no checks).
+- Rewrote `validate/mod.rs` as the entry point calling all 8 steps, with Steps 1 (global config: URD404, URD405, URD411, URD412), 6 (action mutual exclusion: URD406), 7 (sequence/phase validation: URD407, URD408, URD409, URD427, URD428), and 8 (nesting depth: URD410) implemented inline.
+- Wrote 70 VALIDATE tests covering all 25 diagnostic codes across property type checking (15), condition validation (10), effect validation (15), structural constraints (17), skip rule (4), and integration (5 including Monty Hall). Four structural tests (`phase_rule_valid`, `phase_rule_invalid`, `advance_mode_invalid`, `auto_phase_with_actions`) use a `link_modify_and_validate` helper that mutates the symbol table between LINK and VALIDATE to exercise code paths that LINK's current phase collection doesn't populate.
+- All 279 tests pass (6 slugify + 55 import + 72 link + 76 parse + 70 validate). Zero new warnings.
 
 ### What changed from the brief
 
--
+- **`VALID_ADVANCE_MODES` includes `"auto"` and `"manual"` beyond the brief's four modes.** The brief specifies four valid advance modes: `on_action`, `on_rule`, `on_condition`, `end`. However, LINK's `collect_phase` defaults `advance` to `"auto"` (when `phase.auto == true`) or `"manual"` (otherwise). If only the brief's four modes were accepted, every phase would trigger URD409 on creation. Adding `"auto"` and `"manual"` to the valid set is a necessary deviation.
+- **URD423 (exhaustion cross-file) is dead code.** The brief says VALIDATE should emit URD423 when an exhaustion check references a section in another file. In practice, LINK resolves exhaustion checks only against `ctx.local_sections` (the current file). Cross-file section names fail LINK resolution (URD309) and the annotation is left `None`, so VALIDATE skips via the null-annotation rule. The URD423 check is retained as a safety net but can never fire given LINK's current resolution model. The `exhaustion_cross_file` test correctly asserts URD309 from LINK rather than URD423.
+- **`CheckContext` enum added to helpers.** The brief implies URD402 is emitted only for entity property overrides (Step 3), while conditions and effects use URD401 for all mismatches including enum. The implementation uses a `CheckContext` enum (`Override`, `Default`, `ConditionOrEffect`) passed to `check_value` to select the correct diagnostic code, which is a structural addition not detailed in the brief.
+- **Auto phase detection uses `phase.advance == "auto"` instead of a boolean field.** The brief says "if a phase is marked `auto: true`" but `PhaseSymbol` has no separate `auto` boolean — LINK encodes it as `advance: "auto"`. The implementation checks the advance field directly, which is functionally equivalent.
+- **Test count is 70 instead of the planned ~65.** The conformance review identified 8 missing acceptance criteria tests (keyword-location shadowing in moves, world.start with shadowed location, phase rule valid/invalid, advance mode invalid, auto phase with actions, Monty Hall integration) which were added in a follow-up pass.
 
 ---
 

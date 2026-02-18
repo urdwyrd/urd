@@ -14,7 +14,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use crate::ast::{FileAst, FrontmatterValue, ImportDecl};
 use crate::diagnostics::DiagnosticCollector;
-use crate::graph::{file_stem, DependencyGraph, FileNode, MAX_FILE_COUNT, MAX_FILE_SIZE, MAX_IMPORT_DEPTH};
+use crate::graph::{file_stem, CompilationUnit, DependencyGraph, FileNode, MAX_FILE_COUNT, MAX_FILE_SIZE, MAX_IMPORT_DEPTH};
 use crate::parse;
 use crate::span::Span;
 
@@ -27,6 +27,8 @@ pub enum FileReadError {
     PermissionDenied,
     InvalidUtf8,
     IoError(String),
+    /// File exceeds the maximum size limit. Contains the file size in bytes.
+    TooLarge(usize),
 }
 
 /// Abstraction over filesystem operations for testability.
@@ -51,6 +53,24 @@ pub struct OsFileReader;
 
 impl FileReader for OsFileReader {
     fn read_file(&self, fs_path: &str) -> Result<String, FileReadError> {
+        // Check file size via metadata before reading to avoid loading
+        // oversized files into memory.
+        match std::fs::metadata(fs_path) {
+            Ok(meta) => {
+                let size = meta.len() as usize;
+                if size > MAX_FILE_SIZE {
+                    return Err(FileReadError::TooLarge(size));
+                }
+            }
+            Err(e) => {
+                return match e.kind() {
+                    std::io::ErrorKind::NotFound => Err(FileReadError::NotFound),
+                    std::io::ErrorKind::PermissionDenied => Err(FileReadError::PermissionDenied),
+                    _ => Err(FileReadError::IoError(e.to_string())),
+                };
+            }
+        }
+
         match std::fs::read(fs_path) {
             Ok(bytes) => String::from_utf8(bytes).map_err(|_| FileReadError::InvalidUtf8),
             Err(e) => match e.kind() {
@@ -229,7 +249,7 @@ pub fn resolve_imports(
     entry_ast: FileAst,
     entry_dir: &str,
     diagnostics: &mut DiagnosticCollector,
-) -> DependencyGraph {
+) -> CompilationUnit {
     resolve_imports_with_reader(entry_ast, entry_dir, diagnostics, &OsFileReader)
 }
 
@@ -239,7 +259,7 @@ pub fn resolve_imports_with_reader(
     entry_dir: &str,
     diagnostics: &mut DiagnosticCollector,
     reader: &dyn FileReader,
-) -> DependencyGraph {
+) -> CompilationUnit {
     let mut graph = DependencyGraph::new();
 
     let entry_path = entry_ast.path.clone();
@@ -277,7 +297,13 @@ pub fn resolve_imports_with_reader(
     check_file_count(&graph, diagnostics);
     check_file_stems(&graph, diagnostics);
 
-    graph
+    // Build ordered_asts from topological order.
+    let ordered_asts = graph.topological_order().into_iter().cloned().collect();
+
+    CompilationUnit {
+        graph,
+        ordered_asts,
+    }
 }
 
 // ── Import extraction ───────────────────────────────────────────────
@@ -484,9 +510,20 @@ fn process_single_import(
             );
             return;
         }
+        Err(FileReadError::TooLarge(size)) => {
+            diagnostics.error(
+                "URD103",
+                format!(
+                    "File exceeds 1 MB size limit: {} is {} bytes.",
+                    normalised_path, size
+                ),
+                decl.span.clone(),
+            );
+            return;
+        }
     };
 
-    // Check file size (URD103).
+    // Check file size (URD103) — belt-and-braces for readers that skip metadata.
     if source.len() > MAX_FILE_SIZE {
         diagnostics.error(
             "URD103",
@@ -495,7 +532,7 @@ fn process_single_import(
                 normalised_path,
                 source.len()
             ),
-            Span::new(normalised_path.clone(), 1, 1, 1, 1),
+            decl.span.clone(),
         );
         return;
     }

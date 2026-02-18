@@ -10,16 +10,35 @@ February 2026 | Engineering Phase
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:**
+**Date completed:** 2026-02-18
+**Status:** Done — all 55 IMPORT tests pass, fully conformant with brief after compliance audit and remediation
 
 ### What was done
 
--
+- Implemented full IMPORT phase in `import/mod.rs` (~600 lines): recursive DFS discovery, path validation, path resolution, cycle detection, depth limiting, deduplication, file loading with casing mismatch detection, post-discovery checks (file count, stem uniqueness)
+- `FileReader` trait + `OsFileReader` for production filesystem access; tests use `MockFs` and `CasingMockFs` in-memory implementations for deterministic I/O-free testing
+- Path utilities: `path_dir()`, `path_filename()`, `collapse_dotdot()` for lexical `..` collapsing without symlink resolution
+- `validate_import_path()` checks URD211 (empty), URD209 (absolute, including Unix `/` and Windows drive letters `C:`/`D:`), URD210 (missing `.urd.md` extension) — in that order
+- `resolve_import_path()` strips `./`, joins with importer directory, collapses `..`, emits URD208 if path escapes project root
+- `process_single_import()` implements steps a–j from the brief: trim/validate, resolve, self-import check (URD207), cycle detection (URD202 with full normalised-path chain), depth limit (URD204, 64 levels), already-loaded deduplication, file loading with all five filesystem error types, casing mismatch detection (URD206 warning with canonical path correction and re-visit check), parse via PARSE, add to graph, recurse
+- Post-discovery: `check_file_count()` (URD205, 256 max) and `check_file_stems()` (URD203, reports all pairwise collisions using `BTreeMap` for deterministic ordering)
+- `CompilationUnit` struct wrapping `DependencyGraph` + `ordered_asts: Vec<FilePath>` as the IMPORT output type, matching the brief's interface contract
+- `DependencyGraph.nodes` uses `IndexMap` (not `HashMap`) for deterministic iteration order, satisfying the brief's stability guarantee
+- Topological sort via Kahn's algorithm with `BTreeSet` for alphabetical tiebreaking; entry file excluded from ready set and appended last
+- `OsFileReader` checks `std::fs::metadata()` before `std::fs::read()` so oversized files are never loaded into memory — `TooLarge(usize)` variant in `FileReadError`
+- All 14 diagnostic codes implemented with correct severities, message templates, and span conventions (declaration diagnostics use `written_path` + ImportDecl span; file-identity diagnostics use `normalised_path` + ImportDecl span; graph-level diagnostics URD203/URD205 use `Span::synthetic()`)
+- Updated `lib.rs` orchestration to use `CompilationUnit` and pass `compilation_unit.graph` to downstream phases
+- 55 acceptance tests across 10 categories: path resolution (13), graph construction (11), topological sort determinism (4), error recovery (5), span reference (4), filesystem errors (2), casing mismatch (3), cycle format (2), stem collisions (1), CompilationUnit contract (2), integration (3)
 
 ### What changed from the brief
 
--
+- **No `CompilationUnit` wrapper initially:** First implementation returned bare `DependencyGraph`. Compliance audit identified this as a major non-conformance (NC-1). Remediated by adding `CompilationUnit { graph, ordered_asts }` in `graph.rs` and updating all return types and tests.
+- **`HashMap` replaced by `IndexMap`:** First implementation used `HashMap<FilePath, FileNode>` for `DependencyGraph.nodes`. Compliance audit identified non-deterministic iteration order as a major non-conformance (NC-2). Remediated by switching to `IndexMap` (`indexmap` crate already in `Cargo.toml`).
+- **Extra `entry_dir` parameter:** `resolve_imports(entry_ast, entry_dir, diagnostics)` takes an additional `entry_dir: &str` parameter not in the brief's pseudocode. The orchestrator computes this from the entry file path. This is an engineering necessity — IMPORT needs the directory to construct filesystem paths for reading imported files.
+- **`FileReader` trait abstraction:** Not in the brief. Added for testability — IMPORT is the only phase that touches the filesystem, so mocking is essential for the 55-test suite to run without real I/O.
+- **URD203 reports pairwise, not grouped:** The brief says "emit URD203 listing all conflicting files" per stem. The implementation emits one diagnostic per pair of colliding files (O(n^2) for n files sharing a stem). More granular but noisier for large collision sets.
+- **URD103 span uses `decl.span` (ImportDecl span):** The brief doesn't specify which span URD103 should use when emitted by IMPORT. Initial implementation used a synthetic span pointing to the imported file (line 1, col 1). Compliance audit flagged this (NC-6) since "all IMPORT diagnostics that reference a source location must point to the ImportDecl node's span." Remediated to use `decl.span.clone()`.
+- **Metadata-based file size pre-check:** `OsFileReader` checks `std::fs::metadata().len()` before `std::fs::read()` to avoid loading oversized files into memory. The brief allows checks "in any order or during the read" — this is a defensive improvement given the clinical deployment context. A belt-and-braces content-length check remains after reading for `FileReader` implementations that skip metadata.
 
 ---
 

@@ -5,7 +5,8 @@
 // - Graph construction (11 tests)
 // - Topological sort determinism (4 tests)
 // - Error recovery (5 tests)
-// - Span reference (3 tests)
+// - Span reference (4 tests)
+// - Missing tests from audit (6 tests)
 
 use std::collections::HashMap;
 use urd_compiler::diagnostics::DiagnosticCollector;
@@ -131,7 +132,6 @@ fn find_diagnostic<'a>(
 }
 
 /// Count diagnostics with the given code.
-#[allow(dead_code)]
 fn count_diagnostics(diag: &DiagnosticCollector, code: &str) -> usize {
     diag.all().iter().filter(|d| d.code == code).count()
 }
@@ -145,11 +145,11 @@ fn path_simple_relative() {
     let fs = MockFs::new().add("types.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert!(graph.nodes.contains_key("types.urd.md"));
-    assert_eq!(graph.nodes.len(), 2);
+    assert!(cu.graph.nodes.contains_key("types.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 2);
 }
 
 #[test]
@@ -159,10 +159,10 @@ fn path_subdirectory() {
     let fs = MockFs::new().add("shared/types.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert!(graph.nodes.contains_key("shared/types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("shared/types.urd.md"));
 }
 
 #[test]
@@ -178,10 +178,10 @@ fn path_parent_directory() {
         .add("shared/types.urd.md", &types_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(entry_ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(entry_ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors(), "Unexpected errors: {:?}", diag.all());
-    assert!(graph.nodes.contains_key("shared/types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("shared/types.urd.md"));
 }
 
 #[test]
@@ -196,10 +196,10 @@ fn path_nested_parent() {
         .add("lib/core.urd.md", &core_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(entry_ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(entry_ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors(), "Unexpected errors: {:?}", diag.all());
-    assert!(graph.nodes.contains_key("lib/core.urd.md"));
+    assert!(cu.graph.nodes.contains_key("lib/core.urd.md"));
 }
 
 #[test]
@@ -209,10 +209,10 @@ fn path_no_leading_dot_slash() {
     let fs = MockFs::new().add("types.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert!(graph.nodes.contains_key("types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("types.urd.md"));
 }
 
 #[test]
@@ -222,10 +222,10 @@ fn path_backslash_conversion() {
     let fs = MockFs::new().add("shared/types.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert!(graph.nodes.contains_key("shared/types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("shared/types.urd.md"));
 }
 
 #[test]
@@ -235,7 +235,7 @@ fn path_outside_project_root() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD208").is_some());
 }
@@ -247,7 +247,7 @@ fn path_absolute_unix() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD209").is_some());
 }
@@ -259,7 +259,7 @@ fn path_absolute_windows() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     // After backslash normalisation: C:/types.urd.md — absolute path.
     assert!(find_diagnostic(&diag, "URD209").is_some());
@@ -272,7 +272,7 @@ fn path_missing_extension() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD210").is_some());
 }
@@ -295,7 +295,7 @@ fn path_empty() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     if has_import {
         // PARSE produced an ImportDecl → IMPORT should catch it with URD211.
@@ -305,8 +305,8 @@ fn path_empty() {
         );
     }
     // Either way, no panic and graph is valid.
-    assert!(graph_is_valid(&graph));
-    assert_eq!(graph.nodes.len(), 1); // Only entry
+    assert!(graph_is_valid(&cu.graph));
+    assert_eq!(cu.graph.nodes.len(), 1); // Only entry
 }
 
 #[test]
@@ -316,7 +316,7 @@ fn path_self_import() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD207").is_some());
 }
@@ -328,10 +328,10 @@ fn path_whitespace_trimmed() {
     let fs = MockFs::new().add("types.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert!(graph.nodes.contains_key("types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("types.urd.md"));
 }
 
 // ── Graph construction tests ────────────────────────────────────────
@@ -343,14 +343,13 @@ fn graph_single_file_no_imports() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert_eq!(graph.nodes.len(), 1);
-    assert_eq!(graph.edges.len(), 0);
-    let order = graph.topological_order();
-    assert_eq!(order.len(), 1);
-    assert_eq!(order[0], "entry.urd.md");
+    assert_eq!(cu.graph.nodes.len(), 1);
+    assert_eq!(cu.graph.edges.len(), 0);
+    assert_eq!(cu.ordered_asts.len(), 1);
+    assert_eq!(cu.ordered_asts[0], "entry.urd.md");
 }
 
 #[test]
@@ -365,13 +364,12 @@ fn graph_linear_chain_a_b_c() {
         .add("c.urd.md", &c_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert_eq!(graph.nodes.len(), 3);
-    assert_eq!(graph.edges.len(), 2);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
-    assert_eq!(order, vec!["c.urd.md", "b.urd.md", "a.urd.md"]);
+    assert_eq!(cu.graph.nodes.len(), 3);
+    assert_eq!(cu.graph.edges.len(), 2);
+    assert_eq!(cu.ordered_asts, vec!["c.urd.md", "b.urd.md", "a.urd.md"]);
 }
 
 #[test]
@@ -388,13 +386,12 @@ fn graph_diamond_dependency() {
         .add("d.urd.md", &d_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert_eq!(graph.nodes.len(), 4);
+    assert_eq!(cu.graph.nodes.len(), 4);
     // D loaded once (deduplication).
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
-    assert_eq!(order, vec!["d.urd.md", "b.urd.md", "c.urd.md", "a.urd.md"]);
+    assert_eq!(cu.ordered_asts, vec!["d.urd.md", "b.urd.md", "c.urd.md", "a.urd.md"]);
 }
 
 #[test]
@@ -406,12 +403,12 @@ fn graph_duplicate_import() {
     let fs = MockFs::new().add("b.urd.md", &b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert_eq!(graph.nodes.len(), 2);
+    assert_eq!(cu.graph.nodes.len(), 2);
     // One edge, not two.
-    assert_eq!(graph.edges.len(), 1);
+    assert_eq!(cu.graph.edges.len(), 1);
 }
 
 #[test]
@@ -423,15 +420,14 @@ fn graph_cycle_a_b_a() {
     let fs = MockFs::new().add("b.urd.md", &b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD202").is_some());
     // Both files in graph — A imported B successfully.
-    assert_eq!(graph.nodes.len(), 2);
+    assert_eq!(cu.graph.nodes.len(), 2);
     // Only one edge: A→B. The B→A edge was rejected.
-    assert_eq!(graph.edges.len(), 1);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
-    assert_eq!(order, vec!["b.urd.md", "a.urd.md"]);
+    assert_eq!(cu.graph.edges.len(), 1);
+    assert_eq!(cu.ordered_asts, vec!["b.urd.md", "a.urd.md"]);
 }
 
 #[test]
@@ -446,7 +442,7 @@ fn graph_longer_cycle_a_b_c_a() {
         .add("c.urd.md", &c_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     let d = find_diagnostic(&diag, "URD202").expect("Expected URD202");
     // Cycle path should show the full chain.
@@ -454,7 +450,7 @@ fn graph_longer_cycle_a_b_c_a() {
     assert!(d.message.contains("b.urd.md"), "Cycle message: {}", d.message);
     assert!(d.message.contains("c.urd.md"), "Cycle message: {}", d.message);
     // All three files in graph.
-    assert_eq!(graph.nodes.len(), 3);
+    assert_eq!(cu.graph.nodes.len(), 3);
 }
 
 #[test]
@@ -479,13 +475,13 @@ fn graph_deep_chain_65_levels() {
     let ast = parse_source("entry.urd.md", &entry_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD204").is_some());
     // entry + file_01 through file_63 = 64 nodes.
     // file_64 is NOT in the graph (depth limit rejected it).
-    assert!(!graph.nodes.contains_key("file_64.urd.md"));
-    assert_eq!(graph.nodes.len(), 64);
+    assert!(!cu.graph.nodes.contains_key("file_64.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 64);
 }
 
 #[test]
@@ -495,14 +491,13 @@ fn graph_missing_file() {
     let fs = MockFs::new(); // No files
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD201").is_some());
     // Missing file absent from graph.
-    assert!(!graph.nodes.contains_key("missing.urd.md"));
-    assert_eq!(graph.nodes.len(), 1); // Only entry
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
-    assert_eq!(order, vec!["a.urd.md"]);
+    assert!(!cu.graph.nodes.contains_key("missing.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 1); // Only entry
+    assert_eq!(cu.ordered_asts, vec!["a.urd.md"]);
 }
 
 #[test]
@@ -514,11 +509,11 @@ fn graph_file_too_large() {
     let fs = MockFs::new().add("big.urd.md", &big_content);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD103").is_some());
-    assert!(!graph.nodes.contains_key("big.urd.md"));
-    assert_eq!(graph.nodes.len(), 1);
+    assert!(!cu.graph.nodes.contains_key("big.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 1);
 }
 
 #[test]
@@ -536,7 +531,7 @@ fn graph_stem_collision() {
         .add("scenes/tavern.urd.md", &tavern2);
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD203").is_some());
     let d = find_diagnostic(&diag, "URD203").unwrap();
@@ -556,10 +551,9 @@ fn topo_linear() {
         .add("c.urd.md", &c_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
-    assert_eq!(order, vec!["c.urd.md", "b.urd.md", "a.urd.md"]);
+    assert_eq!(cu.ordered_asts, vec!["c.urd.md", "b.urd.md", "a.urd.md"]);
 }
 
 #[test]
@@ -574,10 +568,9 @@ fn topo_diamond_alphabetical_tie() {
         .add("c.urd.md", &c_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
-    assert_eq!(order, vec!["b.urd.md", "c.urd.md", "a.urd.md"]);
+    assert_eq!(cu.ordered_asts, vec!["b.urd.md", "c.urd.md", "a.urd.md"]);
 }
 
 #[test]
@@ -601,11 +594,10 @@ fn topo_wide_fan() {
         .add("e.urd.md", &leaf);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert_eq!(
-        order,
+        cu.ordered_asts,
         vec!["b.urd.md", "c.urd.md", "d.urd.md", "e.urd.md", "a.urd.md"]
     );
 }
@@ -624,12 +616,11 @@ fn topo_shared_dependency() {
         .add("d.urd.md", &d_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     // D first (shared dep), B before C (alphabetical), A last (entry).
     assert_eq!(
-        order,
+        cu.ordered_asts,
         vec!["d.urd.md", "b.urd.md", "c.urd.md", "a.urd.md"]
     );
 }
@@ -645,13 +636,12 @@ fn recovery_one_bad_import_among_good() {
     let fs = MockFs::new().add("b.urd.md", &b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD201").is_some());
-    assert_eq!(graph.nodes.len(), 2); // A and B
-    assert!(!graph.nodes.contains_key("c.urd.md"));
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
-    assert_eq!(order, vec!["b.urd.md", "a.urd.md"]);
+    assert_eq!(cu.graph.nodes.len(), 2); // A and B
+    assert!(!cu.graph.nodes.contains_key("c.urd.md"));
+    assert_eq!(cu.ordered_asts, vec!["b.urd.md", "a.urd.md"]);
 }
 
 #[test]
@@ -668,11 +658,11 @@ fn recovery_cycle_with_other_imports() {
         .add("d.urd.md", &d_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD202").is_some());
     // All four files in graph (A, B, C, D).
-    assert_eq!(graph.nodes.len(), 4);
+    assert_eq!(cu.graph.nodes.len(), 4);
 }
 
 #[test]
@@ -685,11 +675,11 @@ fn recovery_parse_failure_in_import() {
     let fs = MockFs::new().add("b.urd.md", b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     // B not in graph (catastrophic parse failure).
-    assert!(!graph.nodes.contains_key("b.urd.md"));
-    assert_eq!(graph.nodes.len(), 1);
+    assert!(!cu.graph.nodes.contains_key("b.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 1);
     // URD101 from PARSE for B.
     assert!(find_diagnostic(&diag, "URD101").is_some());
 }
@@ -703,14 +693,14 @@ fn recovery_cascading_missing_leaf() {
     let fs = MockFs::new().add("b.urd.md", &b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD201").is_some());
     // B and A in graph. C absent.
-    assert_eq!(graph.nodes.len(), 2);
-    assert!(graph.nodes.contains_key("a.urd.md"));
-    assert!(graph.nodes.contains_key("b.urd.md"));
-    assert!(!graph.nodes.contains_key("c.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 2);
+    assert!(cu.graph.nodes.contains_key("a.urd.md"));
+    assert!(cu.graph.nodes.contains_key("b.urd.md"));
+    assert!(!cu.graph.nodes.contains_key("c.urd.md"));
 }
 
 #[test]
@@ -720,11 +710,11 @@ fn recovery_invalid_utf8() {
     let fs = MockFs::new().add_error("bad.urd.md", MockFile::InvalidUtf8);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD212").is_some());
-    assert!(!graph.nodes.contains_key("bad.urd.md"));
-    assert_eq!(graph.nodes.len(), 1);
+    assert!(!cu.graph.nodes.contains_key("bad.urd.md"));
+    assert_eq!(cu.graph.nodes.len(), 1);
 }
 
 // ── Filesystem error tests ──────────────────────────────────────────
@@ -736,10 +726,10 @@ fn fs_permission_denied() {
     let fs = MockFs::new().add_error("secret.urd.md", MockFile::PermissionDenied);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD213").is_some());
-    assert_eq!(graph.nodes.len(), 1);
+    assert_eq!(cu.graph.nodes.len(), 1);
 }
 
 #[test]
@@ -749,11 +739,11 @@ fn fs_io_error() {
     let fs = MockFs::new().add_error("broken.urd.md", MockFile::IoError("disk failure".to_string()));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     let d = find_diagnostic(&diag, "URD214").expect("Expected URD214");
     assert!(d.message.contains("disk failure"));
-    assert_eq!(graph.nodes.len(), 1);
+    assert_eq!(cu.graph.nodes.len(), 1);
 }
 
 // ── Span reference tests ───────────────────────────────────────────
@@ -765,7 +755,7 @@ fn span_urd201_references_import_decl() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     let d = find_diagnostic(&diag, "URD201").expect("Expected URD201");
     // Span should reference the import declaration in entry.urd.md.
@@ -784,7 +774,7 @@ fn span_urd202_references_cycle_closing_import() {
     let fs = MockFs::new().add("b.urd.md", &b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     let d = find_diagnostic(&diag, "URD202").expect("Expected URD202");
     // Span references the import in B that closes the cycle.
@@ -799,14 +789,31 @@ fn span_urd207_references_self_import() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     let d = find_diagnostic(&diag, "URD207").expect("Expected URD207");
     assert_eq!(d.span.file, "world.urd.md");
     assert_eq!(d.span.start_line, 2);
 }
 
-// ── Casing mismatch test ────────────────────────────────────────────
+#[test]
+fn span_urd103_references_import_decl() {
+    // URD103 (file too large) should reference the ImportDecl span, not the imported file.
+    let source = make_source(&["./big.urd.md"], "");
+    let ast = parse_source("entry.urd.md", &source);
+    let big_content = "x".repeat(1_048_577);
+    let fs = MockFs::new().add("big.urd.md", &big_content);
+    let mut diag = DiagnosticCollector::new();
+
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    let d = find_diagnostic(&diag, "URD103").expect("Expected URD103");
+    // Span should reference the import declaration in entry.urd.md.
+    assert_eq!(d.span.file, "entry.urd.md");
+    assert_eq!(d.span.start_line, 2);
+}
+
+// ── Casing mismatch tests ───────────────────────────────────────────
 
 #[test]
 fn casing_mismatch_warning() {
@@ -817,14 +824,63 @@ fn casing_mismatch_warning() {
     let fs = CasingMockFs::new(inner_fs).add_casing("", "Types.urd.md", "types.urd.md");
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     let d = find_diagnostic(&diag, "URD206").expect("Expected URD206");
     assert!(d.message.contains("Types.urd.md"));
     assert!(d.message.contains("types.urd.md"));
     // File stored under canonical casing.
-    assert!(graph.nodes.contains_key("types.urd.md"));
-    assert!(!graph.nodes.contains_key("Types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("types.urd.md"));
+    assert!(!cu.graph.nodes.contains_key("Types.urd.md"));
+}
+
+#[test]
+fn span_urd206_references_import_decl() {
+    // URD206 span should point to the ImportDecl, not the discovered file.
+    let source = make_source(&["./Types.urd.md"], "");
+    let ast = parse_source("world.urd.md", &source);
+    let inner_fs = MockFs::new().add("Types.urd.md", &make_source(&[], ""));
+    let fs = CasingMockFs::new(inner_fs).add_casing("", "Types.urd.md", "types.urd.md");
+    let mut diag = DiagnosticCollector::new();
+
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    let d = find_diagnostic(&diag, "URD206").expect("Expected URD206");
+    assert_eq!(d.span.file, "world.urd.md");
+    assert_eq!(d.span.start_line, 2); // line 2 is the import declaration
+}
+
+#[test]
+fn casing_mismatch_canonical_already_visited() {
+    // Two files import the same target with different casing.
+    // B imports ./types.urd.md (correct), C imports ./Types.urd.md (wrong casing).
+    // After casing correction, C's import resolves to types.urd.md which is already visited.
+    let entry_source = make_source(&["./b.urd.md", "./c.urd.md"], "");
+    let b_source = make_source(&["./types.urd.md"], "");
+    let c_source = make_source(&["./Types.urd.md"], "");
+    let types_source = make_source(&[], "");
+    let ast = parse_source("entry.urd.md", &entry_source);
+    let inner_fs = MockFs::new()
+        .add("b.urd.md", &b_source)
+        .add("c.urd.md", &c_source)
+        .add("types.urd.md", &types_source)
+        .add("Types.urd.md", &types_source); // Also accessible under wrong casing
+    let fs = CasingMockFs::new(inner_fs).add_casing("", "Types.urd.md", "types.urd.md");
+    let mut diag = DiagnosticCollector::new();
+
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    // URD206 warning for C's import.
+    assert!(find_diagnostic(&diag, "URD206").is_some());
+    // types.urd.md loaded once — only canonical version in graph.
+    assert!(cu.graph.nodes.contains_key("types.urd.md"));
+    assert!(!cu.graph.nodes.contains_key("Types.urd.md"));
+    // c.urd.md should have an edge to types.urd.md.
+    let c_edges: Vec<_> = cu.graph.edges.iter()
+        .filter(|(src, _)| src == "c.urd.md")
+        .collect();
+    assert_eq!(c_edges.len(), 1);
+    assert_eq!(c_edges[0].1, "types.urd.md");
 }
 
 // ── Additional edge cases ───────────────────────────────────────────
@@ -837,10 +893,10 @@ fn graph_no_frontmatter() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert_eq!(graph.nodes.len(), 1);
+    assert_eq!(cu.graph.nodes.len(), 1);
 }
 
 #[test]
@@ -849,10 +905,10 @@ fn graph_empty_file() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors());
-    assert_eq!(graph.nodes.len(), 1);
+    assert_eq!(cu.graph.nodes.len(), 1);
 }
 
 #[test]
@@ -864,11 +920,11 @@ fn graph_entry_dir_prepended_to_fs_path() {
     let fs = MockFs::new().add("content/types.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "content/", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "content/", &mut diag, &fs);
 
     assert!(!diag.has_errors());
     // Graph stores normalised path (without entry_dir prefix).
-    assert!(graph.nodes.contains_key("types.urd.md"));
+    assert!(cu.graph.nodes.contains_key("types.urd.md"));
 }
 
 #[test]
@@ -879,10 +935,9 @@ fn topo_entry_always_last() {
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
-    let order: Vec<&str> = graph.topological_order().into_iter().map(|s| s.as_str()).collect();
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
-    assert_eq!(order, vec!["only.urd.md"]);
+    assert_eq!(cu.ordered_asts, vec!["only.urd.md"]);
 }
 
 #[test]
@@ -900,30 +955,171 @@ fn multiple_path_validation_errors() {
     let fs = MockFs::new().add("good.urd.md", &make_source(&[], ""));
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(find_diagnostic(&diag, "URD209").is_some());
     assert!(find_diagnostic(&diag, "URD210").is_some());
     // Good import still succeeds.
-    assert!(graph.nodes.contains_key("good.urd.md"));
+    assert!(cu.graph.nodes.contains_key("good.urd.md"));
 }
 
-// ── Span reference: URD206 ──────────────────────────────────────────
+// ── Cycle path with subdirectories ──────────────────────────────────
 
 #[test]
-fn span_urd206_references_import_decl() {
-    // URD206 span should point to the ImportDecl, not the discovered file.
-    let source = make_source(&["./Types.urd.md"], "");
-    let ast = parse_source("world.urd.md", &source);
-    let inner_fs = MockFs::new().add("Types.urd.md", &make_source(&[], ""));
-    let fs = CasingMockFs::new(inner_fs).add_casing("", "Types.urd.md", "types.urd.md");
+fn cycle_path_uses_normalised_paths() {
+    // Verify that URD202 cycle path includes full normalised paths, not just filenames.
+    let entry_source = make_source(&["./sub/a.urd.md"], "");
+    let a_source = make_source(&["./b.urd.md"], "");
+    let b_source = make_source(&["../sub/a.urd.md"], "");
+    let ast = parse_source("entry.urd.md", &entry_source);
+    let fs = MockFs::new()
+        .add("sub/a.urd.md", &a_source)
+        .add("sub/b.urd.md", &b_source);
     let mut diag = DiagnosticCollector::new();
 
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
-    let d = find_diagnostic(&diag, "URD206").expect("Expected URD206");
-    assert_eq!(d.span.file, "world.urd.md");
-    assert_eq!(d.span.start_line, 2); // line 2 is the import declaration
+    let d = find_diagnostic(&diag, "URD202").expect("Expected URD202");
+    // Cycle message should contain full normalised paths including directory.
+    assert!(
+        d.message.contains("sub/a.urd.md"),
+        "Expected 'sub/a.urd.md' in cycle message: {}",
+        d.message
+    );
+}
+
+// ── Cycle message format ────────────────────────────────────────────
+
+#[test]
+fn cycle_message_format_arrow_separated() {
+    // Verify the exact arrow-separated format: a → b → a
+    let a_source = make_source(&["./b.urd.md"], "");
+    let b_source = make_source(&["./a.urd.md"], "");
+    let ast = parse_source("a.urd.md", &a_source);
+    let fs = MockFs::new().add("b.urd.md", &b_source);
+    let mut diag = DiagnosticCollector::new();
+
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    let d = find_diagnostic(&diag, "URD202").expect("Expected URD202");
+    // Exact format: "Circular import detected: a.urd.md → b.urd.md → a.urd.md."
+    assert!(
+        d.message.contains("a.urd.md \u{2192} b.urd.md \u{2192} a.urd.md"),
+        "Expected arrow-separated cycle chain in message: {}",
+        d.message
+    );
+}
+
+// ── Stem collision: multiple simultaneous collisions ────────────────
+
+#[test]
+fn stem_collision_reports_all_collisions() {
+    // Three files share stem "tavern" → 3 pairwise URD203 diagnostics.
+    // Two files share stem "types" → 1 URD203 diagnostic.
+    // Total: 4 URD203 diagnostics.
+    let entry_source = make_source(
+        &[
+            "./a/tavern.urd.md",
+            "./b/tavern.urd.md",
+            "./c/tavern.urd.md",
+            "./x/types.urd.md",
+            "./y/types.urd.md",
+        ],
+        "",
+    );
+    let leaf = make_source(&[], "");
+    let ast = parse_source("world.urd.md", &entry_source);
+    let fs = MockFs::new()
+        .add("a/tavern.urd.md", &leaf)
+        .add("b/tavern.urd.md", &leaf)
+        .add("c/tavern.urd.md", &leaf)
+        .add("x/types.urd.md", &leaf)
+        .add("y/types.urd.md", &leaf);
+    let mut diag = DiagnosticCollector::new();
+
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    // 3 pairs for "tavern" (a/b, a/c, b/c) + 1 pair for "types" (x/y) = 4.
+    assert_eq!(count_diagnostics(&diag, "URD203"), 4);
+}
+
+// ── Windows drive-relative path ─────────────────────────────────────
+
+#[test]
+fn path_absolute_windows_drive_relative() {
+    // D:types.urd.md — drive letter without backslash is still an absolute path.
+    let source = make_source(&["D:types.urd.md"], "");
+    let ast = parse_source("world.urd.md", &source);
+    let fs = MockFs::new();
+    let mut diag = DiagnosticCollector::new();
+
+    let _cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    assert!(find_diagnostic(&diag, "URD209").is_some());
+}
+
+// ── CompilationUnit: ordered_asts contract ──────────────────────────
+
+#[test]
+fn compilation_unit_ordered_asts_matches_topo_order() {
+    // Verify that ordered_asts exactly matches topological_order().
+    let a_source = make_source(&["./b.urd.md", "./c.urd.md"], "");
+    let b_source = make_source(&["./d.urd.md"], "");
+    let c_source = make_source(&[], "");
+    let d_source = make_source(&[], "");
+    let ast = parse_source("a.urd.md", &a_source);
+    let fs = MockFs::new()
+        .add("b.urd.md", &b_source)
+        .add("c.urd.md", &c_source)
+        .add("d.urd.md", &d_source);
+    let mut diag = DiagnosticCollector::new();
+
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    let topo: Vec<&str> = cu.graph.topological_order().into_iter().map(|s| s.as_str()).collect();
+    let ordered: Vec<&str> = cu.ordered_asts.iter().map(|s| s.as_str()).collect();
+    assert_eq!(topo, ordered);
+    // Entry always last.
+    assert_eq!(*cu.ordered_asts.last().unwrap(), "a.urd.md");
+}
+
+#[test]
+fn compilation_unit_asts_unmodified() {
+    // Guarantee 7: every FileAST is unmodified after IMPORT.
+    // Verify that ASTs pass through unchanged by checking content node count.
+    let entry_source = "\
+---
+import: ./types.urd.md
+---
+
+# Room One
+
+A description.
+
+# Room Two
+
+Another room.
+";
+    let types_source = "\
+---
+types:
+  NPC [interactable]:
+    mood: string = neutral
+---
+";
+    let ast = parse_source("entry.urd.md", entry_source);
+    let original_entry_content_count = ast.content.len();
+    let fs = MockFs::new().add("types.urd.md", types_source);
+    let mut diag = DiagnosticCollector::new();
+
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+
+    // Entry AST content unchanged.
+    let entry_node = cu.graph.nodes.get("entry.urd.md").unwrap();
+    assert_eq!(entry_node.ast.content.len(), original_entry_content_count);
+    // Types AST has frontmatter preserved.
+    let types_node = cu.graph.nodes.get("types.urd.md").unwrap();
+    assert!(types_node.ast.frontmatter.is_some());
 }
 
 // ── Integration tests ───────────────────────────────────────────────
@@ -953,20 +1149,15 @@ A dim stone cell.
     let fs = MockFs::new();
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     // Trivial graph: one file, no edges, zero import diagnostics.
     assert!(!diag.has_errors());
     assert_eq!(count_diagnostics(&diag, "URD201"), 0);
     assert_eq!(count_diagnostics(&diag, "URD202"), 0);
-    assert_eq!(graph.nodes.len(), 1);
-    assert_eq!(graph.edges.len(), 0);
-    let order: Vec<&str> = graph
-        .topological_order()
-        .into_iter()
-        .map(|s| s.as_str())
-        .collect();
-    assert_eq!(order, vec!["two-room-key.urd.md"]);
+    assert_eq!(cu.graph.nodes.len(), 1);
+    assert_eq!(cu.graph.edges.len(), 0);
+    assert_eq!(cu.ordered_asts, vec!["two-room-key.urd.md"]);
 }
 
 #[test]
@@ -995,18 +1186,13 @@ types:
     let fs = MockFs::new().add("world.urd.md", world_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors(), "Unexpected errors: {:?}", diag.all());
-    assert_eq!(graph.nodes.len(), 2);
-    assert_eq!(graph.edges.len(), 1);
-    let order: Vec<&str> = graph
-        .topological_order()
-        .into_iter()
-        .map(|s| s.as_str())
-        .collect();
+    assert_eq!(cu.graph.nodes.len(), 2);
+    assert_eq!(cu.graph.edges.len(), 1);
     // world.urd.md first (dependency), tavern.urd.md last (entry).
-    assert_eq!(order, vec!["world.urd.md", "tavern.urd.md"]);
+    assert_eq!(cu.ordered_asts, vec!["world.urd.md", "tavern.urd.md"]);
 }
 
 #[test]
@@ -1043,45 +1229,15 @@ entities:
         .add("npcs.urd.md", npcs_source);
     let mut diag = DiagnosticCollector::new();
 
-    let graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
+    let cu = resolve_imports_with_reader(ast, "", &mut diag, &fs);
 
     assert!(!diag.has_errors(), "Unexpected errors: {:?}", diag.all());
-    assert_eq!(graph.nodes.len(), 3);
+    assert_eq!(cu.graph.nodes.len(), 3);
     // types.urd.md loaded once despite being imported by both entry and npcs.
-    let order: Vec<&str> = graph
-        .topological_order()
-        .into_iter()
-        .map(|s| s.as_str())
-        .collect();
     // types first (shared dep), npcs second (depends on types), tavern last (entry).
     assert_eq!(
-        order,
+        cu.ordered_asts,
         vec!["types.urd.md", "npcs.urd.md", "tavern.urd.md"]
-    );
-}
-
-// ── Cycle path with subdirectories ──────────────────────────────────
-
-#[test]
-fn cycle_path_uses_normalised_paths() {
-    // Verify that URD202 cycle path includes full normalised paths, not just filenames.
-    let entry_source = make_source(&["./sub/a.urd.md"], "");
-    let a_source = make_source(&["./b.urd.md"], "");
-    let b_source = make_source(&["../sub/a.urd.md"], "");
-    let ast = parse_source("entry.urd.md", &entry_source);
-    let fs = MockFs::new()
-        .add("sub/a.urd.md", &a_source)
-        .add("sub/b.urd.md", &b_source);
-    let mut diag = DiagnosticCollector::new();
-
-    let _graph = resolve_imports_with_reader(ast, "", &mut diag, &fs);
-
-    let d = find_diagnostic(&diag, "URD202").expect("Expected URD202");
-    // Cycle message should contain full normalised paths including directory.
-    assert!(
-        d.message.contains("sub/a.urd.md"),
-        "Expected 'sub/a.urd.md' in cycle message: {}",
-        d.message
     );
 }
 

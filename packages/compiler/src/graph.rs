@@ -9,7 +9,9 @@
 /// - Non-transitive: A imports B imports C does NOT give A access to C.
 /// - Stable: same source files produce the same graph.
 
-use std::collections::{BTreeSet, HashMap};
+use std::collections::BTreeSet;
+
+use indexmap::IndexMap;
 
 use crate::ast::FileAst;
 use crate::span::FilePath;
@@ -25,10 +27,23 @@ pub struct FileNode {
 /// The dependency graph produced by the IMPORT phase.
 #[derive(Debug, Default)]
 pub struct DependencyGraph {
-    pub nodes: HashMap<FilePath, FileNode>,
+    pub nodes: IndexMap<FilePath, FileNode>,
     pub edges: Vec<(FilePath, FilePath)>,
     /// The entry file's normalised path. Set by IMPORT.
     pub entry_path: Option<FilePath>,
+}
+
+/// The output of the IMPORT phase: dependency graph + topologically sorted ASTs.
+///
+/// IMPORT always returns a `CompilationUnit`. Even if every import fails,
+/// the entry file is still a valid single-file compilation unit.
+#[derive(Debug)]
+pub struct CompilationUnit {
+    pub graph: DependencyGraph,
+    /// Every successfully parsed `FileAst` in topological order.
+    /// Dependencies before dependents, entry file always last.
+    /// Ties broken alphabetically by normalised path.
+    pub ordered_asts: Vec<FilePath>,
 }
 
 impl DependencyGraph {
@@ -57,18 +72,18 @@ impl DependencyGraph {
         }
 
         // dep_count[N] = number of files N imports that are present in the graph.
-        let mut dep_count: HashMap<&FilePath, usize> = HashMap::new();
+        let mut dep_count: IndexMap<&FilePath, usize> = IndexMap::new();
         // reverse_adj[M] = list of files that import M.
-        let mut reverse_adj: HashMap<&FilePath, Vec<&FilePath>> = HashMap::new();
+        let mut reverse_adj: IndexMap<&FilePath, Vec<&FilePath>> = IndexMap::new();
 
         for (path, node) in &self.nodes {
             let count = node.imports.iter()
-                .filter(|imp| self.nodes.contains_key(*imp))
+                .filter(|imp| self.nodes.contains_key(imp.as_str()))
                 .count();
             dep_count.insert(path, count);
 
             for imp in &node.imports {
-                if self.nodes.contains_key(imp) {
+                if self.nodes.contains_key(imp.as_str()) {
                     reverse_adj.entry(imp).or_default().push(path);
                 }
             }
@@ -104,16 +119,6 @@ impl DependencyGraph {
         // Entry file always last.
         result.push(entry);
         result
-    }
-
-    /// Returns the file stems for all nodes.
-    pub fn file_stems(&self) -> HashMap<String, FilePath> {
-        let mut stems = HashMap::new();
-        for path in self.nodes.keys() {
-            let stem = file_stem(path);
-            stems.insert(stem, path.clone());
-        }
-        stems
     }
 }
 

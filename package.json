@@ -5,6 +5,7 @@
     "dev": "pnpm --filter urd.dev dev",
     "build": "pnpm --filter urd.dev build",
     "preview": "pnpm --filter urd.dev preview",
+    "compiler:test": "cargo test --manifest-path packages/compiler/Cargo.toml",
     "grammar:test": "cargo test --manifest-path packages/grammar/Cargo.toml",
     "schema:test": "node scripts/validate-json-schema.mjs",
     "prepare": "husky"

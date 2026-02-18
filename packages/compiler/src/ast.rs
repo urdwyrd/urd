@@ -370,6 +370,27 @@ pub enum EffectType {
 
 // ── Annotations ──
 
+/// Discriminator for container references in ContainmentCheck.
+/// LINK resolves `container_ref` into one of these during the resolution sub-pass.
+/// VALIDATE and EMIT read the discriminator, not the raw string.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ContainerKind {
+    KeywordPlayer,
+    KeywordHere,
+    EntityRef(String),
+    LocationRef(String),
+}
+
+/// Discriminator for destination references in Move effects.
+/// Same resolution model as ContainerKind.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DestinationKind {
+    KeywordPlayer,
+    KeywordHere,
+    EntityRef(String),
+    LocationRef(String),
+}
+
 /// Annotation slot populated by LINK during the resolution sub-pass.
 /// Initially `None` on all fields — LINK fills in resolved references.
 #[derive(Debug, Clone, Default)]
@@ -379,4 +400,6 @@ pub struct Annotation {
     pub resolved_section: Option<String>,
     pub resolved_property: Option<String>,
     pub resolved_location: Option<String>,
+    pub container_kind: Option<ContainerKind>,
+    pub destination_kind: Option<DestinationKind>,
 }

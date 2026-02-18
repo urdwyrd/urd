@@ -86,7 +86,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
     };
 
     // Phase 2: IMPORT
-    let graph = import::resolve_imports(entry_ast, &entry_dir, &mut diagnostics);
+    let compilation_unit = import::resolve_imports(entry_ast, &entry_dir, &mut diagnostics);
 
     // Fatal IMPORT errors (URD203, URD205) prevent LINK.
     if diagnostics.has_errors() {
@@ -98,16 +98,10 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
     }
 
     // Phase 3: LINK
-    let mut symbol_table = symbol_table::SymbolTable::default();
-
-    // Pass 1: Collection — register all declarations
-    link::collect_declarations(&graph, &mut symbol_table, &mut diagnostics);
-
-    // Pass 2: Resolution — resolve all references
-    link::resolve_references(&graph, &symbol_table, &mut diagnostics);
+    let linked = link::link(compilation_unit, &mut diagnostics);
 
     // Phase 4: VALIDATE
-    validate::validate(&graph, &symbol_table, &mut diagnostics);
+    validate::validate(&linked.graph, &linked.symbol_table, &mut diagnostics);
 
     // Phase 5: EMIT
     if diagnostics.has_errors() {
@@ -118,7 +112,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
         };
     }
 
-    let json = emit::emit(&graph, &symbol_table, &mut diagnostics);
+    let json = emit::emit(&linked.graph, &linked.symbol_table, &mut diagnostics);
 
     CompilationResult {
         success: true,

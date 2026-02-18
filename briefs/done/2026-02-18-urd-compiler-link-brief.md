@@ -10,16 +10,31 @@ February 2026 | Engineering Phase
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:**
+**Date completed:** 2026-02-18
+**Status:** Done
 
 ### What was done
 
--
+- Implemented two-pass LINK phase: collection (pass 1) registers all declarations in the symbol table; resolution (pass 2) resolves all references and populates annotation slots.
+- Created `link/mod.rs` with entry point `link(CompilationUnit, &mut DiagnosticCollector) -> LinkedWorld`, shared types (`FileContext`, `WorldConfig`, `ResolveResult`), and helpers (edit distance, scope-checked lookup, property type parsing, scalar conversion).
+- Created `link/collect.rs` — full collection sub-pass covering TypeDef, EntityDecl, WorldBlock, LocationHeading, SectionLabel, SequenceHeading, PhaseHeading, Choice (with ActionSymbol generation), ExitDeclaration, EntityPresence, and RuleBlock.
+- Created `link/resolve.rs` — full resolution sub-pass covering entity type resolution (URD307), property override validation (URD308), entity reference resolution (URD301), property access resolution, jump resolution with section-first priority (URD309/URD310), explicit exit jumps (URD311/URD314), exit destination resolution (URD312), entity presence resolution, condition expression resolution, effect resolution (Set/Reveal/Move/Destroy), and world.start/world.entry resolution.
+- Added `Duplicate` struct and `duplicates: Vec<Duplicate>` to `SymbolTable` for tracking duplicate declarations across all namespaces.
+- Added `world_start: Option<String>` and `world_entry: Option<String>` to `SymbolTable` for downstream VALIDATE consumption.
+- Updated `lib.rs` orchestration: single `link::link()` call replacing two stubs, downstream phases consume `LinkedWorld`.
+- Implemented all 14 diagnostic codes (URD301–URD314) with edit-distance suggestions (Levenshtein ≤ 2) and scope-visibility hints in the `suggestion` field.
+- Wrote 66 tests across 8 categories: collection (10), choice-to-action (7), resolution (14), ID derivation (6), integration (3), error recovery (4), scope & location context (6), compliance regression (6). All tests construct ASTs programmatically — no filesystem dependency.
+- Compliance audit performed and all fixable non-conformances addressed: world config storage, duplicate detection for sequences/rules/choices, EntityPresence early return after URD314, ExhaustionCheck error message accuracy, type not-visible hint placement.
 
 ### What changed from the brief
 
--
+- No `ActionDecl` exists in the frontmatter AST, so frontmatter-declared actions are not implemented (only choice-derived actions). This matches the current AST definition; the brief's mention of frontmatter actions was aspirational.
+- `ContainmentCheck` and `Move` effect resolve both entity references but only the first resolved ID is stored in the `Annotation` (the struct has a single `resolved_entity` field). Functionally sufficient for VALIDATE/EMIT — no cascading errors.
+- Entity property override resolution checks existence but does not store the resolved `PropertySymbol` reference (existence check is sufficient for the current VALIDATE requirements).
+- `LinkedWorld` does not have a separate `annotated_asts` field — annotated ASTs are accessible via `graph.nodes`, which is functionally equivalent and avoids data duplication.
+- Duplicate sequences use URD313 (same code as empty-slug errors) rather than a dedicated code, since both are ID-derivation issues.
+- Duplicate rules use URD302 (same code as duplicate entities) since the brief did not assign a dedicated code for rule duplicates.
+- 66 tests written (exceeding the brief's ~50 target) to cover compliance regression scenarios.
 
 ---
 

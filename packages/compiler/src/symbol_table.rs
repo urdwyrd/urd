@@ -10,10 +10,20 @@ use indexmap::IndexMap;
 
 use crate::span::Span;
 
+/// A duplicate declaration recorded for diagnostic purposes.
+/// The canonical (first) declaration remains in the namespace map.
+#[derive(Debug, Clone)]
+pub struct Duplicate {
+    pub namespace: &'static str,
+    pub name: String,
+    pub declared_in: Span,
+}
+
 /// The compiler's global symbol table.
 ///
 /// Seven ordered maps — types, entities, sections, locations, actions, rules,
 /// sequences — each preserving insertion order for deterministic output.
+/// Duplicates are tracked in a flat list for diagnostics only.
 #[derive(Debug, Default)]
 pub struct SymbolTable {
     pub types: IndexMap<String, TypeSymbol>,
@@ -23,6 +33,11 @@ pub struct SymbolTable {
     pub actions: IndexMap<String, ActionSymbol>,
     pub rules: IndexMap<String, RuleSymbol>,
     pub sequences: IndexMap<String, SequenceSymbol>,
+    pub duplicates: Vec<Duplicate>,
+    /// Resolved `world.start` → location ID (set by LINK, consumed by VALIDATE).
+    pub world_start: Option<String>,
+    /// Resolved `world.entry` → sequence ID (set by LINK, consumed by VALIDATE).
+    pub world_entry: Option<String>,
 }
 
 // ── Symbol types ──
