@@ -6,6 +6,7 @@ on:
     paths:
       - 'sites/urd.dev/**'
       - 'packages/compiler/**'
+      - 'scripts/**'
 
   # Allow manual deploy from the Actions tab
   workflow_dispatch:
