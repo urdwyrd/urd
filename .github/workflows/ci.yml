@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build
+        run: pnpm build
+
+  compiler-tests:
+    name: Compiler tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/compiler/target
+          key: cargo-compiler-${{ hashFiles('packages/compiler/Cargo.lock', 'packages/compiler/Cargo.toml') }}
+          restore-keys: cargo-compiler-
+
+      - name: Run compiler tests
+        run: cargo test --manifest-path packages/compiler/Cargo.toml
+
+  grammar-tests:
+    name: Grammar tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/grammar/target
+          key: cargo-grammar-${{ hashFiles('packages/grammar/Cargo.lock', 'packages/grammar/Cargo.toml') }}
+          restore-keys: cargo-grammar-
+
+      - name: Run grammar tests
+        run: cargo test --manifest-path packages/grammar/Cargo.toml
