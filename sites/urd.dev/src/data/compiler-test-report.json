@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "timestamp": "2026-02-18T12:04:09.490Z",
+  "timestamp": "2026-02-18T18:33:33.493Z",
   "compiler": {
     "name": "urd-compiler",
     "version": "0.1.0",
@@ -11,7 +11,7 @@
     "passed": 390,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 289,
+    "duration_ms": 315,
     "pass_rate": 1
   },
   "phases": [
@@ -3208,13 +3208,28 @@
         "name": "interrogation",
         "source_bytes": 668,
         "output_bytes": 3683,
-        "total_ms": 0.35,
+        "total_ms": 0.34,
         "phases": {
-          "parse_ms": 0.061,
-          "import_ms": 0.129,
-          "link_ms": 0.058,
+          "parse_ms": 0.059,
+          "import_ms": 0.124,
+          "link_ms": 0.055,
           "validate_ms": 0.013,
-          "emit_ms": 0.088
+          "emit_ms": 0.087
+        },
+        "success": true,
+        "diagnostic_count": 0
+      },
+      {
+        "name": "world",
+        "source_bytes": 251,
+        "output_bytes": 809,
+        "total_ms": 0.142,
+        "phases": {
+          "parse_ms": 0.046,
+          "import_ms": 0.021,
+          "link_ms": 0.034,
+          "validate_ms": 0.008,
+          "emit_ms": 0.031
         },
         "success": true,
         "diagnostic_count": 0
@@ -3223,13 +3238,13 @@
         "name": "monty_hall",
         "source_bytes": 622,
         "output_bytes": 2253,
-        "total_ms": 0.205,
+        "total_ms": 0.232,
         "phases": {
-          "parse_ms": 0.062,
-          "import_ms": 0.017,
-          "link_ms": 0.052,
-          "validate_ms": 0.01,
-          "emit_ms": 0.062
+          "parse_ms": 0.072,
+          "import_ms": 0.019,
+          "link_ms": 0.056,
+          "validate_ms": 0.018,
+          "emit_ms": 0.066
         },
         "success": true,
         "diagnostic_count": 0
@@ -3238,13 +3253,13 @@
         "name": "tavern_scene",
         "source_bytes": 545,
         "output_bytes": 2139,
-        "total_ms": 0.199,
+        "total_ms": 0.209,
         "phases": {
-          "parse_ms": 0.057,
-          "import_ms": 0.017,
-          "link_ms": 0.05,
-          "validate_ms": 0.009,
-          "emit_ms": 0.065
+          "parse_ms": 0.064,
+          "import_ms": 0.018,
+          "link_ms": 0.049,
+          "validate_ms": 0.01,
+          "emit_ms": 0.067
         },
         "success": true,
         "diagnostic_count": 0
@@ -3253,26 +3268,26 @@
         "name": "two_room_key_puzzle",
         "source_bytes": 481,
         "output_bytes": 1914,
-        "total_ms": 0.204,
+        "total_ms": 0.217,
         "phases": {
-          "parse_ms": 0.057,
-          "import_ms": 0.02,
-          "link_ms": 0.05,
+          "parse_ms": 0.066,
+          "import_ms": 0.023,
+          "link_ms": 0.051,
           "validate_ms": 0.01,
-          "emit_ms": 0.065
+          "emit_ms": 0.067
         },
         "success": true,
         "diagnostic_count": 0
       }
     ],
     "aggregate": {
-      "total_source_bytes": 2316,
-      "total_output_bytes": 9989,
-      "total_ms": 0.96,
-      "files_compiled": 4,
-      "files_succeeded": 4,
-      "avg_ms_per_file": 0.24,
-      "bytes_per_ms": 2412.5
+      "total_source_bytes": 2567,
+      "total_output_bytes": 10798,
+      "total_ms": 1.14,
+      "files_compiled": 5,
+      "files_succeeded": 5,
+      "avg_ms_per_file": 0.23,
+      "bytes_per_ms": 2251.75
     }
   }
 }

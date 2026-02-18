@@ -183,7 +183,7 @@
       </div>
       <div class="cs-stat">
         <span class="cs-stat-value">{durationDisplay}</span>
-        <span class="cs-stat-label">Duration</span>
+        <span class="cs-stat-label">Total Duration</span>
       </div>
       <div class="cs-stat">
         <span class="cs-stat-value">v{report.compiler.version}</span>
