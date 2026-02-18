@@ -103,16 +103,19 @@ function runCargoTest() {
 
   // Cargo sends "Running ..." headers to stderr and test results to stdout.
   // Merge with 2>&1 so the output is interleaved correctly for parsing.
+  // --color never prevents ANSI escape codes from breaking regex parsing on CI.
   const result = spawnSync(
-    `cargo test --manifest-path "${CARGO_TOML}" 2>&1`,
+    `cargo test --manifest-path "${CARGO_TOML}" --color never 2>&1`,
     {
       encoding: 'utf-8',
       shell: true,
       timeout: 300_000,
+      env: { ...process.env, FORCE_COLOR: '0', NO_COLOR: '1', CARGO_TERM_COLOR: 'never' },
     },
   );
 
-  const output = result.stdout || '';
+  // Strip any residual ANSI escape codes as a safety net
+  const output = (result.stdout || '').replace(/\x1b\[[0-9;]*m/g, '');
   return { output, exitCode: result.status ?? 1 };
 }
 
