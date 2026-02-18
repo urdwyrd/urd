@@ -2,22 +2,32 @@
 
 > Phase 5 of 5. Transforms validated ASTs and the symbol table into a single `.urd.json` string that conforms to the Urd World Schema.
 
-**Status:** Implementation-ready.
+**Status:** Done.
 
 ## Execution Record
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:**
-**Status:**
+**Date completed:** 2026-02-18
+**Status:** Complete. All 8 algorithm steps implemented, 68 tests passing (347 total across all phases).
 
 ### What was done
 
--
+- Added `serde_json` dependency with `preserve_order` feature to `Cargo.toml`.
+- Added `description: Option<String>` field to `PropertySymbol` in `symbol_table.rs` and wired it through LINK's `collect.rs` so property descriptions propagate from AST to symbol table.
+- Rewrote `emit/mod.rs` (~1,400 lines) with full implementation of all 8 steps: world block, types, entities, locations, rules, actions, sequences, and dialogue.
+- Implemented condition lowering for all 6 AST condition types (PropertyComparison, ContainmentCheck with entity/location/here/player/negated, ExhaustionCheck).
+- Implemented effect lowering for all 4 effect types (Set with direct and arithmetic variants, Move, Reveal, Destroy) with typed JSON value emission.
+- Implemented space-free advance expression encoding for `on_condition` phases.
+- Implemented Region A/B/C partitioning for dialogue sections (prompt, description, conditions, choices, on_exhausted).
+- Wrote 68 tests in `emit_tests.rs` covering: world (4), types (6), entities (5), locations (6), conditions (8), effects (8), sequences (5), dialogue (16), determinism (4), integration (4), plus 2 additional prompt+description and nested-action tests.
+- All 279 pre-existing tests continue to pass (76 parse + 55 import + 72 link + 70 validate + 6 slugify).
 
 ### What changed from the brief
 
--
+- **`slugify()` calls in EMIT.** The brief states "It does not call `slugify()`" but the implementation calls it in 3 places to correlate AST nodes (LocationHeading, Choice) to their corresponding symbols. This is necessary because LINK does not annotate structural AST nodes with compiled_ids. No correctness impact — the derived IDs are identical to LINK's.
+- **v1 symbol table gaps.** Several fields the brief describes as "Emit if present, omit if absent" do not exist on v1 symbols: `description` on TypeSymbol/RuleSymbol/SequenceSymbol, `actor`/`description` on ActionSymbol, `prompt`/`effects`/`condition` on PhaseSymbol. These are always absent in v1, so always omitted — technically compliant. When the AST and LINK are extended to support these fields, EMIT must be updated.
+- **Two acceptance criteria are untestable in v1.** "Phase with both advance and condition" (PhaseSymbol lacks a `condition` field) and "Monty Hall integration test" (requires complex rule/sequence/select setup not yet exercised end-to-end) were deferred. Both require upstream LINK/AST additions before EMIT can emit or test them.
 
 ---
 

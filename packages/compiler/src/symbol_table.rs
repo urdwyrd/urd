@@ -101,6 +101,7 @@ pub struct PropertySymbol {
     pub element_type: Option<PropertyType>,
     pub element_values: Option<Vec<String>>,
     pub element_ref_type: Option<String>,
+    pub description: Option<String>,
     pub declared_in: Span,
 }
 

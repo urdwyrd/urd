@@ -217,6 +217,7 @@ pub fn check_value(
                         element_type: None,
                         element_values: None,
                         element_ref_type: None,
+                        description: None,
                         declared_in: prop.declared_in.clone(),
                     };
                     for item in items {

@@ -122,6 +122,7 @@ fn collect_frontmatter_entry(
                         element_type,
                         element_values: prop.element_values.clone(),
                         element_ref_type: prop.element_ref_type.clone(),
+                        description: prop.description.clone(),
                         declared_in: prop.span.clone(),
                     },
                 );
