@@ -9,7 +9,7 @@
 /// - Non-transitive: A imports B imports C does NOT give A access to C.
 /// - Stable: same source files produce the same graph.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 
 use crate::ast::FileAst;
 use crate::span::FilePath;
@@ -27,6 +27,8 @@ pub struct FileNode {
 pub struct DependencyGraph {
     pub nodes: HashMap<FilePath, FileNode>,
     pub edges: Vec<(FilePath, FilePath)>,
+    /// The entry file's normalised path. Set by IMPORT.
+    pub entry_path: Option<FilePath>,
 }
 
 impl DependencyGraph {
@@ -36,12 +38,72 @@ impl DependencyGraph {
 
     /// Returns files in topological order (dependencies first, entry file last).
     /// Ties at the same depth are broken alphabetically by normalised path.
+    ///
+    /// Uses Kahn's algorithm with a BTreeSet for deterministic ordering.
+    /// The entry file is excluded from the priority queue and appended last.
     pub fn topological_order(&self) -> Vec<&FilePath> {
-        // Stub: will be implemented in the IMPORT phase.
-        // For now, return all node paths sorted alphabetically.
-        let mut paths: Vec<&FilePath> = self.nodes.keys().collect();
-        paths.sort();
-        paths
+        let entry = match &self.entry_path {
+            Some(p) => p,
+            None => {
+                // No entry path set — return alphabetically sorted.
+                let mut paths: Vec<&FilePath> = self.nodes.keys().collect();
+                paths.sort();
+                return paths;
+            }
+        };
+
+        if self.nodes.len() <= 1 {
+            return self.nodes.keys().collect();
+        }
+
+        // dep_count[N] = number of files N imports that are present in the graph.
+        let mut dep_count: HashMap<&FilePath, usize> = HashMap::new();
+        // reverse_adj[M] = list of files that import M.
+        let mut reverse_adj: HashMap<&FilePath, Vec<&FilePath>> = HashMap::new();
+
+        for (path, node) in &self.nodes {
+            let count = node.imports.iter()
+                .filter(|imp| self.nodes.contains_key(*imp))
+                .count();
+            dep_count.insert(path, count);
+
+            for imp in &node.imports {
+                if self.nodes.contains_key(imp) {
+                    reverse_adj.entry(imp).or_default().push(path);
+                }
+            }
+        }
+
+        // Initial ready set: nodes with 0 dependencies, excluding entry.
+        let mut ready: BTreeSet<&FilePath> = BTreeSet::new();
+        for (&path, &count) in &dep_count {
+            if count == 0 && path != entry {
+                ready.insert(path);
+            }
+        }
+
+        let mut result = Vec::with_capacity(self.nodes.len());
+
+        while let Some(&path) = ready.iter().next() {
+            ready.remove(path);
+            result.push(path);
+
+            if let Some(dependents) = reverse_adj.get(path) {
+                for &dep in dependents {
+                    if dep == entry { continue; }
+                    if let Some(count) = dep_count.get_mut(dep) {
+                        *count -= 1;
+                        if *count == 0 {
+                            ready.insert(dep);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Entry file always last.
+        result.push(entry);
+        result
     }
 
     /// Returns the file stems for all nodes.

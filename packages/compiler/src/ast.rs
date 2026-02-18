@@ -206,6 +206,7 @@ pub struct Choice {
     pub target: Option<String>,
     pub target_type: Option<String>,
     pub content: Vec<ContentNode>,
+    pub indent_level: usize,
     pub annotation: Option<Annotation>,
     pub span: Span,
 }
@@ -214,6 +215,7 @@ pub struct Choice {
 #[derive(Debug, Clone)]
 pub struct Condition {
     pub expr: ConditionExpr,
+    pub indent_level: usize,
     pub span: Span,
 }
 
@@ -221,6 +223,7 @@ pub struct Condition {
 #[derive(Debug, Clone)]
 pub struct OrConditionBlock {
     pub conditions: Vec<ConditionExpr>,
+    pub indent_level: usize,
     pub span: Span,
 }
 
@@ -228,6 +231,7 @@ pub struct OrConditionBlock {
 #[derive(Debug, Clone)]
 pub struct Effect {
     pub effect_type: EffectType,
+    pub indent_level: usize,
     pub annotation: Option<Annotation>,
     pub span: Span,
 }
@@ -237,6 +241,7 @@ pub struct Effect {
 pub struct Jump {
     pub target: String,
     pub is_exit_qualified: bool,
+    pub indent_level: usize,
     pub annotation: Option<Annotation>,
     pub span: Span,
 }
@@ -246,6 +251,7 @@ pub struct Jump {
 pub struct ExitDeclaration {
     pub direction: String,
     pub destination: String,
+    pub children: Vec<ContentNode>,
     pub annotation: Option<Annotation>,
     pub span: Span,
 }
@@ -254,6 +260,7 @@ pub struct ExitDeclaration {
 #[derive(Debug, Clone)]
 pub struct BlockedMessage {
     pub text: String,
+    pub indent_level: usize,
     pub span: Span,
 }
 
@@ -267,7 +274,8 @@ pub struct Comment {
 /// A syntax error marker — PARSE places these where recovery occurred.
 #[derive(Debug, Clone)]
 pub struct ErrorNode {
-    pub message: String,
+    pub raw_text: String,
+    pub attempted_rule: Option<String>,
     pub span: Span,
 }
 
@@ -342,6 +350,7 @@ pub enum EffectType {
     /// `> @entity.prop = value` or `> @entity.prop + N`
     Set {
         target_prop: String,
+        operator: String,
         value_expr: String,
     },
     /// `> move @entity -> container`

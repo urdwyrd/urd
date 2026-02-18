@@ -46,6 +46,17 @@ pub struct CompilationResult {
 pub fn compile(entry_file: &FilePath) -> CompilationResult {
     let mut diagnostics = DiagnosticCollector::new();
 
+    // Normalise entry file path: split into directory + filename.
+    // All graph paths are stored relative to the entry file's directory.
+    let normalised = entry_file.replace('\\', "/");
+    let (entry_dir, entry_filename) = match normalised.rfind('/') {
+        Some(pos) => (
+            normalised[..pos + 1].to_string(),
+            normalised[pos + 1..].to_string(),
+        ),
+        None => (String::new(), normalised),
+    };
+
     // Phase 1: PARSE
     let source = match std::fs::read_to_string(entry_file) {
         Ok(s) => s,
@@ -53,7 +64,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
             diagnostics.error(
                 "URD100",
                 format!("Cannot read file '{}': {}", entry_file, e),
-                span::Span::new(entry_file.clone(), 1, 1, 1, 1),
+                span::Span::new(entry_filename.clone(), 1, 1, 1, 1),
             );
             return CompilationResult {
                 success: false,
@@ -63,7 +74,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
         }
     };
 
-    let entry_ast = match parse::parse(entry_file, &source, &mut diagnostics) {
+    let entry_ast = match parse::parse(&entry_filename, &source, &mut diagnostics) {
         Some(ast) => ast,
         None => {
             return CompilationResult {
@@ -75,7 +86,16 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
     };
 
     // Phase 2: IMPORT
-    let graph = import::resolve_imports(entry_ast, &mut diagnostics);
+    let graph = import::resolve_imports(entry_ast, &entry_dir, &mut diagnostics);
+
+    // Fatal IMPORT errors (URD203, URD205) prevent LINK.
+    if diagnostics.has_errors() {
+        return CompilationResult {
+            success: false,
+            world: None,
+            diagnostics,
+        };
+    }
 
     // Phase 3: LINK
     let mut symbol_table = symbol_table::SymbolTable::default();
