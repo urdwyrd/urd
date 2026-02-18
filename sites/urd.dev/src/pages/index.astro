@@ -9,6 +9,7 @@ import DocumentExplorer from "../components/DocumentExplorer.svelte";
 import PeerReview from "../components/PeerReview.svelte";
 import ProjectLog from "../components/ProjectLog.svelte";
 import Architecture from "../components/Architecture.astro";
+import CompilerStatus from "../components/CompilerStatus.svelte";
 import ProjectTimeline from "../components/ProjectTimeline.svelte";
 import RuneCanvas from "../components/RuneCanvas.astro";
 import Presentation from "../components/Presentation.svelte";
@@ -70,6 +71,10 @@ import Presentation from "../components/Presentation.svelte";
   <div class="content">
     <section id="timeline">
       <ProjectTimeline client:visible />
+    </section>
+
+    <section id="compiler-status">
+      <CompilerStatus client:visible />
     </section>
 
     <section id="updates">

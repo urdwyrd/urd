@@ -8,4 +8,8 @@ description = "Five-phase compiler for Urd Schema Markdown (.urd.md → .urd.jso
 indexmap = "2"
 serde_json = { version = "1", features = ["preserve_order"] }
 
+[[bin]]
+name = "bench"
+path = "src/bin/bench.rs"
+
 [dev-dependencies]

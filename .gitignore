@@ -19,5 +19,9 @@ Thumbs.db
 .wrangler/
 .dev.vars
 
+# Generated reports
+test-report.json
+sites/urd.dev/src/data/compiler-test-report.json
+
 # Editor / AI tooling
 .claude/

@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://urd.dev/schemas/compiler-test-report.schema.json",
+  "title": "UrdCompilerTestReport",
+  "description": "Structured test report for the Urd compiler test suite and benchmark harness.",
+  "type": "object",
+  "required": ["version", "timestamp", "compiler", "summary", "phases", "compliance", "benchmarks"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1",
+      "description": "Schema version — always \"1\" for this format."
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO 8601 timestamp of when the report was generated."
+    },
+    "compiler": {
+      "type": "object",
+      "required": ["name", "version", "language"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "const": "urd-compiler" },
+        "version": { "type": "string", "description": "Semver from Cargo.toml." },
+        "language": { "type": "string", "const": "rust" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["total_tests", "passed", "failed", "skipped", "duration_ms", "pass_rate"],
+      "additionalProperties": false,
+      "properties": {
+        "total_tests": { "type": "integer", "minimum": 0 },
+        "passed": { "type": "integer", "minimum": 0 },
+        "failed": { "type": "integer", "minimum": 0 },
+        "skipped": { "type": "integer", "minimum": 0 },
+        "duration_ms": { "type": "number", "minimum": 0, "description": "Total wall-clock time for the test run." },
+        "pass_rate": { "type": "number", "minimum": 0, "maximum": 1, "description": "passed / total_tests, or 1.0 if total_tests is 0." }
+      }
+    },
+    "phases": {
+      "type": "array",
+      "description": "One entry per compiler phase, plus e2e and scaffolding groups.",
+      "items": {
+        "type": "object",
+        "required": ["name", "diagnostic_range", "tests", "passed", "failed", "skipped", "duration_ms", "categories", "diagnostics"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "description": "Phase name: parse, import, link, validate, emit, e2e, or scaffolding." },
+          "diagnostic_range": {
+            "type": ["string", "null"],
+            "description": "Diagnostic code range for this phase, e.g. \"100-199\", or null if none."
+          },
+          "tests": { "type": "integer", "minimum": 0 },
+          "passed": { "type": "integer", "minimum": 0 },
+          "failed": { "type": "integer", "minimum": 0 },
+          "skipped": { "type": "integer", "minimum": 0 },
+          "duration_ms": { "type": ["number", "null"], "minimum": 0, "description": "Per-binary duration from cargo test, or null if unavailable." },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["name", "tests", "passed", "failed", "test_names"],
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string", "description": "Category name derived from test name prefix." },
+                "tests": { "type": "integer", "minimum": 0 },
+                "passed": { "type": "integer", "minimum": 0 },
+                "failed": { "type": "integer", "minimum": 0 },
+                "test_names": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["name", "status"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": { "type": "string" },
+                      "status": { "type": "string", "enum": ["pass", "fail", "skip"] },
+                      "duration_ms": { "type": ["number", "null"], "description": "Per-test timing — null on stable Rust." }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "diagnostics": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Diagnostic codes owned by this phase."
+          }
+        }
+      }
+    },
+    "compliance": {
+      "type": "array",
+      "description": "Architecture compliance checks — static metadata validated by the test suite.",
+      "items": {
+        "type": "object",
+        "required": ["label", "status", "note"],
+        "additionalProperties": false,
+        "properties": {
+          "label": { "type": "string" },
+          "status": { "type": "string", "enum": ["pass", "fail"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "benchmarks": {
+      "type": "object",
+      "required": ["files", "aggregate"],
+      "additionalProperties": false,
+      "properties": {
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "source_bytes", "output_bytes", "total_ms", "phases", "success", "diagnostic_count"],
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "source_bytes": { "type": "integer", "minimum": 0 },
+              "output_bytes": { "type": "integer", "minimum": 0 },
+              "total_ms": { "type": "number", "minimum": 0 },
+              "phases": {
+                "type": "object",
+                "required": ["parse_ms", "import_ms", "link_ms", "validate_ms", "emit_ms"],
+                "additionalProperties": false,
+                "properties": {
+                  "parse_ms": { "type": "number", "minimum": 0 },
+                  "import_ms": { "type": "number", "minimum": 0 },
+                  "link_ms": { "type": "number", "minimum": 0 },
+                  "validate_ms": { "type": "number", "minimum": 0 },
+                  "emit_ms": { "type": "number", "minimum": 0 }
+                }
+              },
+              "success": { "type": "boolean" },
+              "diagnostic_count": { "type": "integer", "minimum": 0 }
+            }
+          }
+        },
+        "aggregate": {
+          "type": "object",
+          "required": ["total_source_bytes", "total_output_bytes", "total_ms", "files_compiled", "files_succeeded", "avg_ms_per_file", "bytes_per_ms"],
+          "additionalProperties": false,
+          "properties": {
+            "total_source_bytes": { "type": "integer", "minimum": 0 },
+            "total_output_bytes": { "type": "integer", "minimum": 0 },
+            "total_ms": { "type": "number", "minimum": 0 },
+            "files_compiled": { "type": "integer", "minimum": 0 },
+            "files_succeeded": { "type": "integer", "minimum": 0 },
+            "avg_ms_per_file": { "type": "number", "minimum": 0 },
+            "bytes_per_ms": { "type": "number", "minimum": 0 }
+          }
+        }
+      }
+    }
+  }
+}

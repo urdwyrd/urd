@@ -5,7 +5,10 @@
     "dev": "pnpm --filter urd.dev dev",
     "build": "pnpm --filter urd.dev build",
     "preview": "pnpm --filter urd.dev preview",
-    "compiler:test": "cargo test --manifest-path packages/compiler/Cargo.toml",
+    "compiler:test": "node scripts/compiler-test-report.mjs",
+    "compiler:test:raw": "cargo test --manifest-path packages/compiler/Cargo.toml",
+    "compiler:report:copy": "node -e \"require('fs').cpSync('packages/compiler/test-report.json','sites/urd.dev/src/data/compiler-test-report.json')\"",
+    "build:full": "pnpm compiler:test && pnpm compiler:report:copy && pnpm build",
     "grammar:test": "cargo test --manifest-path packages/grammar/Cargo.toml",
     "schema:test": "node scripts/validate-json-schema.mjs",
     "prepare": "husky"
