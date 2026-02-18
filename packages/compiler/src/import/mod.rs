@@ -107,6 +107,23 @@ impl FileReader for OsFileReader {
     }
 }
 
+/// A file reader that rejects all imports (single-file mode).
+///
+/// Used by `compile_source()` and the WASM bindings where filesystem
+/// access is unavailable. Any `import:` declaration in the source will
+/// produce a URD201 diagnostic (imported file not found).
+pub struct StubFileReader;
+
+impl FileReader for StubFileReader {
+    fn read_file(&self, _fs_path: &str) -> Result<String, FileReadError> {
+        Err(FileReadError::NotFound)
+    }
+
+    fn canonical_filename(&self, _dir: &str, _filename: &str) -> Option<String> {
+        None
+    }
+}
+
 // ── Path utilities ──────────────────────────────────────────────────
 
 /// Extract the directory part of a path. Returns `""` if no directory.

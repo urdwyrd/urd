@@ -21,10 +21,16 @@ pub mod link;
 pub mod validate;
 pub mod emit;
 
+// WASM bindings (only compiled with the `wasm` feature)
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
 use diagnostics::DiagnosticCollector;
+use import::FileReader;
+#[cfg(not(target_arch = "wasm32"))]
 use span::FilePath;
 
-/// The result of a `compile()` call.
+/// The result of a compilation.
 #[derive(Debug)]
 pub struct CompilationResult {
     /// `true` if compilation succeeded with zero errors.
@@ -35,20 +41,36 @@ pub struct CompilationResult {
     pub diagnostics: DiagnosticCollector,
 }
 
-/// Top-level compiler entry point.
+/// Compile a single `.urd.md` source string (no import resolution).
+///
+/// Import declarations in the source will produce URD201 diagnostics
+/// (file not found) because this function runs in single-file mode.
+/// For multi-file compilation, use [`compile_source_with_reader()`].
+pub fn compile_source(filename: &str, source: &str) -> CompilationResult {
+    compile_source_with_reader(filename, source, &import::StubFileReader)
+}
+
+/// Compile a `.urd.md` source string with a custom file reader.
+///
+/// The reader is used to resolve `import:` declarations. Native callers
+/// pass [`import::OsFileReader`]; WASM callers pass a stub or
+/// JavaScript-backed reader.
 ///
 /// Orchestrates the five phases in sequence:
-/// 1. PARSE  — source text → per-file AST
-/// 2. IMPORT — entry AST → dependency graph + all ASTs
-/// 3. LINK   — graph + ASTs → symbol table + annotated ASTs
+/// 1. PARSE    — source text → per-file AST
+/// 2. IMPORT   — entry AST → dependency graph + all ASTs
+/// 3. LINK     — graph + ASTs → symbol table + annotated ASTs
 /// 4. VALIDATE — annotated ASTs + symbol table → diagnostics
-/// 5. EMIT   — validated ASTs + symbol table → `.urd.json`
-pub fn compile(entry_file: &FilePath) -> CompilationResult {
+/// 5. EMIT     — validated ASTs + symbol table → `.urd.json`
+pub fn compile_source_with_reader(
+    filename: &str,
+    source: &str,
+    reader: &dyn FileReader,
+) -> CompilationResult {
     let mut diagnostics = DiagnosticCollector::new();
 
-    // Normalise entry file path: split into directory + filename.
-    // All graph paths are stored relative to the entry file's directory.
-    let normalised = entry_file.replace('\\', "/");
+    // Normalise filename: split into directory + filename components.
+    let normalised = filename.replace('\\', "/");
     let (entry_dir, entry_filename) = match normalised.rfind('/') {
         Some(pos) => (
             normalised[..pos + 1].to_string(),
@@ -58,23 +80,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
     };
 
     // Phase 1: PARSE
-    let source = match std::fs::read_to_string(entry_file) {
-        Ok(s) => s,
-        Err(e) => {
-            diagnostics.error(
-                "URD100",
-                format!("Cannot read file '{}': {}", entry_file, e),
-                span::Span::new(entry_filename.clone(), 1, 1, 1, 1),
-            );
-            return CompilationResult {
-                success: false,
-                world: None,
-                diagnostics,
-            };
-        }
-    };
-
-    let entry_ast = match parse::parse(&entry_filename, &source, &mut diagnostics) {
+    let entry_ast = match parse::parse(&entry_filename, source, &mut diagnostics) {
         Some(ast) => ast,
         None => {
             return CompilationResult {
@@ -86,7 +92,8 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
     };
 
     // Phase 2: IMPORT
-    let compilation_unit = import::resolve_imports(entry_ast, &entry_dir, &mut diagnostics);
+    let compilation_unit =
+        import::resolve_imports_with_reader(entry_ast, &entry_dir, &mut diagnostics, reader);
 
     // Fatal IMPORT errors (URD203, URD205) prevent LINK.
     if diagnostics.has_errors() {
@@ -119,4 +126,39 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
         world: Some(json),
         diagnostics,
     }
+}
+
+/// Convenience: compile from a file path (reads the file from disk).
+///
+/// Equivalent to reading the file and calling [`compile_source_with_reader()`]
+/// with [`import::OsFileReader`].
+///
+/// Not available on WASM targets.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn compile(entry_file: &FilePath) -> CompilationResult {
+    let mut diagnostics = DiagnosticCollector::new();
+
+    let normalised = entry_file.replace('\\', "/");
+    let entry_filename = match normalised.rfind('/') {
+        Some(pos) => normalised[pos + 1..].to_string(),
+        None => normalised.clone(),
+    };
+
+    let source = match std::fs::read_to_string(entry_file) {
+        Ok(s) => s,
+        Err(e) => {
+            diagnostics.error(
+                "URD100",
+                format!("Cannot read file '{}': {}", entry_file, e),
+                span::Span::new(entry_filename, 1, 1, 1, 1),
+            );
+            return CompilationResult {
+                success: false,
+                world: None,
+                diagnostics,
+            };
+        }
+    };
+
+    compile_source_with_reader(entry_file, &source, &import::OsFileReader)
 }

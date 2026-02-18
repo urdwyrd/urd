@@ -90,7 +90,7 @@ The Urd World Schema v0.1 covers:
 |-----------|------|--------|
 | **PEG Grammar** | Formal pest grammar — 75 rules defining Schema Markdown syntax. | Complete |
 | **JSON Schema** | 9 sub-schemas validating `.urd.json` contract output. | Complete |
-| **Compiler** | `.urd.md` → `.urd.json`. Five phases: parse, import, link, validate, emit. Rust, 390 tests, 100% pass rate. | v0.1 complete |
+| **Compiler** | `.urd.md` → `.urd.json`. Five phases: parse, import, link, validate, emit. Rust, 390 tests, 100% pass rate. Native CLI (`urd`) and WASM dual-target. | v0.1 complete |
 | **Wyrd** | Reference runtime. Loads compiled JSON, executes the world, produces events. Browser-native. | Next milestone |
 | **Testing** | Schema validation, reachability analysis, playthrough simulation, coverage reporting. | Planned |
 | **LSP** | Language server wrapping the compiler. Live diagnostics, autocomplete, go-to-definition. | Planned |
@@ -119,14 +119,18 @@ pnpm 10 monorepo. Rust for the compiler and grammar packages.
 # Site
 pnpm dev                    # Astro dev server
 pnpm build                  # Production build
+pnpm build:full             # Compiler tests + report + site build
 
 # Compiler
-pnpm compiler:test          # Run tests + generate report
+pnpm compiler:test          # Run tests + benchmarks, generate report
 pnpm compiler:test:raw      # Raw cargo test output
+pnpm compiler:build         # Release build of the `urd` CLI binary
 pnpm compiler:bench         # Release benchmarks + update report
+pnpm compiler:wasm:check    # Verify WASM target compiles
 
-# Grammar
+# Grammar & Schema
 pnpm grammar:test           # PEG validation corpus
+pnpm schema:test            # JSON Schema validation
 ```
 
 ## Validation Strategy

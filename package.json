@@ -9,6 +9,8 @@
     "compiler:test:raw": "cargo test --manifest-path packages/compiler/Cargo.toml",
     "compiler:report:copy": "node -e \"require('fs').cpSync('packages/compiler/test-report.json','sites/urd.dev/src/data/compiler-test-report.json')\"",
     "build:full": "pnpm compiler:test && pnpm compiler:report:copy && pnpm build",
+    "compiler:build": "cargo build --release --manifest-path packages/compiler/Cargo.toml --bin urd",
+    "compiler:wasm:check": "cargo check --target wasm32-unknown-unknown --manifest-path packages/compiler/Cargo.toml --features wasm",
     "compiler:bench": "cargo build --release --manifest-path packages/compiler/Cargo.toml --bin bench && node scripts/compiler-bench.mjs",
     "grammar:test": "cargo test --manifest-path packages/grammar/Cargo.toml",
     "schema:test": "node scripts/validate-json-schema.mjs",

@@ -57,6 +57,32 @@ jobs:
       - name: Run compiler tests
         run: cargo test --manifest-path packages/compiler/Cargo.toml
 
+  compiler-wasm-check:
+    name: Compiler WASM check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            packages/compiler/target
+          key: cargo-wasm-${{ hashFiles('packages/compiler/Cargo.lock', 'packages/compiler/Cargo.toml') }}
+          restore-keys: cargo-wasm-
+
+      - name: Check WASM target
+        run: cargo check --manifest-path packages/compiler/Cargo.toml --target wasm32-unknown-unknown --features wasm
+
   grammar-tests:
     name: Grammar tests
     runs-on: ubuntu-latest
