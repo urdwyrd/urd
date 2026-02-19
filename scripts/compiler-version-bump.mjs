@@ -24,6 +24,7 @@
  *   4. Runs the test suite (cargo test)
  *   5. Regenerates the test report (with the new version)
  *   6. Copies the report to the site data directory
+ *   7. Rebuilds WASM and vendors it into the Astro site
  *
  * The script aborts if tests fail — the version is still written to
  * Cargo.toml so you can fix the issue and re-run, but the report is
@@ -145,6 +146,44 @@ cpSync(TEST_REPORT, SITE_REPORT);
 console.log(`  ✓ Copied report to site data`);
 
 // ---------------------------------------------------------------------------
+// 7. Rebuild WASM and vendor into Astro site
+// ---------------------------------------------------------------------------
+
+console.log(`\n  Building WASM (release)...\n`);
+
+const wasmBuildResult = spawnSync('pnpm', ['compiler:wasm:build'], {
+  encoding: 'utf-8',
+  shell: true,
+  timeout: 600_000,
+  stdio: 'inherit',
+  cwd: ROOT,
+});
+
+if (wasmBuildResult.status !== 0) {
+  console.error(`\n  WASM build failed. The test report has been updated but the`);
+  console.error(`  WASM binary still has the old version. Run 'pnpm compiler:wasm:build'`);
+  console.error(`  and 'pnpm compiler:wasm:vendor' manually.\n`);
+  process.exit(1);
+}
+
+console.log(`\n  Vendoring WASM artifacts...\n`);
+
+const vendorResult = spawnSync('pnpm', ['compiler:wasm:vendor'], {
+  encoding: 'utf-8',
+  shell: true,
+  timeout: 60_000,
+  stdio: 'inherit',
+  cwd: ROOT,
+});
+
+if (vendorResult.status !== 0) {
+  console.error(`\n  WASM vendor failed. Run 'pnpm compiler:wasm:vendor' manually.\n`);
+  process.exit(1);
+}
+
+console.log(`  ✓ WASM rebuilt and vendored`);
+
+// ---------------------------------------------------------------------------
 // Done
 // ---------------------------------------------------------------------------
 
@@ -152,4 +191,6 @@ console.log(`\n  urd-compiler ${current} → ${next}`);
 console.log(`\n  Files updated:`);
 console.log(`    packages/compiler/Cargo.toml`);
 console.log(`    packages/compiler/test-report.json`);
-console.log(`    sites/urd.dev/src/data/compiler-test-report.json\n`);
+console.log(`    sites/urd.dev/src/data/compiler-test-report.json`);
+console.log(`    sites/urd.dev/public/wasm/ (WASM binary)`);
+console.log(`    sites/urd.dev/src/lib/wasm/ (JS glue)\n`);
