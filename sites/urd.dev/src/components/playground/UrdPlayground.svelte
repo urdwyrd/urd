@@ -24,7 +24,7 @@ world:
 types:
   Character [interactable]:
     mood: enum(wary, neutral, friendly) = wary
-    trust: integer = 0
+    trust: int(0,100) = 0
     ~role: string
   Item [portable]:
     name: string
