@@ -60,7 +60,7 @@
   <header class="log-header">
     <span class="log-label">{label}</span>
     <h2 class="log-title">{title}</h2>
-    <p class="log-subtitle">{subtitle}</p>
+    <p class="log-subtitle">{subtitle} <a href="/rss.xml" class="log-rss" aria-label="RSS feed">RSS</a></p>
   </header>
 
   {#if loaded}
@@ -148,6 +148,25 @@
     font-size: 17px;
     color: var(--faint);
     line-height: 1.6;
+  }
+
+  .log-rss {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    text-decoration: none;
+    letter-spacing: 0.06em;
+    margin-left: 6px;
+    padding: 2px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+    vertical-align: middle;
+  }
+
+  .log-rss:hover {
+    color: var(--gold);
+    border-color: color-mix(in srgb, var(--gold) 30%, transparent);
   }
 
   .log-entries {

@@ -36,7 +36,7 @@ const displayDate = year && month ? `${MONTHS[month] ?? month} ${year}` : "";
 
       <header class="article-header">
         <div class="article-header-accent"></div>
-        {displayDate && <span class="article-date">{displayDate}</span>}
+        {displayDate && <span class="article-date">{displayDate} · <a href="/rss.xml" class="article-rss-inline">subscribe via RSS</a></span>}
         <h1 class="article-title">{title}</h1>
         {description && <p class="article-description">{description}</p>}
       </header>
@@ -194,6 +194,16 @@ const displayDate = year && month ? `${MONTHS[month] ?? month} ${year}` : "";
   .article-footer-link:focus-visible {
     outline: 2px solid var(--gold);
     outline-offset: 2px;
+  }
+
+  .article-rss-inline {
+    color: var(--faint);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .article-rss-inline:hover {
+    color: var(--gold);
   }
 
   /* ── Responsive ── */
