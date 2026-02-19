@@ -217,8 +217,16 @@ Overgrown paths wind between crumbling statues.
           const ver = compilerVersion();
           metaEl.innerHTML = metaEl.innerHTML.replace(
             'urd-compiler',
-            `<a href="https://github.com/urdwyrd/urd/blob/main/packages/compiler/CHANGELOG.md" target="_blank" rel="noopener" class="changelog-link">urd-compiler v${ver}</a>`,
+            `urd-compiler v${ver}`,
           );
+          // Append changelog link
+          const link = document.createElement('a');
+          link.href = 'https://github.com/urdwyrd/urd/blob/main/packages/compiler/CHANGELOG.md';
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.className = 'changelog-link';
+          link.textContent = 'changelog';
+          metaEl.appendChild(link);
         }
 
         // Compile the starter example
