@@ -2157,3 +2157,214 @@ fn move_location_destination() {
         assert_eq!(ann.destination_kind, Some(DestinationKind::LocationRef("cellar".to_string())));
     } else { panic!("expected Effect"); }
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// 9. Built-in Jump Targets (-> end)
+// ═══════════════════════════════════════════════════════════════════
+
+#[test]
+fn resolve_builtin_end_jump() {
+    // -> end should resolve without error. Annotation has no resolved_section or resolved_location.
+    let ast = make_file_ast(
+        "test.urd.md",
+        None,
+        vec![jump("end")],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let linked = link::link(cu, &mut diag);
+
+    assert!(!diag.has_errors(), "Expected no errors, got: {:?}", diag.all());
+    if let ContentNode::Jump(j) = &linked.graph.nodes["test.urd.md"].ast.content[0] {
+        let ann = j.annotation.as_ref().expect("annotation should be set for -> end");
+        assert_eq!(ann.resolved_section, None);
+        assert_eq!(ann.resolved_location, None);
+    } else {
+        panic!("expected Jump");
+    }
+}
+
+#[test]
+fn resolve_non_builtin_still_errors() {
+    // -> ending should NOT be treated as a built-in (exact match only).
+    let ast = make_file_ast(
+        "test.urd.md",
+        None,
+        vec![jump("ending")],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let _linked = link::link(cu, &mut diag);
+
+    assert!(has_error(&diag, "URD309"));
+}
+
+#[test]
+fn resolve_builtin_end_shadows_section() {
+    // If a section named "end" exists, -> end still resolves as built-in terminal
+    // but emits URD431 shadowing warning.
+    let ast = make_file_ast(
+        "test.urd.md",
+        None,
+        vec![
+            section("end"),
+            jump("end"),
+        ],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let linked = link::link(cu, &mut diag);
+
+    assert!(!diag.has_errors(), "Expected no errors, got: {:?}", diag.all());
+    assert!(has_warning(&diag, "URD431"));
+    // Built-in wins — annotation has no resolved_section.
+    if let ContentNode::Jump(j) = &linked.graph.nodes["test.urd.md"].ast.content[1] {
+        let ann = j.annotation.as_ref().expect("annotation should be set");
+        assert_eq!(ann.resolved_section, None, "built-in should win, not section");
+        assert_eq!(ann.resolved_location, None);
+    } else {
+        panic!("expected Jump");
+    }
+}
+
+#[test]
+fn resolve_builtin_end_inside_location() {
+    // -> end inside a location context should still resolve as built-in.
+    let ast = make_file_ast(
+        "test.urd.md",
+        None,
+        vec![
+            location("Cell"),
+            jump("end"),
+        ],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let linked = link::link(cu, &mut diag);
+
+    assert!(!diag.has_errors(), "Expected no errors, got: {:?}", diag.all());
+    if let ContentNode::Jump(j) = &linked.graph.nodes["test.urd.md"].ast.content[1] {
+        let ann = j.annotation.as_ref().expect("annotation should be set");
+        assert_eq!(ann.resolved_section, None);
+        assert_eq!(ann.resolved_location, None);
+    } else {
+        panic!("expected Jump");
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. Implicit Properties (.container)
+// ═══════════════════════════════════════════════════════════════════
+
+#[test]
+fn implicit_container_in_condition() {
+    // ? @key.container != player — should resolve without URD308.
+    let ast = make_file_ast(
+        "test.urd.md",
+        Some(make_frontmatter(vec![
+            fm_entry("Item", make_type_def("Item", vec!["portable"], vec![])),
+            fm_entry("key", make_entity_decl("key", "Item", vec![])),
+        ])),
+        vec![
+            property_comparison("key", "container", "!=", "player"),
+        ],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let linked = link::link(cu, &mut diag);
+
+    assert!(!diag.has_errors(), "Expected no errors, got: {:?}", diag.all());
+    if let ContentNode::Condition(cond) = &linked.graph.nodes["test.urd.md"].ast.content[0] {
+        if let ConditionExpr::PropertyComparison(pc) = &cond.expr {
+            let ann = pc.annotation.as_ref().expect("annotation should be set");
+            assert_eq!(ann.resolved_entity, Some("key".to_string()));
+            assert_eq!(ann.resolved_property, Some("container".to_string()));
+            assert_eq!(ann.resolved_type, Some("Item".to_string()));
+        } else { panic!("expected PropertyComparison"); }
+    } else { panic!("expected Condition"); }
+}
+
+#[test]
+fn implicit_container_in_effect() {
+    // > @key.container = player — should resolve without URD308.
+    let ast = make_file_ast(
+        "test.urd.md",
+        Some(make_frontmatter(vec![
+            fm_entry("Item", make_type_def("Item", vec!["portable"], vec![])),
+            fm_entry("key", make_entity_decl("key", "Item", vec![])),
+        ])),
+        vec![
+            set_effect("@key.container", "player"),
+        ],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let linked = link::link(cu, &mut diag);
+
+    assert!(!diag.has_errors(), "Expected no errors, got: {:?}", diag.all());
+    if let ContentNode::Effect(eff) = &linked.graph.nodes["test.urd.md"].ast.content[0] {
+        let ann = eff.annotation.as_ref().expect("annotation should be set");
+        assert_eq!(ann.resolved_entity, Some("key".to_string()));
+        assert_eq!(ann.resolved_property, Some("container".to_string()));
+    } else { panic!("expected Effect"); }
+}
+
+#[test]
+fn implicit_container_in_entity_override() {
+    // Entity with container override in frontmatter — should not URD308.
+    let ast = make_file_ast(
+        "test.urd.md",
+        Some(make_frontmatter(vec![
+            fm_entry("Item", make_type_def("Item", vec!["portable"], vec![])),
+            fm_entry("key", make_entity_decl("key", "Item", vec![
+                ("container", Scalar::String("player".to_string())),
+            ])),
+        ])),
+        Vec::new(),
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let _linked = link::link(cu, &mut diag);
+
+    assert!(!diag.has_errors(), "Expected no errors, got: {:?}", diag.all());
+}
+
+#[test]
+fn non_implicit_property_still_errors() {
+    // ? @key.nonexistent != player — should still produce URD308.
+    let ast = make_file_ast(
+        "test.urd.md",
+        Some(make_frontmatter(vec![
+            fm_entry("Item", make_type_def("Item", vec!["portable"], vec![])),
+            fm_entry("key", make_entity_decl("key", "Item", vec![])),
+        ])),
+        vec![
+            property_comparison("key", "nonexistent", "!=", "player"),
+        ],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let _linked = link::link(cu, &mut diag);
+
+    assert!(has_error(&diag, "URD308"));
+}
+
+#[test]
+fn near_miss_implicit_property_still_errors() {
+    // ? @key.containers != player — "containers" is not "container", should URD308.
+    let ast = make_file_ast(
+        "test.urd.md",
+        Some(make_frontmatter(vec![
+            fm_entry("Item", make_type_def("Item", vec!["portable"], vec![])),
+            fm_entry("key", make_entity_decl("key", "Item", vec![])),
+        ])),
+        vec![
+            property_comparison("key", "containers", "!=", "player"),
+        ],
+    );
+    let cu = single_file_cu(ast);
+    let mut diag = DiagnosticCollector::new();
+    let _linked = link::link(cu, &mut diag);
+
+    assert!(has_error(&diag, "URD308"));
+}

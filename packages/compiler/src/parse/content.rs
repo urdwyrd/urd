@@ -592,7 +592,8 @@ fn parse_effect_type(text: &str) -> EffectType {
             let after_at = &rest[1..];
             if let Some(arrow_pos) = after_at.find(" -> ") {
                 let entity = after_at[..arrow_pos].trim().to_string();
-                let dest = after_at[arrow_pos + 4..].trim().to_string();
+                let dest_raw = after_at[arrow_pos + 4..].trim();
+                let dest = dest_raw.strip_prefix('@').unwrap_or(dest_raw).to_string();
                 return EffectType::Move {
                     entity_ref: entity,
                     destination_ref: dest,

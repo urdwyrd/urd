@@ -156,7 +156,9 @@ fn resolve_frontmatter_entry(
                 let overrides: Vec<String> = ed.property_overrides.iter().map(|(k, _)| k.clone()).collect();
                 for prop_name in &overrides {
                     if let Some(ts) = symbol_table.types.get(&type_name) {
-                        if !ts.properties.contains_key(prop_name) {
+                        if !ts.properties.contains_key(prop_name)
+                            && !IMPLICIT_PROPERTIES.contains(&prop_name.as_str())
+                        {
                             diagnostics.error(
                                 "URD308",
                                 format!(
@@ -680,7 +682,9 @@ fn resolve_condition_expr(
                 if let Some(es) = symbol_table.entities.get(entity_id) {
                     if let Some(type_name) = &es.type_symbol {
                         if let Some(ts) = symbol_table.types.get(type_name) {
-                            if ts.properties.contains_key(&pc.property) {
+                            if ts.properties.contains_key(&pc.property)
+                                || IMPLICIT_PROPERTIES.contains(&pc.property.as_str())
+                            {
                                 if let Some(ann) = &mut pc.annotation {
                                     ann.resolved_property = Some(pc.property.clone());
                                     ann.resolved_type = Some(type_name.clone());
@@ -793,7 +797,9 @@ fn resolve_effect(
                         if let Some(es) = symbol_table.entities.get(entity_id) {
                             if let Some(type_name) = &es.type_symbol {
                                 if let Some(ts) = symbol_table.types.get(type_name) {
-                                    if ts.properties.contains_key(property) {
+                                    if ts.properties.contains_key(property)
+                                        || IMPLICIT_PROPERTIES.contains(&property)
+                                    {
                                         ann.resolved_property = Some(property.to_string());
                                         ann.resolved_type = Some(type_name.clone());
                                     } else {
@@ -870,6 +876,15 @@ fn resolve_effect(
     }
 }
 
+/// Implicit properties defined by the Urd runtime, not by user type definitions.
+/// These are valid in conditions, effects, and rule where clauses on any entity.
+/// See Schema Spec §Containment Model.
+const IMPLICIT_PROPERTIES: &[&str] = &["container"];
+
+/// Built-in jump targets recognized by the compiler.
+/// These are documented in the Schema Markdown spec §Jumps.
+const BUILTIN_JUMP_TARGETS: &[&str] = &["end"];
+
 /// Resolve a jump target using the normative priority rule.
 fn resolve_jump(
     jump: &mut crate::ast::Jump,
@@ -879,6 +894,27 @@ fn resolve_jump(
     symbol_table: &SymbolTable,
     diagnostics: &mut DiagnosticCollector,
 ) {
+    // Built-in terminals — check before section/exit lookup.
+    if BUILTIN_JUMP_TARGETS.contains(&jump.target.as_str()) {
+        // Warn if a user-defined section shadows this built-in.
+        if ctx.local_sections.contains_key(&jump.target) {
+            diagnostics.warning(
+                "URD431",
+                format!(
+                    "Section '{}' shadows the built-in '-> {}' terminal. \
+                     The jump will always end the conversation, not jump to this section. \
+                     Consider renaming the section.",
+                    jump.target, jump.target,
+                ),
+                jump.span.clone(),
+            );
+        }
+        jump.annotation = Some(Annotation {
+            ..Default::default()
+        });
+        return;
+    }
+
     if jump.is_exit_qualified {
         // Explicit exit jump: -> exit:name
         if current_location_id.is_none() {

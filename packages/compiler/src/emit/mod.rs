@@ -1405,6 +1405,8 @@ fn scalar_to_json(scalar: &Scalar) -> Json {
         Scalar::Integer(i) => Json::Number(Number::from(*i)),
         Scalar::Number(n) => number_to_json(*n),
         Scalar::Boolean(b) => Json::Bool(*b),
+        Scalar::List(items) => Json::Array(items.iter().map(scalar_to_json).collect()),
+        Scalar::EntityRef(id) => Json::String(id.clone()),
     }
 }
 

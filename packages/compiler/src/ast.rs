@@ -49,13 +49,15 @@ pub enum FrontmatterValue {
     WorldBlock(WorldBlock),
 }
 
-/// A scalar value (string, number, boolean).
+/// A frontmatter value (primitives, lists, entity references).
 #[derive(Debug, Clone, PartialEq)]
 pub enum Scalar {
     String(String),
     Integer(i64),
     Number(f64),
     Boolean(bool),
+    List(Vec<Scalar>),
+    EntityRef(String),
 }
 
 // ── Frontmatter-specific nodes ──

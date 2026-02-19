@@ -4,6 +4,28 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] — 2026-02-20
+
+### Added
+
+- **List and entity ref values in frontmatter:** `Scalar` enum now supports `List(Vec<Scalar>)` and `EntityRef(String)` variants. Entity overrides like `tags: [conspiracy, voss]` and `requires: @bone_key` parse as structured data instead of falling through to strings. Empty lists, trailing commas, nested entity refs in lists, and recursive element parsing all work through the existing `parse_flow_list()` infrastructure.
+- **Implicit `container` property recognition:** The `container` property — defined in the Schema Spec as an implicit property of every entity — is now accepted in conditions, effects, and entity overrides without requiring a type declaration. Controlled by the `IMPLICIT_PROPERTIES` constant in the resolver.
+- **Built-in `-> end` jump target:** `-> end` is now recognised as a built-in dialogue terminal in the LINK phase. The `BUILTIN_JUMP_TARGETS` constant defines reserved targets checked before section/exit lookup. If a section named `end` shadows the built-in, URD431 warns and the built-in wins.
+- **URD430 warning** for unparseable type-definition lines at type indent level (uppercase start, failed parse). Replaces the silent skip that previously caused cascade errors.
+- **URD431 warning** when a user-defined section shadows the built-in `-> end` terminal.
+- **URD432 warning** for unparseable entity-declaration lines starting with `@` in the entities block.
+- 39 new tests (9 parse, 5 link for container, 4 link for `-> end`, 8 parse for silent skip, 9 parse for list/ref, 4 regression). Total: 480 tests.
+
+### Fixed
+
+- **Frontmatter inline comment stripping:** Lines like `Guard [interactable]: # NPC type` now parse correctly. A quote-aware `strip_frontmatter_comment()` function strips `# ...` suffixes while preserving `#` inside quoted strings. Applied at four entry points: type definitions, property definitions, entity declarations, and world fields.
+- **Move effect destination `@` prefix:** `> move @coin -> @guard` now correctly strips the `@` from the destination reference, producing `destination_ref: "guard"` instead of `"@guard"`. Previously caused cascading URD301 errors.
+- **`-> end` no longer emits URD309:** The LINK phase now recognises `end` as a built-in target before attempting section/exit lookup.
+- **`.container` no longer emits URD308:** Implicit properties bypass the declared-property check at all three resolution sites (entity overrides, condition property access, effect property access).
+- **List defaults and overrides no longer emit URD413/URD401:** `tags: list = []` and `tags: [conspiracy, voss]` are now parsed as `Scalar::List` and validated against `PropertyType::List` correctly.
+- **Entity ref overrides no longer misrepresented:** `requires: @bone_key` parses as `Scalar::EntityRef("bone_key")` and validates against `PropertyType::Ref` with proper type checking.
+- **Sunken-citadel stress test:** 1101-line fixture now compiles with zero errors (was 19 errors at start of 0.1.2).
+
 ## [0.1.2] — 2026-02-19
 
 ### Fixed

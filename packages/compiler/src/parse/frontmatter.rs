@@ -286,9 +286,10 @@ fn parse_world_fields(
             break; // Dedented — end of world block
         }
 
-        if let Some(colon_pos) = trimmed.find(':') {
-            let key = trimmed[..colon_pos].trim().to_string();
-            let val = trimmed[colon_pos + 1..].trim();
+        let clean = strip_frontmatter_comment(trimmed);
+        if let Some(colon_pos) = clean.find(':') {
+            let key = clean[..colon_pos].trim().to_string();
+            let val = clean[colon_pos + 1..].trim();
             if !key.is_empty() {
                 fields.push((key, parse_scalar_value(val)));
             }
@@ -337,6 +338,19 @@ fn parse_types_block(
                 span,
             });
         } else {
+            let ptext = parser.check_tabs(*i);
+            let ptrimmed = strip_frontmatter_comment(ptext.trim());
+            if ptrimmed.chars().next().map_or(false, |c| c.is_uppercase()) {
+                let display_text = truncate_for_display(ptrimmed);
+                parser.diagnostics.warning(
+                    "URD430",
+                    format!(
+                        "Line looks like a type definition but could not be parsed: '{}'.",
+                        display_text,
+                    ),
+                    parser.line_span(*i),
+                );
+            }
             *i += 1;
         }
     }
@@ -353,7 +367,7 @@ fn parse_type_definition(
 ) -> Option<TypeDef> {
     let line_idx = *i;
     let text = parser.check_tabs(line_idx);
-    let trimmed = text.trim();
+    let trimmed = strip_frontmatter_comment(text.trim());
 
     // Must end with ':'
     if !trimmed.ends_with(':') {
@@ -426,7 +440,7 @@ fn parse_type_definition(
 /// Parse a property definition line: `name: type` or `~name: type = default`.
 fn parse_property_def(parser: &mut Parser, line_idx: usize) -> Option<PropertyDef> {
     let text = parser.check_tabs(line_idx);
-    let trimmed = text.trim();
+    let trimmed = strip_frontmatter_comment(text.trim());
     let span = parser.line_span(line_idx);
 
     // Check for hidden prefix
@@ -589,6 +603,16 @@ fn parse_entities_block(
                 value: FrontmatterValue::EntityDecl(entity),
                 span,
             });
+        } else if trimmed.starts_with('@') {
+            let display_text = truncate_for_display(strip_frontmatter_comment(trimmed));
+            parser.diagnostics.warning(
+                "URD432",
+                format!(
+                    "Line looks like an entity declaration but could not be parsed: '{}'.",
+                    display_text,
+                ),
+                parser.line_span(*i),
+            );
         }
         *i += 1;
     }
@@ -599,7 +623,7 @@ fn parse_entities_block(
 /// Parse an entity declaration: `@name: Type { overrides }`.
 fn parse_entity_declaration(parser: &mut Parser, line_idx: usize) -> Option<EntityDecl> {
     let text = parser.check_tabs(line_idx);
-    let trimmed = text.trim();
+    let trimmed = strip_frontmatter_comment(text.trim());
     let span = parser.line_span(line_idx);
 
     // Must start with @
@@ -772,6 +796,22 @@ pub(crate) fn parse_scalar_value(s: &str) -> Scalar {
         return Scalar::String(s[1..s.len() - 1].to_string());
     }
 
+    // List literal: [...]
+    if s.starts_with('[') && s.ends_with(']') {
+        let items = parse_flow_list(s);
+        return Scalar::List(
+            items.iter().map(|item| parse_scalar_value(item)).collect(),
+        );
+    }
+
+    // Entity reference: @identifier
+    if s.starts_with('@') {
+        let id = &s[1..];
+        if !id.is_empty() && id.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') {
+            return Scalar::EntityRef(id.to_string());
+        }
+    }
+
     // Integer
     if let Ok(i) = s.parse::<i64>() {
         return Scalar::Integer(i);
@@ -784,6 +824,35 @@ pub(crate) fn parse_scalar_value(s: &str) -> Scalar {
 
     // Default: unquoted string
     Scalar::String(s.to_string())
+}
+
+/// Strip an inline frontmatter comment (`# ...`) from a line.
+/// Returns the text before the comment, trimmed.
+/// Quote-aware: `#` inside `"..."` or `'...'` is not a comment.
+fn strip_frontmatter_comment(text: &str) -> &str {
+    let mut in_quotes = false;
+    let mut quote_char = b'"';
+    let bytes = text.as_bytes();
+
+    for i in 0..bytes.len() {
+        let ch = bytes[i];
+        if in_quotes {
+            if ch == quote_char {
+                in_quotes = false;
+            }
+            continue;
+        }
+        if ch == b'"' || ch == b'\'' {
+            in_quotes = true;
+            quote_char = ch;
+            continue;
+        }
+        // '#' preceded by whitespace = inline comment start
+        if ch == b'#' && i > 0 && bytes[i - 1] == b' ' {
+            return text[..i].trim_end();
+        }
+    }
+    text
 }
 
 /// Truncate text for display in diagnostic messages.

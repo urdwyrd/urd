@@ -200,5 +200,7 @@ pub(crate) fn scalar_to_value(s: &Scalar) -> Value {
         Scalar::Integer(v) => Value::Integer(*v),
         Scalar::Number(v) => Value::Number(*v),
         Scalar::Boolean(v) => Value::Boolean(*v),
+        Scalar::List(items) => Value::List(items.iter().map(scalar_to_value).collect()),
+        Scalar::EntityRef(id) => Value::EntityRef(id.clone()),
     }
 }

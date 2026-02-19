@@ -29,6 +29,38 @@ fn first_node(source: &str) -> ContentNode {
     nodes.into_iter().next().unwrap()
 }
 
+fn get_type_def(ast: &Option<FileAst>, type_name: &str) -> TypeDef {
+    let fm = ast.as_ref().expect("no AST").frontmatter.as_ref().expect("no frontmatter");
+    for entry in &fm.entries {
+        if let FrontmatterValue::Map(entries) = &entry.value {
+            for e in entries {
+                if let FrontmatterValue::TypeDef(td) = &e.value {
+                    if td.name == type_name {
+                        return td.clone();
+                    }
+                }
+            }
+        }
+    }
+    panic!("type '{}' not found in frontmatter", type_name);
+}
+
+fn get_entity_decl(ast: &Option<FileAst>, entity_id: &str) -> EntityDecl {
+    let fm = ast.as_ref().expect("no AST").frontmatter.as_ref().expect("no frontmatter");
+    for entry in &fm.entries {
+        if let FrontmatterValue::Map(entries) = &entry.value {
+            for e in entries {
+                if let FrontmatterValue::EntityDecl(ed) = &e.value {
+                    if ed.id == entity_id {
+                        return ed.clone();
+                    }
+                }
+            }
+        }
+    }
+    panic!("entity '{}' not found in frontmatter", entity_id);
+}
+
 // ── Unit Tests: Grammar Rule Coverage ──
 
 #[test]
@@ -293,6 +325,22 @@ fn move_effect() {
                 EffectType::Move { entity_ref, destination_ref } => {
                     assert_eq!(entity_ref, "rusty_key");
                     assert_eq!(destination_ref, "player");
+                }
+                other => panic!("expected Move, got {:?}", other),
+            }
+        }
+        other => panic!("expected Effect, got {:?}", other),
+    }
+}
+
+#[test]
+fn move_effect_entity_destination() {
+    match first_node("> move @ancient_coin -> @gate_guard") {
+        ContentNode::Effect(e) => {
+            match &e.effect_type {
+                EffectType::Move { entity_ref, destination_ref } => {
+                    assert_eq!(entity_ref, "ancient_coin");
+                    assert_eq!(destination_ref, "gate_guard");
                 }
                 other => panic!("expected Move, got {:?}", other),
             }
@@ -1647,4 +1695,417 @@ fn target_condition_in_choice_guard() {
         }
         other => panic!("expected PropertyComparison, got {:?}", other),
     }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Frontmatter inline comment stripping
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn frontmatter_type_def_with_comment() {
+    let source = "---\ntypes:\n  Guard [interactable, mobile]:  # comment\n    name: string\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "type def with comment should not produce errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let guard = entries.iter().find(|e| e.key == "Guard");
+        assert!(guard.is_some(), "Guard type should be registered");
+        if let FrontmatterValue::TypeDef(td) = &guard.unwrap().value {
+            assert_eq!(td.traits, vec!["interactable", "mobile"]);
+            assert_eq!(td.properties.len(), 1);
+            assert_eq!(td.properties[0].name, "name");
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map for types block");
+    }
+}
+
+#[test]
+fn frontmatter_type_def_without_comment_regression() {
+    let source = "---\ntypes:\n  Villager [interactable]:\n    name: string\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "type def without comment should not produce errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let villager = entries.iter().find(|e| e.key == "Villager");
+        assert!(villager.is_some(), "Villager type should be registered");
+    } else {
+        panic!("expected Map for types block");
+    }
+}
+
+#[test]
+fn frontmatter_property_default_with_comment() {
+    let source = "---\ntypes:\n  Weapon []:\n    durability: num(0.0, 100.0) = 100.0  # float with range\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "property default with comment should not produce errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let weapon = entries.iter().find(|e| e.key == "Weapon").unwrap();
+        if let FrontmatterValue::TypeDef(td) = &weapon.value {
+            let prop = &td.properties[0];
+            assert_eq!(prop.name, "durability");
+            assert_eq!(prop.property_type, "number");
+            assert_eq!(prop.min, Some(0.0));
+            assert_eq!(prop.max, Some(100.0));
+            assert_eq!(prop.default, Some(Scalar::Number(100.0)));
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_property_type_with_comment() {
+    let source = "---\ntypes:\n  Door []:\n    requires: ref(Key)  # ref type\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "property type with comment should not produce errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let door = entries.iter().find(|e| e.key == "Door").unwrap();
+        if let FrontmatterValue::TypeDef(td) = &door.value {
+            let prop = &td.properties[0];
+            assert_eq!(prop.name, "requires");
+            assert_eq!(prop.property_type, "ref");
+            assert_eq!(prop.ref_type, Some("Key".to_string()));
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_hash_inside_quoted_string_preserved() {
+    let source = "---\ntypes:\n  Room []:\n    name: string = \"value with # in it\"\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "hash inside quoted string should not produce errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let room = entries.iter().find(|e| e.key == "Room").unwrap();
+        if let FrontmatterValue::TypeDef(td) = &room.value {
+            let prop = &td.properties[0];
+            assert_eq!(prop.default, Some(Scalar::String("value with # in it".to_string())));
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_hash_inside_single_quoted_string_preserved() {
+    let source = "---\ntypes:\n  Room []:\n    label: string = 'room #5'\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let room = entries.iter().find(|e| e.key == "Room").unwrap();
+        if let FrontmatterValue::TypeDef(td) = &room.value {
+            assert_eq!(td.properties[0].default, Some(Scalar::String("room #5".to_string())));
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_hidden_property_with_comment() {
+    let source = "---\ntypes:\n  NPC []:\n    ~secret: string = \"none\"  # hidden visibility\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let npc = entries.iter().find(|e| e.key == "NPC").unwrap();
+        if let FrontmatterValue::TypeDef(td) = &npc.value {
+            let prop = &td.properties[0];
+            assert_eq!(prop.name, "secret");
+            assert_eq!(prop.visibility, Some("hidden".to_string()));
+            assert_eq!(prop.default, Some(Scalar::String("none".to_string())));
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_enum_with_comment() {
+    let source = "---\ntypes:\n  NPC []:\n    mood: enum(a, b) = a  # note\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    let type_entry = fm.entries.iter().find(|e| e.key == "types").unwrap();
+    if let FrontmatterValue::Map(entries) = &type_entry.value {
+        let npc = entries.iter().find(|e| e.key == "NPC").unwrap();
+        if let FrontmatterValue::TypeDef(td) = &npc.value {
+            let prop = &td.properties[0];
+            assert_eq!(prop.property_type, "enum");
+            assert_eq!(prop.values, Some(vec!["a".to_string(), "b".to_string()]));
+            assert_eq!(prop.default, Some(Scalar::String("a".to_string())));
+        } else {
+            panic!("expected TypeDef");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_entity_override_with_comment() {
+    let source = "---\ntypes:\n  Guard []:\n    name: string\n\nentities:\n  @player: Guard { name: \"Test\" }  # player decl\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "entity with comment should not produce errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    let entity_entry = fm.entries.iter().find(|e| e.key == "entities").unwrap();
+    if let FrontmatterValue::Map(entries) = &entity_entry.value {
+        let player = entries.iter().find(|e| e.key == "player").unwrap();
+        if let FrontmatterValue::EntityDecl(ed) = &player.value {
+            assert_eq!(ed.id, "player");
+            assert_eq!(ed.type_name, "Guard");
+            assert_eq!(ed.property_overrides.len(), 1);
+            assert_eq!(ed.property_overrides[0].0, "name");
+            assert_eq!(ed.property_overrides[0].1, Scalar::String("Test".to_string()));
+        } else {
+            panic!("expected EntityDecl");
+        }
+    } else {
+        panic!("expected Map");
+    }
+}
+
+#[test]
+fn frontmatter_world_field_with_comment() {
+    let source = "---\nworld:\n  name: Test World  # world name\n  start: lobby  # starting location\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    let world_entry = fm.entries.iter().find(|e| e.key == "world").unwrap();
+    if let FrontmatterValue::WorldBlock(wb) = &world_entry.value {
+        let name = wb.fields.iter().find(|f| f.0 == "name").unwrap();
+        assert_eq!(name.1, Scalar::String("Test World".to_string()));
+        let start = wb.fields.iter().find(|f| f.0 == "start").unwrap();
+        assert_eq!(start.1, Scalar::String("lobby".to_string()));
+    } else {
+        panic!("expected WorldBlock");
+    }
+}
+
+#[test]
+fn frontmatter_urd430_unparseable_type_like_line() {
+    let source = "---\ntypes:\n  Broken [\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(!warnings.is_empty(), "expected URD430 warning for unparseable type-like line");
+}
+
+#[test]
+fn frontmatter_no_urd430_for_whole_line_comment() {
+    let source = "---\ntypes:\n  # This is a comment\n  Door []:\n    locked: bool\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(warnings.is_empty(), "whole-line comment should not trigger URD430");
+}
+
+#[test]
+fn frontmatter_urd430_missing_colon() {
+    // Guard [interactable] — missing trailing colon.
+    let source = "---\ntypes:\n  Guard [interactable]\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(!warnings.is_empty(), "expected URD430 for type-like line missing colon");
+}
+
+#[test]
+fn frontmatter_no_urd430_for_lowercase() {
+    // guard [interactable]: — lowercase name, not a type definition attempt.
+    let source = "---\ntypes:\n  guard [interactable]:\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(warnings.is_empty(), "lowercase line should not trigger URD430");
+}
+
+#[test]
+fn frontmatter_no_urd430_for_bracket_start() {
+    // [interactable]: — starts with bracket, not uppercase.
+    let source = "---\ntypes:\n  [interactable]:\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(warnings.is_empty(), "line starting with bracket should not trigger URD430");
+}
+
+#[test]
+fn frontmatter_no_urd430_for_valid_type() {
+    // Valid type definition should not emit URD430.
+    let source = "---\ntypes:\n  Guard [interactable]:\n    mood: string\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(warnings.is_empty(), "valid type definition should not trigger URD430");
+}
+
+#[test]
+fn frontmatter_no_urd430_for_blank_line() {
+    // Blank line inside types block should not emit URD430.
+    let source = "---\ntypes:\n  \n  Door []:\n    locked: bool\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD430").cloned().collect();
+    assert!(warnings.is_empty(), "blank line should not trigger URD430");
+}
+
+#[test]
+fn frontmatter_urd432_malformed_entity() {
+    // @broken_entity without a type — should emit URD432.
+    let source = "---\ntypes:\n  Item []:\n    weight: int\nentities:\n  @broken_item\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD432").cloned().collect();
+    assert!(!warnings.is_empty(), "expected URD432 for malformed entity declaration");
+}
+
+#[test]
+fn frontmatter_no_urd432_for_valid_entity() {
+    // Valid entity should not emit URD432.
+    let source = "---\ntypes:\n  Item []:\n    weight: int\nentities:\n  @sword: Item\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD432").cloned().collect();
+    assert!(warnings.is_empty(), "valid entity should not trigger URD432");
+}
+
+#[test]
+fn frontmatter_no_urd432_for_comment_in_entities() {
+    // Comment inside entities block should not emit URD432.
+    let source = "---\ntypes:\n  Item []:\n    weight: int\nentities:\n  # A comment\n  @sword: Item\n---\n";
+    let (_, diag) = parse_source(source);
+    let warnings: Vec<_> = diag.all().iter().filter(|d| d.code == "URD432").cloned().collect();
+    assert!(warnings.is_empty(), "comment should not trigger URD432");
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// List and EntityRef Scalar parsing
+// ═══════════════════════════════════════════════════════════════════
+
+#[test]
+fn scalar_empty_list() {
+    let source = "---\ntypes:\n  Item []:\n    tags: list = []\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let td = get_type_def(&ast, "Item");
+    assert_eq!(td.properties[0].default, Some(Scalar::List(vec![])));
+}
+
+#[test]
+fn scalar_string_list() {
+    let source = "---\ntypes:\n  Item []:\n    tags: list = [a, b, c]\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let td = get_type_def(&ast, "Item");
+    assert_eq!(
+        td.properties[0].default,
+        Some(Scalar::List(vec![
+            Scalar::String("a".to_string()),
+            Scalar::String("b".to_string()),
+            Scalar::String("c".to_string()),
+        ])),
+    );
+}
+
+#[test]
+fn scalar_entity_ref_list() {
+    let source = "---\ntypes:\n  Chest []:\n    items: list = [@key, @sword]\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let td = get_type_def(&ast, "Chest");
+    assert_eq!(
+        td.properties[0].default,
+        Some(Scalar::List(vec![
+            Scalar::EntityRef("key".to_string()),
+            Scalar::EntityRef("sword".to_string()),
+        ])),
+    );
+}
+
+#[test]
+fn scalar_list_with_trailing_comma() {
+    let source = "---\ntypes:\n  Item []:\n    tags: list = [a, b, ]\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let td = get_type_def(&ast, "Item");
+    assert_eq!(
+        td.properties[0].default,
+        Some(Scalar::List(vec![
+            Scalar::String("a".to_string()),
+            Scalar::String("b".to_string()),
+        ])),
+    );
+}
+
+#[test]
+fn scalar_entity_ref_in_override() {
+    let source = "---\ntypes:\n  Chest []:\n    requires: ref\nentities:\n  @lockbox: Chest { requires: @bone_key }\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let ed = get_entity_decl(&ast, "lockbox");
+    assert_eq!(ed.property_overrides.len(), 1);
+    assert_eq!(ed.property_overrides[0].0, "requires");
+    assert_eq!(ed.property_overrides[0].1, Scalar::EntityRef("bone_key".to_string()));
+}
+
+#[test]
+fn scalar_list_in_override() {
+    let source = "---\ntypes:\n  Evidence []:\n    tags: list\nentities:\n  @letter: Evidence { tags: [conspiracy, voss] }\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let ed = get_entity_decl(&ast, "letter");
+    assert_eq!(ed.property_overrides.len(), 1);
+    assert_eq!(ed.property_overrides[0].0, "tags");
+    assert_eq!(
+        ed.property_overrides[0].1,
+        Scalar::List(vec![
+            Scalar::String("conspiracy".to_string()),
+            Scalar::String("voss".to_string()),
+        ]),
+    );
+}
+
+#[test]
+fn scalar_regression_string_override() {
+    let source = "---\ntypes:\n  Item []:\n    name: string\nentities:\n  @key: Item { name: \"Gold Key\" }\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let ed = get_entity_decl(&ast, "key");
+    assert_eq!(ed.property_overrides[0].1, Scalar::String("Gold Key".to_string()));
+}
+
+#[test]
+fn scalar_regression_integer_override() {
+    let source = "---\ntypes:\n  Item []:\n    weight: int\nentities:\n  @key: Item { weight: 5 }\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let ed = get_entity_decl(&ast, "key");
+    assert_eq!(ed.property_overrides[0].1, Scalar::Integer(5));
+}
+
+#[test]
+fn scalar_regression_boolean_override() {
+    let source = "---\ntypes:\n  Item []:\n    active: bool\nentities:\n  @key: Item { active: true }\n---\n";
+    let (ast, _diag) = parse_source(source);
+    let ed = get_entity_decl(&ast, "key");
+    assert_eq!(ed.property_overrides[0].1, Scalar::Boolean(true));
 }
