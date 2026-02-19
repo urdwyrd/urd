@@ -489,6 +489,7 @@
   }
 
   .cs-changelog-link {
+    font-size: 9px;
     color: var(--faint);
     text-decoration: none;
     transition: color 0.15s;
