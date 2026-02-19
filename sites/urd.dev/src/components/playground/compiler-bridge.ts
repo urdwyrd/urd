@@ -3,6 +3,9 @@
  * typed wrappers for the playground component.
  */
 
+// Injected by Vite `define` at build time (compiler version for cache-busting).
+declare const __WASM_CACHE_BUST__: string;
+
 // --- Types ---
 
 export interface CompileResult {
@@ -44,7 +47,10 @@ export async function initCompiler(): Promise<void> {
   if (wasmReady) return;
 
   const mod = await import('../../lib/wasm/urd_compiler');
-  await mod.default(fetch('/wasm/urd_compiler_bg.wasm'));
+  // Cache-bust: the WASM filename is fixed, so append a build-time hash
+  // to force browsers to fetch the new binary after each deploy.
+  const bustParam = __WASM_CACHE_BUST__ ? `?v=${__WASM_CACHE_BUST__}` : '';
+  await mod.default(fetch(`/wasm/urd_compiler_bg.wasm${bustParam}`));
   wasmModule = mod;
   wasmReady = true;
 }
