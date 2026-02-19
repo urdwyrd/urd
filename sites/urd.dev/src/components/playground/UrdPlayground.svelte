@@ -143,17 +143,22 @@ Overgrown paths wind between crumbling statues.
 
   onMount(() => {
     let destroyed = false;
+    let themeObserver: MutationObserver | undefined;
 
     async function setup() {
       // 1. Mount CodeMirror
       const { EditorView, keymap, placeholder, lineNumbers, highlightActiveLine, drawSelection } = await import('@codemirror/view');
-      const { EditorState } = await import('@codemirror/state');
+      const { EditorState, Compartment } = await import('@codemirror/state');
       const { defaultKeymap, history, historyKeymap, indentWithTab } = await import('@codemirror/commands');
       const { bracketMatching, indentOnInput } = await import('@codemirror/language');
       const { lintGutter } = await import('@codemirror/lint');
-      const { urdLanguage, gloamingTheme, gloamingHighlight } = await import('./codemirror-urd');
+      const { urdLanguage, gloamingTheme, parchmentTheme, urdHighlight } = await import('./codemirror-urd');
 
       if (destroyed) return;
+
+      // Theme compartment for dynamic switching
+      const themeCompartment = new Compartment();
+      const isParchment = document.documentElement.getAttribute('data-theme') === 'parchment';
 
       editorView = new EditorView({
         parent: editorContainer!,
@@ -176,8 +181,8 @@ Overgrown paths wind between crumbling statues.
             ]),
             EditorState.tabSize.of(2),
             urdLanguage,
-            gloamingTheme,
-            gloamingHighlight,
+            themeCompartment.of(isParchment ? parchmentTheme : gloamingTheme),
+            urdHighlight,
             EditorView.updateListener.of((update) => {
               if (update.docChanged) {
                 onSourceChange(update.state.doc.toString());
@@ -185,6 +190,19 @@ Overgrown paths wind between crumbling statues.
             }),
           ],
         }),
+      });
+
+      // Watch for theme changes on <html data-theme>
+      themeObserver = new MutationObserver(() => {
+        if (!editorView) return;
+        const parchment = document.documentElement.getAttribute('data-theme') === 'parchment';
+        editorView.dispatch({
+          effects: themeCompartment.reconfigure(parchment ? parchmentTheme : gloamingTheme),
+        });
+      });
+      themeObserver.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme'],
       });
 
       // 2. Load WASM compiler
@@ -211,6 +229,7 @@ Overgrown paths wind between crumbling statues.
 
     return () => {
       destroyed = true;
+      themeObserver?.disconnect();
       editorView?.destroy();
       clearTimeout(parseTimer);
       clearTimeout(compileTimer);

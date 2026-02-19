@@ -1,5 +1,5 @@
 /**
- * CodeMirror 6 language mode for Urd Schema Markdown + Gloaming editor theme.
+ * CodeMirror 6 language mode for Urd Schema Markdown + Gloaming/Parchment editor themes.
  *
  * Line-oriented pattern matching — not a full grammar parse.
  * Sufficient for visual differentiation in the playground.
@@ -236,9 +236,101 @@ export const gloamingTheme = EditorView.theme({
   },
 }, { dark: true });
 
-// --- Gloaming Syntax Highlighting ---
+// --- Parchment Editor Theme ---
 
-export const gloamingHighlight = syntaxHighlighting(HighlightStyle.define([
+/** Shared UI styles — identical between themes (use CSS variables). */
+const sharedThemeStyles = {
+  '&': {
+    backgroundColor: 'var(--deep)',
+    color: 'var(--text)',
+    fontFamily: 'var(--mono)',
+    fontSize: '13px',
+    lineHeight: '1.6',
+  },
+  '.cm-content': {
+    caretColor: 'var(--gold)',
+    fontFamily: 'var(--mono)',
+  },
+  '.cm-cursor, .cm-dropCursor': {
+    borderLeftColor: 'var(--gold)',
+    borderLeftWidth: '2px',
+  },
+  '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
+    backgroundColor: 'var(--surface) !important',
+  },
+  '.cm-gutters': {
+    backgroundColor: 'var(--raise)',
+    color: 'var(--faint)',
+    borderRight: '1px solid var(--border)',
+    fontFamily: 'var(--mono)',
+    fontSize: '12px',
+  },
+  '.cm-activeLineGutter': {
+    backgroundColor: 'var(--surface)',
+    color: 'var(--dim)',
+  },
+  '.cm-lineNumbers .cm-gutterElement': {
+    padding: '0 8px 0 4px',
+  },
+  '.cm-placeholder': {
+    color: 'var(--faint)',
+    fontStyle: 'italic',
+  },
+  '.cm-tooltip': {
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
+    color: 'var(--text)',
+  },
+  '.cm-panels': {
+    backgroundColor: 'var(--raise)',
+    color: 'var(--text)',
+  },
+  '.cm-panels.cm-panels-top': {
+    borderBottom: '1px solid var(--border)',
+  },
+  '.cm-foldPlaceholder': {
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
+    color: 'var(--faint)',
+  },
+  '.cm-lint-marker-error': {
+    content: '"◆"',
+  },
+  '.cm-lint-marker-warning': {
+    content: '"▸"',
+  },
+};
+
+export const parchmentTheme = EditorView.theme({
+  ...sharedThemeStyles,
+  '.cm-activeLine': {
+    backgroundColor: 'rgba(45, 40, 24, 0.06)',
+  },
+  '.cm-matchingBracket': {
+    backgroundColor: 'rgba(138, 109, 24, 0.15)',
+    outline: '1px solid rgba(138, 109, 24, 0.3)',
+  },
+  '.cm-searchMatch': {
+    backgroundColor: 'rgba(138, 109, 24, 0.12)',
+    outline: '1px solid rgba(138, 109, 24, 0.2)',
+  },
+  '.cm-searchMatch.cm-searchMatch-selected': {
+    backgroundColor: 'rgba(138, 109, 24, 0.25)',
+  },
+  '.cm-lintRange-error': {
+    backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='3'><path d='m0 3 l2 -2 l1 0 l2 2 l1 0' stroke='%23a05050' fill='none' stroke-width='1.1'/></svg>")`,
+  },
+  '.cm-lintRange-warning': {
+    backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='3'><path d='m0 3 l2 -2 l1 0 l2 2 l1 0' stroke='%23a05a1a' fill='none' stroke-width='1.1'/></svg>")`,
+  },
+  '.cm-lintRange-info': {
+    backgroundImage: `url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='6' height='3'><path d='m0 3 l2 -2 l1 0 l2 2 l1 0' stroke='%233a6a98' fill='none' stroke-width='1.1'/></svg>")`,
+  },
+}, { dark: false });
+
+// --- Syntax Highlighting (shared — uses CSS variables, adapts per theme) ---
+
+export const urdHighlight = syntaxHighlighting(HighlightStyle.define([
   // Frontmatter delimiters + comments
   { tag: tags.meta, color: 'var(--faint)' },
   { tag: tags.comment, color: 'var(--faint)', fontStyle: 'italic' },
