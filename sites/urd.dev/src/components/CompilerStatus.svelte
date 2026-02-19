@@ -186,7 +186,7 @@
         <span class="cs-stat-label">Total Duration</span>
       </div>
       <div class="cs-stat">
-        <span class="cs-stat-value">v{report.compiler.version}</span>
+        <a class="cs-stat-value cs-changelog-link" href="https://github.com/urdwyrd/urd/blob/main/packages/compiler/CHANGELOG.md" target="_blank" rel="noopener">v{report.compiler.version}</a>
         <span class="cs-stat-label">{report.compiler.language}</span>
       </div>
     </div>
@@ -486,6 +486,16 @@
     color: var(--text);
     letter-spacing: -0.02em;
     line-height: 1;
+  }
+
+  .cs-changelog-link {
+    text-decoration: none;
+    color: var(--text);
+    transition: color 0.15s;
+  }
+
+  .cs-changelog-link:hover {
+    color: var(--gold);
   }
 
   .cs-stat-pass .cs-stat-value {

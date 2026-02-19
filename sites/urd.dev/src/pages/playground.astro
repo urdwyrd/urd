@@ -134,6 +134,16 @@ import UrdPlayground from "../components/playground/UrdPlayground.svelte";
     opacity: 0.7;
   }
 
+  .footer-meta :global(.changelog-link) {
+    color: var(--faint);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+
+  .footer-meta :global(.changelog-link:hover) {
+    color: var(--gold);
+  }
+
   .footer-sep {
     font-size: 0.5rem;
     vertical-align: middle;
