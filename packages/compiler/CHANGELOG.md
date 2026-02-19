@@ -4,6 +4,18 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] — 2026-02-19
+
+### Fixed
+
+- **Reserved property references in conditions:** `? target.state == closed` and `? player.health > 0` now parse correctly as `PropertyComparison` nodes. Previously these fell through to `None` in `parse_condition_expr()`, emitting spurious URD112 "Unrecognised syntax" errors. This was the primary mechanism for filtering entity-targeted choices (`-> any Type`) with guard conditions.
+- **LINK phase bypass for reserved bindings:** The resolver now skips entity lookup for `target` and `player` property comparisons, preventing false URD301 "Unresolved entity reference" errors. These are runtime-bound values, not static entity names.
+
+### Changed
+
+- Extracted `parse_prop_comparison()` helper from inline operator scanning in `parse_condition_expr()`. Both the `@entity.prop` path and the new `target.`/`player.` path use the shared helper, eliminating duplicated logic.
+- 8 new tests covering `target.prop` equality, `target.prop` boolean, `player.prop` greater-than, `player.prop` not-equal, non-reserved bare identifier rejection, `target.prop` in choice guards, `target.prop` in rule-block `where` clauses, and `target.prop` effect parsing confirmation.
+
 ## [0.1.1] — 2026-02-19
 
 ### Added

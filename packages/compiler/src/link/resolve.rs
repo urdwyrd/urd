@@ -651,6 +651,16 @@ fn resolve_condition_expr(
 ) {
     match expr {
         ConditionExpr::PropertyComparison(pc) => {
+            // Reserved bindings ("target", "player") resolve at runtime, not statically.
+            // Skip entity lookup — these are not entity references.
+            if pc.entity_ref == "target" || pc.entity_ref == "player" {
+                pc.annotation = Some(Annotation {
+                    resolved_entity: Some(pc.entity_ref.clone()),
+                    ..Default::default()
+                });
+                return;
+            }
+
             let entity_resolved = resolve_entity_ref_value(
                 &pc.entity_ref,
                 &pc.span,

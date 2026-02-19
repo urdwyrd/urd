@@ -1,25 +1,25 @@
 {
   "version": "1",
-  "timestamp": "2026-02-19T10:50:41.570Z",
+  "timestamp": "2026-02-19T18:33:02.098Z",
   "compiler": {
     "name": "urd-compiler",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "language": "rust"
   },
   "summary": {
-    "total_tests": 433,
-    "passed": 433,
+    "total_tests": 441,
+    "passed": 441,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 2115,
+    "duration_ms": 1474,
     "pass_rate": 1
   },
   "phases": [
     {
       "name": "parse",
       "diagnostic_range": "100-199",
-      "tests": 86,
-      "passed": 86,
+      "tests": 94,
+      "passed": 94,
       "failed": 0,
       "skipped": 0,
       "duration_ms": 0,
@@ -510,6 +510,19 @@
           ]
         },
         {
+          "name": "non",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "non_reserved_bare_identifier_rejected",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
           "name": "num",
           "tests": 1,
           "passed": 1,
@@ -561,6 +574,24 @@
             },
             {
               "name": "phase_heading_auto",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "player",
+          "tests": 2,
+          "passed": 2,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "player_condition_greater_than",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "player_condition_not_equal",
               "status": "pass",
               "duration_ms": null
             }
@@ -747,6 +778,39 @@
           "test_names": [
             {
               "name": "tab_indentation",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "target",
+          "tests": 5,
+          "passed": 5,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "target_condition_boolean",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "target_condition_equality",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "target_condition_in_choice_guard",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "target_condition_in_rule_where_clause",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "target_effect_parses_as_set",
               "status": "pass",
               "duration_ms": null
             }
@@ -3471,28 +3535,13 @@
         "name": "interrogation",
         "source_bytes": 668,
         "output_bytes": 3683,
-        "total_ms": 0.371,
+        "total_ms": 0.34,
         "phases": {
-          "parse_ms": 0.066,
-          "import_ms": 0.141,
-          "link_ms": 0.06,
+          "parse_ms": 0.061,
+          "import_ms": 0.131,
+          "link_ms": 0.055,
           "validate_ms": 0.012,
-          "emit_ms": 0.09
-        },
-        "success": true,
-        "diagnostic_count": 0
-      },
-      {
-        "name": "world",
-        "source_bytes": 251,
-        "output_bytes": 809,
-        "total_ms": 0.128,
-        "phases": {
-          "parse_ms": 0.041,
-          "import_ms": 0.018,
-          "link_ms": 0.029,
-          "validate_ms": 0.007,
-          "emit_ms": 0.032
+          "emit_ms": 0.082
         },
         "success": true,
         "diagnostic_count": 0
@@ -3501,13 +3550,13 @@
         "name": "locked_garden",
         "source_bytes": 1943,
         "output_bytes": 7974,
-        "total_ms": 0.338,
+        "total_ms": 0.317,
         "phases": {
-          "parse_ms": 0.106,
-          "import_ms": 0.017,
-          "link_ms": 0.066,
+          "parse_ms": 0.096,
+          "import_ms": 0.016,
+          "link_ms": 0.067,
           "validate_ms": 0.012,
-          "emit_ms": 0.129
+          "emit_ms": 0.118
         },
         "success": true,
         "diagnostic_count": 0
@@ -3516,13 +3565,13 @@
         "name": "monty_hall",
         "source_bytes": 622,
         "output_bytes": 2253,
-        "total_ms": 0.229,
+        "total_ms": 0.199,
         "phases": {
-          "parse_ms": 0.077,
-          "import_ms": 0.02,
-          "link_ms": 0.055,
+          "parse_ms": 0.067,
+          "import_ms": 0.016,
+          "link_ms": 0.047,
           "validate_ms": 0.01,
-          "emit_ms": 0.065
+          "emit_ms": 0.059
         },
         "success": true,
         "diagnostic_count": 0
@@ -3531,13 +3580,13 @@
         "name": "tavern_scene",
         "source_bytes": 545,
         "output_bytes": 2139,
-        "total_ms": 0.221,
+        "total_ms": 0.19,
         "phases": {
-          "parse_ms": 0.066,
-          "import_ms": 0.017,
-          "link_ms": 0.048,
+          "parse_ms": 0.06,
+          "import_ms": 0.015,
+          "link_ms": 0.043,
           "validate_ms": 0.009,
-          "emit_ms": 0.08
+          "emit_ms": 0.062
         },
         "success": true,
         "diagnostic_count": 0
@@ -3546,13 +3595,13 @@
         "name": "two_room_key_puzzle",
         "source_bytes": 481,
         "output_bytes": 1914,
-        "total_ms": 0.214,
+        "total_ms": 0.189,
         "phases": {
-          "parse_ms": 0.07,
-          "import_ms": 0.018,
-          "link_ms": 0.051,
-          "validate_ms": 0.009,
-          "emit_ms": 0.064
+          "parse_ms": 0.063,
+          "import_ms": 0.014,
+          "link_ms": 0.046,
+          "validate_ms": 0.008,
+          "emit_ms": 0.057
         },
         "success": true,
         "diagnostic_count": 0
@@ -3561,26 +3610,26 @@
         "name": "type_aliases",
         "source_bytes": 314,
         "output_bytes": 1152,
-        "total_ms": 0.17,
+        "total_ms": 0.15,
         "phases": {
-          "parse_ms": 0.051,
-          "import_ms": 0.018,
-          "link_ms": 0.04,
-          "validate_ms": 0.009,
-          "emit_ms": 0.052
+          "parse_ms": 0.048,
+          "import_ms": 0.016,
+          "link_ms": 0.034,
+          "validate_ms": 0.008,
+          "emit_ms": 0.044
         },
         "success": true,
         "diagnostic_count": 0
       }
     ],
     "aggregate": {
-      "total_source_bytes": 4824,
-      "total_output_bytes": 19924,
-      "total_ms": 1.67,
-      "files_compiled": 7,
-      "files_succeeded": 7,
-      "avg_ms_per_file": 0.24,
-      "bytes_per_ms": 2888.62
+      "total_source_bytes": 4573,
+      "total_output_bytes": 19115,
+      "total_ms": 1.39,
+      "files_compiled": 6,
+      "files_succeeded": 6,
+      "avg_ms_per_file": 0.23,
+      "bytes_per_ms": 3289.93
     }
   }
 }

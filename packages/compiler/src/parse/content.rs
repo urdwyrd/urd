@@ -400,6 +400,29 @@ fn parse_condition_line(parser: &mut Parser, indent_level: usize) -> ContentNode
     }
 }
 
+/// Given an entity/binding name and the text after the dot (e.g. "state == closed"),
+/// attempt to parse as a PropertyComparison.
+fn parse_prop_comparison(entity_ref: String, after_dot: &str, span: &Span) -> Option<ConditionExpr> {
+    let ops = ["==", "!=", ">=", "<=", ">", "<"];
+    for op in &ops {
+        if let Some(op_pos) = after_dot.find(op) {
+            let property = after_dot[..op_pos].trim().to_string();
+            let value = after_dot[op_pos + op.len()..].trim().to_string();
+            if !property.is_empty() {
+                return Some(ConditionExpr::PropertyComparison(PropertyComparison {
+                    entity_ref,
+                    property,
+                    operator: op.to_string(),
+                    value,
+                    annotation: None,
+                    span: span.clone(),
+                }));
+            }
+        }
+    }
+    None
+}
+
 /// Parse a condition expression string into a ConditionExpr.
 pub(crate) fn parse_condition_expr(expr: &str, span: &Span) -> Option<ConditionExpr> {
     let expr = expr.trim();
@@ -469,23 +492,23 @@ pub(crate) fn parse_condition_expr(expr: &str, span: &Span) -> Option<ConditionE
                 remaining = &rest[id_end + 1..];
             }
 
-            // Find the operator: ==, !=, >=, <=, >, <
-            let ops = ["==", "!=", ">=", "<=", ">", "<"];
-            for op in &ops {
-                if let Some(op_pos) = remaining.find(op) {
-                    let property = remaining[..op_pos].trim().to_string();
-                    let value = remaining[op_pos + op.len()..].trim().to_string();
-                    if !property.is_empty() {
-                        return Some(ConditionExpr::PropertyComparison(PropertyComparison {
-                            entity_ref,
-                            property,
-                            operator: op.to_string(),
-                            value,
-                            annotation: None,
-                            span: span.clone(),
-                        }));
-                    }
-                }
+            if let Some(result) = parse_prop_comparison(entity_ref, remaining, span) {
+                return Some(result);
+            }
+        }
+    }
+
+    // ReservedPropRef: target.prop or player.prop (narrative-scope reserved bindings).
+    // "target" and "player" are reserved binding names, NOT entity references.
+    // They resolve to runtime-bound values (e.g. the entity selected by `-> any Type`).
+    // Downstream phases (LINK, VALIDATE) must treat entity_ref values of "target" and
+    // "player" as reserved bindings, not as entity lookups.
+    if expr.starts_with("target.") || expr.starts_with("player.") {
+        if let Some(dot_pos) = expr.find('.') {
+            let entity_ref = expr[..dot_pos].to_string();
+            let after_dot = &expr[dot_pos + 1..];
+            if let Some(result) = parse_prop_comparison(entity_ref, after_dot, span) {
+                return Some(result);
             }
         }
     }

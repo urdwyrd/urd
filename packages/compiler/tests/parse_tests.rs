@@ -1478,3 +1478,173 @@ import: ./world.urd.md
     assert!(!inner_choices.is_empty(), "missing nested choice under 'Show evidence'");
     assert_eq!(inner_choices[0].label, "Push further");
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ReservedPropRef — target.prop and player.prop in narrative conditions
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn target_condition_equality() {
+    match first_node("? target.state == closed") {
+        ContentNode::Condition(c) => {
+            match &c.expr {
+                ConditionExpr::PropertyComparison(pc) => {
+                    assert_eq!(pc.entity_ref, "target");
+                    assert_eq!(pc.property, "state");
+                    assert_eq!(pc.operator, "==");
+                    assert_eq!(pc.value, "closed");
+                }
+                other => panic!("expected PropertyComparison, got {:?}", other),
+            }
+        }
+        other => panic!("expected Condition, got {:?}", other),
+    }
+}
+
+#[test]
+fn target_condition_boolean() {
+    match first_node("? target.chosen == false") {
+        ContentNode::Condition(c) => {
+            match &c.expr {
+                ConditionExpr::PropertyComparison(pc) => {
+                    assert_eq!(pc.entity_ref, "target");
+                    assert_eq!(pc.property, "chosen");
+                    assert_eq!(pc.operator, "==");
+                    assert_eq!(pc.value, "false");
+                }
+                other => panic!("expected PropertyComparison, got {:?}", other),
+            }
+        }
+        other => panic!("expected Condition, got {:?}", other),
+    }
+}
+
+#[test]
+fn player_condition_greater_than() {
+    match first_node("? player.health > 0") {
+        ContentNode::Condition(c) => {
+            match &c.expr {
+                ConditionExpr::PropertyComparison(pc) => {
+                    assert_eq!(pc.entity_ref, "player");
+                    assert_eq!(pc.property, "health");
+                    assert_eq!(pc.operator, ">");
+                    assert_eq!(pc.value, "0");
+                }
+                other => panic!("expected PropertyComparison, got {:?}", other),
+            }
+        }
+        other => panic!("expected Condition, got {:?}", other),
+    }
+}
+
+#[test]
+fn player_condition_not_equal() {
+    match first_node("? player.alive != false") {
+        ContentNode::Condition(c) => {
+            match &c.expr {
+                ConditionExpr::PropertyComparison(pc) => {
+                    assert_eq!(pc.entity_ref, "player");
+                    assert_eq!(pc.property, "alive");
+                    assert_eq!(pc.operator, "!=");
+                    assert_eq!(pc.value, "false");
+                }
+                other => panic!("expected PropertyComparison, got {:?}", other),
+            }
+        }
+        other => panic!("expected Condition, got {:?}", other),
+    }
+}
+
+#[test]
+fn target_condition_in_rule_where_clause() {
+    let source = r#"---
+world:
+  name: Test
+types:
+  Door [interactable]:
+    prize: enum(goat, car)
+entities:
+  @door_1: Door { prize: "goat" }
+  @door_2: Door { prize: "car" }
+---
+
+# Stage
+
+[@door_1, @door_2]
+
+rule test_rule:
+  selects target from [@door_1, @door_2]
+    where target.prize != car
+  > reveal @door_1.prize
+"#;
+    let (ast, diag) = parse_source(source);
+    assert!(!diag.has_errors(), "rule block with target.prize should not produce errors: {:?}", diag.all());
+    let ast = ast.unwrap();
+    let rule = ast.content.iter().find_map(|n| match n {
+        ContentNode::RuleBlock(r) => Some(r),
+        _ => None,
+    });
+    assert!(rule.is_some(), "should have a rule block");
+    let select = rule.unwrap().select.as_ref().expect("rule should have select clause");
+    assert_eq!(select.where_clauses.len(), 1, "select should have one where clause");
+    match &select.where_clauses[0] {
+        ConditionExpr::PropertyComparison(pc) => {
+            assert_eq!(pc.entity_ref, "target");
+            assert_eq!(pc.property, "prize");
+            assert_eq!(pc.operator, "!=");
+            assert_eq!(pc.value, "car");
+        }
+        other => panic!("expected PropertyComparison, got {:?}", other),
+    }
+}
+
+#[test]
+fn target_effect_parses_as_set() {
+    match first_node("> target.state = open") {
+        ContentNode::Effect(e) => {
+            match &e.effect_type {
+                EffectType::Set { target_prop, operator, value_expr } => {
+                    assert_eq!(target_prop, "target.state");
+                    assert_eq!(operator, "=");
+                    assert_eq!(value_expr, "open");
+                }
+                other => panic!("expected Set effect, got {:?}", other),
+            }
+        }
+        other => panic!("expected Effect, got {:?}", other),
+    }
+}
+
+#[test]
+fn non_reserved_bare_identifier_rejected() {
+    // Only "target" and "player" are reserved in narrative scope.
+    // "door.state == closed" should not parse as a condition.
+    let (_, diag) = parse_source("? door.state == closed");
+    assert!(diag.has_errors(), "bare non-reserved identifier should produce an error");
+    let errors: Vec<_> = diag.all().iter().filter(|d| d.code == "URD112").collect();
+    assert!(!errors.is_empty(), "expected URD112 for non-reserved bare identifier");
+}
+
+#[test]
+fn target_condition_in_choice_guard() {
+    let source = "* Pick a door -> any Door\n  ? target.state == closed";
+    let nodes = parse_content_only(source);
+    let choice = match &nodes[0] {
+        ContentNode::Choice(c) => c,
+        other => panic!("expected Choice, got {:?}", other),
+    };
+    let guard = choice.content.iter().find_map(|n| match n {
+        ContentNode::Condition(c) => Some(c),
+        _ => None,
+    });
+    assert!(guard.is_some(), "choice should have a condition guard");
+    match &guard.unwrap().expr {
+        ConditionExpr::PropertyComparison(pc) => {
+            assert_eq!(pc.entity_ref, "target");
+            assert_eq!(pc.property, "state");
+            assert_eq!(pc.operator, "==");
+            assert_eq!(pc.value, "closed");
+        }
+        other => panic!("expected PropertyComparison, got {:?}", other),
+    }
+}
