@@ -614,6 +614,382 @@ fn e2e_interrogation_goto_between_sections() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Locked Garden — multiple types, immutable props, enum/integer/string/bool,
+//   conditional exits, sticky vs one-shot choices, OR conditions, nested
+//   choices, entity-targeted choices, arithmetic effects, destroy, section jumps
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn e2e_locked_garden_compiles_successfully() {
+    let result = compile_fixture("locked-garden.urd.md");
+    assert!(
+        result.success,
+        "Locked Garden should compile. Diagnostics:\n{}",
+        format_diagnostics(&result.diagnostics)
+    );
+}
+
+#[test]
+fn e2e_locked_garden_zero_error_diagnostics() {
+    let result = compile_fixture("locked-garden.urd.md");
+    let errors = error_codes(&result.diagnostics);
+    assert!(errors.is_empty(), "Expected zero errors, got: {:?}", errors);
+}
+
+#[test]
+fn e2e_locked_garden_world_block() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let world = &json["world"];
+    assert_eq!(world["name"], "The Locked Garden");
+    assert_eq!(world["start"], "gatehouse");
+    assert_eq!(world["urd"], "1");
+}
+
+#[test]
+fn e2e_locked_garden_types() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let types = json["types"].as_object().unwrap();
+    assert_eq!(types.len(), 3);
+    assert!(types.contains_key("Character"));
+    assert!(types.contains_key("Item"));
+    assert!(types.contains_key("Lock"));
+}
+
+#[test]
+fn e2e_locked_garden_character_type() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let character = &json["types"]["Character"];
+
+    // Trait
+    let traits = character["traits"].as_array().unwrap();
+    assert!(traits.contains(&serde_json::json!("interactable")));
+
+    let props = character["properties"].as_object().unwrap();
+
+    // mood: enum with values and default
+    assert_eq!(props["mood"]["type"], "enum");
+    let mood_values = props["mood"]["values"].as_array().unwrap();
+    assert!(mood_values.contains(&serde_json::json!("wary")));
+    assert!(mood_values.contains(&serde_json::json!("neutral")));
+    assert!(mood_values.contains(&serde_json::json!("friendly")));
+    assert_eq!(props["mood"]["default"], "wary");
+
+    // trust: integer with default
+    assert_eq!(props["trust"]["type"], "integer");
+    assert_eq!(props["trust"]["default"], 0);
+
+    // ~role: immutable string (emitted as visibility: hidden)
+    assert_eq!(props["role"]["type"], "string");
+    assert_eq!(props["role"]["visibility"], "hidden");
+}
+
+#[test]
+fn e2e_locked_garden_item_type() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let item = &json["types"]["Item"];
+
+    let traits = item["traits"].as_array().unwrap();
+    assert!(traits.contains(&serde_json::json!("portable")));
+
+    let props = item["properties"].as_object().unwrap();
+    assert_eq!(props["name"]["type"], "string");
+    assert_eq!(props["used"]["type"], "boolean");
+    assert_eq!(props["used"]["default"], false);
+}
+
+#[test]
+fn e2e_locked_garden_entities() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let entities = json["entities"].as_object().unwrap();
+    assert_eq!(entities.len(), 5);
+
+    assert_eq!(entities["warden"]["type"], "Character");
+    assert_eq!(entities["warden"]["properties"]["role"], "Gatekeeper");
+    assert_eq!(entities["warden"]["properties"]["mood"], "neutral");
+
+    assert_eq!(entities["ghost"]["type"], "Character");
+    assert_eq!(entities["ghost"]["properties"]["role"], "The Forgotten");
+    assert_eq!(entities["ghost"]["properties"]["trust"], 3);
+
+    assert_eq!(entities["iron_key"]["type"], "Item");
+    assert_eq!(entities["iron_key"]["properties"]["name"], "Iron Key");
+
+    assert_eq!(entities["journal"]["type"], "Item");
+    assert_eq!(entities["journal"]["properties"]["name"], "Warden's Journal");
+
+    assert_eq!(entities["garden_gate"]["type"], "Lock");
+}
+
+#[test]
+fn e2e_locked_garden_locations() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let locations = json["locations"].as_object().unwrap();
+    assert_eq!(locations.len(), 2);
+    assert!(locations.contains_key("gatehouse"));
+    assert!(locations.contains_key("the-walled-garden"));
+}
+
+#[test]
+fn e2e_locked_garden_gatehouse_description_and_contents() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let gatehouse = &json["locations"]["gatehouse"];
+    assert_eq!(gatehouse["description"], "A stone archway choked with ivy. Lantern light flickers.");
+
+    let contains = gatehouse["contains"].as_array().unwrap();
+    assert!(contains.contains(&serde_json::json!("warden")));
+    assert!(contains.contains(&serde_json::json!("iron_key")));
+}
+
+#[test]
+fn e2e_locked_garden_conditional_exit() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let exits = json["locations"]["gatehouse"]["exits"].as_object().unwrap();
+    let garden_exit = &exits["garden"];
+    assert_eq!(garden_exit["to"], "the-walled-garden");
+
+    // Should have a condition
+    assert!(
+        garden_exit.get("condition").is_some(),
+        "Garden exit should have a condition"
+    );
+    let condition = garden_exit["condition"].as_str().unwrap();
+    assert!(
+        condition.contains("garden_gate.locked"),
+        "Condition should reference garden_gate.locked, got: {}",
+        condition
+    );
+
+    // Should have a blocked message
+    assert_eq!(garden_exit["blocked_message"], "The gate is sealed with old iron.");
+}
+
+#[test]
+fn e2e_locked_garden_walled_garden_contents() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let garden = &json["locations"]["the-walled-garden"];
+    assert_eq!(garden["description"], "Overgrown paths wind between crumbling statues.");
+
+    let contains = garden["contains"].as_array().unwrap();
+    assert!(contains.contains(&serde_json::json!("ghost")));
+    assert!(contains.contains(&serde_json::json!("journal")));
+
+    // Plain exit back to gatehouse
+    let exits = garden["exits"].as_object().unwrap();
+    let north = &exits["north"];
+    assert_eq!(north["to"], "gatehouse");
+}
+
+#[test]
+fn e2e_locked_garden_dialogue_sections() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+
+    let has_greet = dialogue.keys().any(|k| k.contains("greet"));
+    let has_explore = dialogue.keys().any(|k| k.contains("explore"));
+    let has_revelation = dialogue.keys().any(|k| k.contains("revelation"));
+
+    assert!(has_greet, "Should have greet section. Keys: {:?}", dialogue.keys().collect::<Vec<_>>());
+    assert!(has_explore, "Should have explore section. Keys: {:?}", dialogue.keys().collect::<Vec<_>>());
+    assert!(has_revelation, "Should have revelation section. Keys: {:?}", dialogue.keys().collect::<Vec<_>>());
+}
+
+#[test]
+fn e2e_locked_garden_sticky_vs_oneshot_choices() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let greet_key = dialogue.keys().find(|k| k.contains("greet")).unwrap();
+    let greet = &dialogue[greet_key];
+    let choices = greet["choices"].as_array().unwrap();
+
+    // "State your purpose" is sticky (+)
+    let state_purpose = choices.iter().find(|c| c["label"] == "State your purpose")
+        .expect("Should have 'State your purpose' choice");
+    assert_eq!(state_purpose["sticky"], true, "State your purpose should be sticky");
+
+    // "Offer the journal" is one-shot (*)
+    let offer = choices.iter().find(|c| c["label"] == "Offer the journal")
+        .expect("Should have 'Offer the journal' choice");
+    assert_eq!(
+        offer.get("sticky").and_then(|v| v.as_bool()).unwrap_or(false),
+        false,
+        "Offer the journal should be one-shot"
+    );
+}
+
+#[test]
+fn e2e_locked_garden_choice_conditions() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let greet_key = dialogue.keys().find(|k| k.contains("greet")).unwrap();
+    let greet = &dialogue[greet_key];
+    let choices = greet["choices"].as_array().unwrap();
+
+    // "Offer the journal" has condition: @journal in player
+    let offer = choices.iter().find(|c| c["label"] == "Offer the journal").unwrap();
+    let conditions = offer["conditions"].as_array().unwrap();
+    assert!(!conditions.is_empty(), "Offer choice should have conditions");
+
+    // "Ask about the garden" has condition: @warden.trust >= 3
+    let ask = choices.iter().find(|c| c["label"] == "Ask about the garden").unwrap();
+    let conditions = ask["conditions"].as_array().unwrap();
+    assert!(!conditions.is_empty(), "Ask choice should have conditions");
+}
+
+#[test]
+fn e2e_locked_garden_entity_targeted_choice() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    // Entity-targeted choices emit their target in the actions block
+    let actions = json["actions"].as_object().unwrap();
+    let force_action = actions.values()
+        .find(|a| a.get("target").and_then(|t| t.as_str()) == Some("garden_gate"));
+    assert!(
+        force_action.is_some(),
+        "Should have an action targeting garden_gate. Actions: {:?}",
+        actions.keys().collect::<Vec<_>>()
+    );
+}
+
+#[test]
+fn e2e_locked_garden_section_jump() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let greet_key = dialogue.keys().find(|k| k.contains("greet")).unwrap();
+    let greet = &dialogue[greet_key];
+    let choices = greet["choices"].as_array().unwrap();
+
+    // "State your purpose" has goto -> greet (self-referencing loop)
+    let state = choices.iter().find(|c| c["label"] == "State your purpose").unwrap();
+    let goto = state.get("goto");
+    assert!(goto.is_some(), "State your purpose should have a goto");
+    let goto_str = goto.unwrap().as_str().unwrap();
+    assert!(
+        goto_str.contains("greet"),
+        "Goto should reference greet section, got: {}",
+        goto_str
+    );
+}
+
+#[test]
+fn e2e_locked_garden_or_conditions() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let explore_key = dialogue.keys().find(|k| k.contains("explore")).unwrap();
+    let explore = &dialogue[explore_key];
+
+    // Should have section-level conditions with OR ("any")
+    let conditions = explore.get("conditions");
+    assert!(
+        conditions.is_some(),
+        "Explore section should have conditions (OR block)"
+    );
+}
+
+#[test]
+fn e2e_locked_garden_nested_choices() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let explore_key = dialogue.keys().find(|k| k.contains("explore")).unwrap();
+    let explore = &dialogue[explore_key];
+    let choices = explore["choices"].as_array().unwrap();
+
+    // "Listen to the ghost" has nested choice "Press for the truth"
+    let listen = choices.iter().find(|c| c["label"] == "Listen to the ghost")
+        .expect("Should have 'Listen to the ghost' choice");
+    let nested = listen.get("choices");
+    assert!(nested.is_some(), "Listen to the ghost should have nested choices");
+    let nested = nested.unwrap().as_array().unwrap();
+    assert!(!nested.is_empty(), "Should have at least one nested choice");
+    assert_eq!(nested[0]["label"], "Press for the truth");
+}
+
+#[test]
+fn e2e_locked_garden_nested_choice_goto() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let explore_key = dialogue.keys().find(|k| k.contains("explore")).unwrap();
+    let explore = &dialogue[explore_key];
+    let choices = explore["choices"].as_array().unwrap();
+
+    let listen = choices.iter().find(|c| c["label"] == "Listen to the ghost").unwrap();
+    let nested = listen["choices"].as_array().unwrap();
+    let press = &nested[0];
+
+    // "Press for the truth" has goto -> revelation
+    let goto = press.get("goto");
+    assert!(goto.is_some(), "Press for the truth should have a goto");
+    let goto_str = goto.unwrap().as_str().unwrap();
+    assert!(
+        goto_str.contains("revelation"),
+        "Goto should reference revelation section, got: {}",
+        goto_str
+    );
+}
+
+#[test]
+fn e2e_locked_garden_revelation_section() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let revelation_key = dialogue.keys().find(|k| k.contains("revelation")).unwrap();
+    let revelation = &dialogue[revelation_key];
+
+    // Revelation has a prompt from @ghost
+    let prompt = revelation.get("prompt");
+    assert!(prompt.is_some(), "Revelation should have a prompt");
+    assert_eq!(prompt.unwrap()["speaker"], "ghost");
+    assert_eq!(prompt.unwrap()["text"], "Now you know.");
+}
+
+#[test]
+fn e2e_locked_garden_arithmetic_effects() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let greet_key = dialogue.keys().find(|k| k.contains("greet")).unwrap();
+    let greet = &dialogue[greet_key];
+    let choices = greet["choices"].as_array().unwrap();
+
+    // "State your purpose" has effect: @warden.trust + 1
+    let state = choices.iter().find(|c| c["label"] == "State your purpose").unwrap();
+    let effects = state["effects"].as_array().unwrap();
+    assert!(!effects.is_empty(), "State purpose should have effects");
+    let effect = &effects[0];
+    assert_eq!(effect["set"], "warden.trust");
+    assert!(
+        effect["to"].as_str().unwrap().contains("warden.trust"),
+        "Arithmetic effect should reference warden.trust"
+    );
+}
+
+#[test]
+fn e2e_locked_garden_assignment_effect() {
+    let json = compile_and_parse("locked-garden.urd.md");
+    let dialogue = json["dialogue"].as_object().unwrap();
+    let greet_key = dialogue.keys().find(|k| k.contains("greet")).unwrap();
+    let greet = &dialogue[greet_key];
+    let choices = greet["choices"].as_array().unwrap();
+
+    // "Offer the journal" has effect: @warden.mood = friendly
+    let offer = choices.iter().find(|c| c["label"] == "Offer the journal").unwrap();
+    let effects = offer["effects"].as_array().unwrap();
+
+    let mood_set = effects.iter().find(|e| {
+        e.get("set").and_then(|v| v.as_str()) == Some("warden.mood")
+    });
+    assert!(mood_set.is_some(), "Should have mood assignment effect");
+    assert_eq!(mood_set.unwrap()["to"], "friendly");
+}
+
+#[test]
+fn e2e_locked_garden_deterministic_output() {
+    let result1 = compile_fixture("locked-garden.urd.md");
+    let result2 = compile_fixture("locked-garden.urd.md");
+    assert_eq!(
+        result1.world.unwrap(),
+        result2.world.unwrap(),
+        "Two compilations must produce identical output"
+    );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Cross-cutting: JSON structure
 // ═══════════════════════════════════════════════════════════════════════════
 

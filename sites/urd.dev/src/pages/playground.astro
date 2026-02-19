@@ -1,0 +1,55 @@
+---
+import Base from "../layouts/base.astro";
+import Nav from "../components/Nav.astro";
+import UrdPlayground from "../components/playground/UrdPlayground.svelte";
+---
+
+<Base title="Urd · Playground" description="Try the Urd compiler in your browser. Type Schema Markdown, see compiled JSON in real time.">
+  <Nav />
+
+  <main class="playground-page">
+    <div class="playground-header">
+      <h1>Playground</h1>
+      <p>Type Schema Markdown on the left. See compiled JSON on the right.</p>
+    </div>
+
+    <UrdPlayground client:visible />
+  </main>
+</Base>
+
+<style>
+  .playground-page {
+    max-width: 1160px;
+    margin: 0 auto;
+    padding: 24px 32px 48px;
+  }
+
+  .playground-header {
+    margin-bottom: 20px;
+  }
+
+  .playground-header h1 {
+    font-family: var(--display);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0 0 4px;
+  }
+
+  .playground-header p {
+    font-family: var(--body);
+    font-size: 0.9rem;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  @media (max-width: 767px) {
+    .playground-page {
+      padding: 16px 16px 32px;
+    }
+
+    .playground-header h1 {
+      font-size: 1.25rem;
+    }
+  }
+</style>

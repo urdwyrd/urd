@@ -4,3 +4,7 @@
 /audio/*.m4a
   Content-Type: audio/mp4
   Accept-Ranges: bytes
+
+/wasm/*.wasm
+  Content-Type: application/wasm
+  Cache-Control: public, max-age=31536000, immutable
