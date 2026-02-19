@@ -6,8 +6,6 @@ on:
     paths:
       - 'sites/urd.dev/**'
       - 'content/**'
-      - 'packages/compiler/**'
-      - 'scripts/**'
 
   # Allow manual deploy from the Actions tab
   workflow_dispatch:
@@ -31,29 +29,8 @@ jobs:
         with:
           node-version: 20
 
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-
-      - name: Cache Cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            packages/compiler/target
-          key: cargo-wasm-${{ hashFiles('packages/compiler/Cargo.lock', 'packages/compiler/Cargo.toml') }}
-          restore-keys: cargo-wasm-
-
-      - name: Install wasm-bindgen-cli
-        run: cargo install wasm-bindgen-cli
-
       - name: Install dependencies
         run: pnpm install
-
-      - name: Build WASM + vendor
-        run: pnpm compiler:wasm:build && pnpm compiler:wasm:vendor
 
       - name: Build
         run: pnpm build

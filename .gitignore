@@ -8,10 +8,6 @@ target/
 Cargo.lock
 packages/compiler/pkg/
 
-# WASM vendored artifacts
-sites/urd.dev/public/wasm/
-sites/urd.dev/src/lib/wasm/
-
 # General
 .env
 .env.*
