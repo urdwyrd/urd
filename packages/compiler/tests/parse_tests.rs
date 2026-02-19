@@ -1013,6 +1013,221 @@ fn ref_type_parsing() {
     }
 }
 
+// ── Type alias normalisation tests ──
+
+#[test]
+fn type_alias_int_normalised() {
+    let source = "---\ntypes:\n  Stat []:\n    trust: int\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "unexpected errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "integer");
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn type_alias_bool_normalised() {
+    let source = "---\ntypes:\n  Flag []:\n    active: bool\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "boolean");
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn type_alias_num_normalised() {
+    let source = "---\ntypes:\n  Stat []:\n    weight: num\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "number");
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn type_alias_str_normalised() {
+    let source = "---\ntypes:\n  Label []:\n    text: str\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "string");
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn int_range_shorthand() {
+    let source = "---\ntypes:\n  Stat []:\n    trust: int(0, 100)\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "unexpected errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "integer");
+                    assert_eq!(td.properties[0].min, Some(0.0));
+                    assert_eq!(td.properties[0].max, Some(100.0));
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn integer_range_shorthand() {
+    let source = "---\ntypes:\n  Stat []:\n    trust: integer(0, 100)\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "integer");
+                    assert_eq!(td.properties[0].min, Some(0.0));
+                    assert_eq!(td.properties[0].max, Some(100.0));
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn num_range_shorthand() {
+    let source = "---\ntypes:\n  Stat []:\n    weight: num(0.0, 10.0)\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "number");
+                    assert_eq!(td.properties[0].min, Some(0.0));
+                    assert_eq!(td.properties[0].max, Some(10.0));
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn int_range_with_default() {
+    let source = "---\ntypes:\n  Stat []:\n    trust: int(0, 100) = 30\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors(), "unexpected errors: {:?}", diag.all());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "integer");
+                    assert_eq!(td.properties[0].min, Some(0.0));
+                    assert_eq!(td.properties[0].max, Some(100.0));
+                    assert_eq!(td.properties[0].default, Some(Scalar::Integer(30)));
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn int_range_malformed_graceful() {
+    let source = "---\ntypes:\n  Stat []:\n    trust: int(abc, def)\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "integer");
+                    assert_eq!(td.properties[0].min, None);
+                    assert_eq!(td.properties[0].max, None);
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
+#[test]
+fn int_empty_parens_graceful() {
+    let source = "---\ntypes:\n  Stat []:\n    trust: int()\n---\n";
+    let (ast, diag) = parse_source(source);
+    let ast = ast.unwrap();
+    assert!(!diag.has_errors());
+    let fm = ast.frontmatter.unwrap();
+    match &fm.entries[0].value {
+        FrontmatterValue::Map(entries) => {
+            match &entries[0].value {
+                FrontmatterValue::TypeDef(td) => {
+                    assert_eq!(td.properties[0].property_type, "integer");
+                    assert_eq!(td.properties[0].min, None);
+                    assert_eq!(td.properties[0].max, None);
+                }
+                other => panic!("expected TypeDef, got {:?}", other),
+            }
+        }
+        other => panic!("expected Map, got {:?}", other),
+    }
+}
+
 #[test]
 fn multiple_imports() {
     let source = "---\nimport: ./world.urd.md\nimport: ./characters.urd.md\n---\n";

@@ -515,8 +515,43 @@ fn parse_type_signature(
         return ("list".to_string(), None, None, Some(inner.to_string()), None, None, None, None);
     }
 
-    // Simple types: string, bool, integer, number
-    (type_str.to_string(), None, None, None, None, None, None, None)
+    // Integer with range: int(0, 100) or integer(0, 100)
+    if (type_str.starts_with("int(") || type_str.starts_with("integer(")) && type_str.ends_with(')') {
+        let paren_start = type_str.find('(').unwrap();
+        let inner = &type_str[paren_start + 1..type_str.len() - 1];
+        let parts: Vec<&str> = inner.split(',').map(|s| s.trim()).collect();
+        if parts.len() == 2 {
+            let min = parts[0].parse::<f64>().ok();
+            let max = parts[1].parse::<f64>().ok();
+            return ("integer".to_string(), None, None, None, None, None, min, max);
+        }
+        return ("integer".to_string(), None, None, None, None, None, None, None);
+    }
+
+    // Number with range: num(0.0, 1.0) or number(0.0, 1.0)
+    if (type_str.starts_with("num(") || type_str.starts_with("number(")) && type_str.ends_with(')') {
+        let paren_start = type_str.find('(').unwrap();
+        let inner = &type_str[paren_start + 1..type_str.len() - 1];
+        let parts: Vec<&str> = inner.split(',').map(|s| s.trim()).collect();
+        if parts.len() == 2 {
+            let min = parts[0].parse::<f64>().ok();
+            let max = parts[1].parse::<f64>().ok();
+            return ("number".to_string(), None, None, None, None, None, min, max);
+        }
+        return ("number".to_string(), None, None, None, None, None, None, None);
+    }
+
+    // Normalise bare aliases to canonical names
+    let canonical = match type_str {
+        "int" => "integer",
+        "num" => "number",
+        "str" => "string",
+        "bool" => "boolean",
+        _ => type_str,
+    };
+
+    // Simple types: string, bool, boolean, int, integer, num, number, str
+    (canonical.to_string(), None, None, None, None, None, None, None)
 }
 
 /// Parse an entities: block.

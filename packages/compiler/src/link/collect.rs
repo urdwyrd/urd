@@ -113,6 +113,7 @@ fn collect_frontmatter_entry(
                     PropertySymbol {
                         name: prop.name.clone(),
                         property_type: prop_type,
+                        raw_type_string: prop.property_type.clone(),
                         default,
                         visibility,
                         values: prop.values.clone(),

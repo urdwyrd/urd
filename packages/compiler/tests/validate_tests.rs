@@ -1253,6 +1253,61 @@ fn skip_error_node() {
 }
 
 // ═══════════════════════════════════════════════════════════
+// Unrecognised Type Warning Tests (URD429)
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn unrecognised_type_warns() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property("mood", "integr"),
+        ])),
+    ])), Vec::new());
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD429"), "Expected URD429 for unrecognised type 'integr': {:?}", diag.all());
+    assert_eq!(count_validate_errors(&diag), 0, "URD429 is a warning, not an error");
+}
+
+#[test]
+fn recognised_alias_no_warning() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property("trust", "int"),
+            make_property("flag", "bool"),
+            make_property("weight", "num"),
+            make_property("label", "str"),
+        ])),
+    ])), Vec::new());
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD429"), "Recognised aliases should not trigger URD429: {:?}", diag.all());
+}
+
+#[test]
+fn recognised_canonical_no_warning() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property("trust", "integer"),
+            make_property("flag", "boolean"),
+            make_property("weight", "number"),
+            make_property("label", "string"),
+        ])),
+    ])), Vec::new());
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD429"), "Canonical types should not trigger URD429: {:?}", diag.all());
+}
+
+#[test]
+fn uppercase_type_warns() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property("trust", "Int"),
+        ])),
+    ])), Vec::new());
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD429"), "Case-sensitive: 'Int' should trigger URD429: {:?}", diag.all());
+}
+
+// ═══════════════════════════════════════════════════════════
 // Integration Tests
 // ═══════════════════════════════════════════════════════════
 

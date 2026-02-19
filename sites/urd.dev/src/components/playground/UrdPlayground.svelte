@@ -6,6 +6,7 @@
     compileSource,
     parseOnly,
     isReady,
+    compilerVersion,
     byteColToCharCol,
     type CompileResult,
   } from './compiler-bridge';
@@ -191,6 +192,13 @@ Overgrown paths wind between crumbling statues.
         await initCompiler();
         if (destroyed) return;
         compilerReady = true;
+
+        // Inject version into the static footer
+        const metaEl = document.getElementById('compiler-meta');
+        if (metaEl) {
+          metaEl.innerHTML = metaEl.innerHTML.replace('urd-compiler', `urd-compiler v${compilerVersion()}`);
+        }
+
         // Compile the starter example
         runCompile(STARTER_EXAMPLE);
       } catch (e) {

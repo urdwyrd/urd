@@ -92,6 +92,7 @@ pub struct TypeSymbol {
 pub struct PropertySymbol {
     pub name: String,
     pub property_type: PropertyType,
+    pub raw_type_string: String,
     pub default: Option<Value>,
     pub visibility: Visibility,
     pub values: Option<Vec<String>>,

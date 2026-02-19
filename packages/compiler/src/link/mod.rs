@@ -183,9 +183,9 @@ pub(crate) fn find_suggestion<V>(name: &str, namespace: &IndexMap<String, V>) ->
 pub(crate) fn parse_property_type(s: &str) -> PropertyType {
     match s {
         "bool" | "boolean" => PropertyType::Boolean,
-        "integer" => PropertyType::Integer,
-        "number" => PropertyType::Number,
-        "string" => PropertyType::String,
+        "int" | "integer" => PropertyType::Integer,
+        "num" | "number" => PropertyType::Number,
+        "str" | "string" => PropertyType::String,
         "enum" => PropertyType::Enum,
         "ref" => PropertyType::Ref,
         "list" => PropertyType::List,

@@ -208,6 +208,7 @@ pub fn check_value(
                     let elem_prop = PropertySymbol {
                         name: prop.name.clone(),
                         property_type: elem_type.clone(),
+                        raw_type_string: String::new(),
                         default: None,
                         visibility: Visibility::Visible,
                         values: prop.element_values.clone(),

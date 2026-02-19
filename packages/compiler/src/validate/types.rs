@@ -92,6 +92,34 @@ pub fn validate_types(
                     );
                 }
             }
+
+            // f. Unrecognised type string.
+            if !is_recognised_type(&prop.raw_type_string) {
+                diagnostics.warning(
+                    "URD429",
+                    format!(
+                        "Unrecognised property type '{}' on property '{}' of type '{}'. \
+                         Valid types: bool, int, num, str, enum, ref, list (and their long forms). \
+                         Treating as 'string'.",
+                        prop.raw_type_string, prop.name, type_name,
+                    ),
+                    type_sym.declared_in.clone(),
+                );
+            }
         }
     }
+}
+
+/// Check whether a raw type string is a recognised type name.
+fn is_recognised_type(s: &str) -> bool {
+    matches!(
+        s,
+        "bool" | "boolean"
+            | "int" | "integer"
+            | "num" | "number"
+            | "str" | "string"
+            | "enum"
+            | "ref"
+            | "list"
+    )
 }

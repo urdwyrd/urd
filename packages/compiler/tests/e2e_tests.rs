@@ -990,6 +990,68 @@ fn e2e_locked_garden_deterministic_output() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// Type Aliases and Range Shorthand
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn e2e_type_aliases_compiles_successfully() {
+    let result = compile_fixture("type-aliases.urd.md");
+    assert!(
+        result.success,
+        "Type aliases fixture should compile. Diagnostics:\n{}",
+        format_diagnostics(&result.diagnostics)
+    );
+}
+
+#[test]
+fn e2e_type_aliases_zero_errors() {
+    let result = compile_fixture("type-aliases.urd.md");
+    let errors: Vec<_> = result.diagnostics.sorted().into_iter()
+        .filter(|d| d.severity == Severity::Error)
+        .collect();
+    assert!(errors.is_empty(), "Expected zero errors, got: {:?}", errors);
+}
+
+#[test]
+fn e2e_type_aliases_canonical_output() {
+    // JSON must always use canonical type names, never aliases
+    let json = compile_and_parse("type-aliases.urd.md");
+    let types = json["types"].as_object().unwrap();
+    let character = &types["Character"];
+    let props = character["properties"].as_object().unwrap();
+
+    assert_eq!(props["trust"]["type"], "integer", "int should emit as integer");
+    assert_eq!(props["active"]["type"], "boolean", "bool should emit as boolean");
+    assert_eq!(props["weight"]["type"], "number", "num should emit as number");
+    assert_eq!(props["label"]["type"], "string", "str should emit as string");
+}
+
+#[test]
+fn e2e_type_aliases_int_range() {
+    let json = compile_and_parse("type-aliases.urd.md");
+    let props = &json["types"]["Character"]["properties"];
+    assert_eq!(props["trust"]["min"], 0.0, "int(0, 100) should set min=0");
+    assert_eq!(props["trust"]["max"], 100.0, "int(0, 100) should set max=100");
+}
+
+#[test]
+fn e2e_type_aliases_num_range() {
+    let json = compile_and_parse("type-aliases.urd.md");
+    let props = &json["types"]["Character"]["properties"];
+    assert_eq!(props["weight"]["min"], 0.0, "num(0.0, 10.0) should set min=0");
+    assert_eq!(props["weight"]["max"], 10.0, "num(0.0, 10.0) should set max=10");
+}
+
+#[test]
+fn e2e_type_aliases_defaults_preserved() {
+    let json = compile_and_parse("type-aliases.urd.md");
+    let props = &json["types"]["Character"]["properties"];
+    assert_eq!(props["trust"]["default"], 30);
+    assert_eq!(props["active"]["default"], true);
+    assert_eq!(props["label"]["default"], "default");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // Cross-cutting: JSON structure
 // ═══════════════════════════════════════════════════════════════════════════
 
