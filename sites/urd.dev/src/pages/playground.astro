@@ -14,6 +14,43 @@ import UrdPlayground from "../components/playground/UrdPlayground.svelte";
     </div>
 
     <UrdPlayground client:visible />
+
+    <footer class="playground-footer">
+      <div class="footer-rule"></div>
+      <div class="footer-grid">
+        <div class="footer-col">
+          <h2>How it works</h2>
+          <p>
+            The Urd compiler runs entirely in your browser via WebAssembly.
+            Your source never leaves the page — compilation happens locally
+            in a single synchronous call, typically under a millisecond
+            (the first run is slower while the module initialises).
+          </p>
+        </div>
+        <div class="footer-col">
+          <h2>The compiler</h2>
+          <p>
+            Written in Rust with five compilation phases: parse, resolve,
+            validate, lower, and emit. The same binary powers the CLI, the
+            test suite (413 tests), and this playground via
+            <code>wasm-bindgen</code>.
+          </p>
+        </div>
+        <div class="footer-col">
+          <h2>The editor</h2>
+          <p>
+            Built on CodeMirror 6 with a custom Schema Markdown language
+            mode and the Gloaming syntax theme. Output JSON is
+            syntax-highlighted with a lightweight regex tokeniser.
+          </p>
+        </div>
+      </div>
+      <p class="footer-meta">
+        urd-compiler v0.1.0 <span class="footer-sep" aria-hidden="true">◆</span>
+        Rust + wasm-bindgen <span class="footer-sep" aria-hidden="true">◆</span>
+        ~67 KB gzipped
+      </p>
+    </footer>
   </main>
 </Base>
 
@@ -43,6 +80,67 @@ import UrdPlayground from "../components/playground/UrdPlayground.svelte";
     margin: 0;
   }
 
+  /* --- Footer --- */
+
+  .playground-footer {
+    margin-top: 32px;
+  }
+
+  .footer-rule {
+    height: 1px;
+    background: var(--border);
+    margin-bottom: 24px;
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 24px;
+  }
+
+  .footer-col h2 {
+    font-family: var(--display);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
+  }
+
+  .footer-col p {
+    font-family: var(--body);
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--faint);
+    margin: 0;
+  }
+
+  .footer-col code {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--dim);
+    background: var(--surface);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .footer-meta {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    color: var(--faint);
+    margin: 0;
+    opacity: 0.7;
+  }
+
+  .footer-sep {
+    font-size: 0.5rem;
+    vertical-align: middle;
+    margin: 0 6px;
+    color: var(--border-light);
+  }
+
   @media (max-width: 767px) {
     .playground-page {
       padding: 16px 16px 32px;
@@ -50,6 +148,11 @@ import UrdPlayground from "../components/playground/UrdPlayground.svelte";
 
     .playground-header h1 {
       font-size: 1.25rem;
+    }
+
+    .footer-grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
     }
   }
 </style>
