@@ -27,12 +27,25 @@
   let copied = $state(false);
   let validationState: 'idle' | 'loading' | 'valid' | 'invalid' = $state('idle');
   let validationErrors: string[] = $state([]);
+  let autoValidate = $state(true);
 
-  // Reset validation when compile result changes
+  onMount(() => {
+    const stored = localStorage.getItem('urd-auto-validate');
+    if (stored !== null) autoValidate = stored === 'true';
+  });
+
+  // Auto-validate when compile result changes (if enabled)
   $effect(() => {
-    compileResult;
+    if (!compileResult?.success || !compileResult.world) {
+      validationState = 'idle';
+      validationErrors = [];
+      return;
+    }
     validationState = 'idle';
     validationErrors = [];
+    if (autoValidate) {
+      runValidation();
+    }
   });
 
   // --- Derived ---
@@ -83,6 +96,14 @@
     } catch {
       validationState = 'invalid';
       validationErrors = ['Schema validation failed to load.'];
+    }
+  }
+
+  function toggleAutoValidate() {
+    autoValidate = !autoValidate;
+    localStorage.setItem('urd-auto-validate', String(autoValidate));
+    if (autoValidate && compileResult?.success && compileResult.world) {
+      runValidation();
     }
   }
 
@@ -145,23 +166,24 @@
     <div class="output-header">
       <span class="compile-time">Compiled in {formattedTime}</span>
       <div class="header-actions">
-        <button
-          class="validate-btn"
-          class:validate-valid={validationState === 'valid'}
-          class:validate-invalid={validationState === 'invalid'}
-          onclick={runValidation}
-          disabled={validationState === 'loading'}
-        >
-          {#if validationState === 'idle'}
-            Validate
-          {:else if validationState === 'loading'}
-            Validating…
+        <div class="validate-group">
+          <button
+            class="validate-toggle"
+            onclick={toggleAutoValidate}
+            title={autoValidate ? 'Auto-validate on — click to disable' : 'Auto-validate off — click to enable'}
+          >
+            {autoValidate ? '◆' : '◇'}
+          </button>
+          {#if validationState === 'loading'}
+            <span class="validate-status">Validating…</span>
           {:else if validationState === 'valid'}
-            ◆ Valid
-          {:else}
-            ◆ Invalid
+            <span class="validate-status validate-valid">Valid</span>
+          {:else if validationState === 'invalid'}
+            <button class="validate-status validate-invalid" onclick={runValidation}>Invalid</button>
+          {:else if !autoValidate}
+            <button class="validate-btn" onclick={runValidation}>Validate</button>
           {/if}
-        </button>
+        </div>
         <button class="copy-btn" onclick={copyJson}>
           {copied ? 'Copied' : 'Copy JSON'}
         </button>
@@ -311,7 +333,37 @@
 
   .header-actions {
     display: flex;
+    align-items: center;
     gap: 6px;
+  }
+
+  .validate-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .validate-toggle {
+    padding: 2px 6px;
+    border: none;
+    background: none;
+    color: var(--faint);
+    font-size: 11px;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .validate-toggle:hover {
+    color: var(--text);
+  }
+
+  .validate-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--faint);
+    border: none;
+    background: none;
+    padding: 0;
   }
 
   .validate-btn {
@@ -326,24 +378,22 @@
     transition: border-color 0.15s, color 0.15s;
   }
 
-  .validate-btn:hover:not(:disabled) {
+  .validate-btn:hover {
     border-color: var(--gold-dim);
     color: var(--text);
   }
 
-  .validate-btn:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
   .validate-valid {
     color: var(--green-light);
-    border-color: var(--green-light);
   }
 
   .validate-invalid {
     color: var(--rose);
-    border-color: var(--rose);
+    cursor: pointer;
+  }
+
+  .validate-invalid:hover {
+    text-decoration: underline;
   }
 
   .validation-errors {
