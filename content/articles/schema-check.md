@@ -1,7 +1,7 @@
 ---
 title: "Schema Check: Closing the Loop"
 slug: schema-check
-description: The JSON Schema now validates compiler output at three levels — CI test suite, browser playground, and the emit phase itself. Defence in depth for a clinical system.
+description: The JSON Schema now validates compiler output at three levels — CI test suite, browser playground, and the emit phase itself.
 date: "2026-02-20"
 ---
 
@@ -51,13 +51,13 @@ The fix is one function call in the emit phase. When the compiler encounters a `
 
 This is compiler version 0.1.4.
 
-## Defence in depth
+## Why three layers
 
-For a system that will run in a hospital, each layer serves a different purpose:
+Each layer serves a different purpose:
 
 - **CI tests** catch regressions before they ship. If a compiler change breaks schema conformance, the build fails.
 - **Browser validation** gives writers immediate feedback without needing a local toolchain. A red light means something is wrong — before the JSON ever reaches a runtime.
-- **Emit-phase slugification** eliminates an entire class of invalid output at the source. The compiler cannot produce a world name that violates the schema, regardless of what the author writes.
+- **Emit-phase slugification** eliminates an entire class of invalid output at the source. The compiler cannot produce a world name that violates the schema.
 
 No single layer is sufficient. The CI tests do not run in the browser. The browser validator does not run at build time. The emit fix only addresses world names — there could be other structural mismatches in the future. Together, they form a pipeline where each layer catches what the others miss.
 
