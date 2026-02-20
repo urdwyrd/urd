@@ -167,13 +167,6 @@
       <span class="compile-time">Compiled in {formattedTime}</span>
       <div class="header-actions">
         <div class="validate-group">
-          <button
-            class="validate-toggle"
-            onclick={toggleAutoValidate}
-            title={autoValidate ? 'Auto-validate on — click to disable' : 'Auto-validate off — click to enable'}
-          >
-            {autoValidate ? '◆' : '◇'}
-          </button>
           {#if validationState === 'loading'}
             <span class="validate-status">Validating…</span>
           {:else if validationState === 'valid'}
@@ -183,6 +176,16 @@
           {:else if !autoValidate}
             <button class="validate-btn" onclick={runValidation}>Validate</button>
           {/if}
+          <button
+            class="auto-toggle"
+            class:auto-toggle-on={autoValidate}
+            onclick={toggleAutoValidate}
+            title={autoValidate ? 'Auto-validate on' : 'Auto-validate off'}
+            role="switch"
+            aria-checked={autoValidate}
+          >
+            <span class="auto-toggle-knob"></span>
+          </button>
         </div>
         <button class="copy-btn" onclick={copyJson}>
           {copied ? 'Copied' : 'Copy JSON'}
@@ -340,21 +343,54 @@
   .validate-group {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
   }
 
-  .validate-toggle {
-    padding: 2px 6px;
-    border: none;
-    background: none;
-    color: var(--faint);
-    font-size: 11px;
+  .auto-toggle {
+    position: relative;
+    width: 26px;
+    height: 14px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--surface);
     cursor: pointer;
-    transition: color 0.15s;
+    padding: 0;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
   }
 
-  .validate-toggle:hover {
-    color: var(--text);
+  .auto-toggle-knob {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--faint);
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .auto-toggle-on {
+    border-color: var(--green-light);
+  }
+
+  .auto-toggle-on .auto-toggle-knob {
+    transform: translateX(12px);
+    background: var(--green-light);
+  }
+
+  .auto-toggle:hover {
+    border-color: var(--dim);
+  }
+
+  .auto-toggle-on:hover {
+    border-color: var(--green-light);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .auto-toggle-knob {
+      transition: none;
+    }
   }
 
   .validate-status {
