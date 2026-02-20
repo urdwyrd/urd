@@ -4,6 +4,12 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] — 2026-02-20
+
+### Fixed
+
+- **World name auto-slugification:** The `world.name` field from frontmatter is now slugified during emit, matching how location, sequence, and phase names are already handled. Writers can use display names like `name: Monty Hall` and the compiler emits `"name": "monty-hall"`, conforming to the JSON Schema pattern `^[a-z][a-z0-9-]*$`.
+
 ## [0.1.3] — 2026-02-20
 
 ### Added

@@ -1,9 +1,9 @@
 {
   "version": "1",
-  "timestamp": "2026-02-20T01:05:01.536Z",
+  "timestamp": "2026-02-20T02:01:24.038Z",
   "compiler": {
     "name": "urd-compiler",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "language": "rust"
   },
   "summary": {
@@ -11,7 +11,7 @@
     "passed": 480,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 398,
+    "duration_ms": 10421,
     "pass_rate": 1
   },
   "phases": [
@@ -2878,7 +2878,7 @@
       "passed": 68,
       "failed": 0,
       "skipped": 0,
-      "duration_ms": 0,
+      "duration_ms": 10,
       "categories": [
         {
           "name": "advance",
@@ -3762,13 +3762,13 @@
         "name": "interrogation",
         "source_bytes": 668,
         "output_bytes": 3704,
-        "total_ms": 0.339,
+        "total_ms": 0.361,
         "phases": {
-          "parse_ms": 0.058,
-          "import_ms": 0.127,
-          "link_ms": 0.06,
-          "validate_ms": 0.013,
-          "emit_ms": 0.08
+          "parse_ms": 0.06,
+          "import_ms": 0.138,
+          "link_ms": 0.058,
+          "validate_ms": 0.018,
+          "emit_ms": 0.085
         },
         "success": true,
         "diagnostic_count": 0
@@ -3777,13 +3777,13 @@
         "name": "locked_garden",
         "source_bytes": 1943,
         "output_bytes": 8041,
-        "total_ms": 0.316,
+        "total_ms": 0.304,
         "phases": {
-          "parse_ms": 0.098,
-          "import_ms": 0.014,
-          "link_ms": 0.067,
-          "validate_ms": 0.011,
-          "emit_ms": 0.118
+          "parse_ms": 0.095,
+          "import_ms": 0.013,
+          "link_ms": 0.063,
+          "validate_ms": 0.014,
+          "emit_ms": 0.117
         },
         "success": true,
         "diagnostic_count": 0
@@ -3792,13 +3792,13 @@
         "name": "monty_hall",
         "source_bytes": 622,
         "output_bytes": 2299,
-        "total_ms": 0.283,
+        "total_ms": 0.195,
         "phases": {
-          "parse_ms": 0.064,
-          "import_ms": 0.013,
-          "link_ms": 0.05,
-          "validate_ms": 0.01,
-          "emit_ms": 0.146
+          "parse_ms": 0.066,
+          "import_ms": 0.012,
+          "link_ms": 0.048,
+          "validate_ms": 0.011,
+          "emit_ms": 0.057
         },
         "success": true,
         "diagnostic_count": 0
@@ -3807,13 +3807,13 @@
         "name": "sunken_citadel",
         "source_bytes": 37158,
         "output_bytes": 92693,
-        "total_ms": 1.693,
+        "total_ms": 1.668,
         "phases": {
-          "parse_ms": 0.509,
+          "parse_ms": 0.5,
           "import_ms": 0.015,
-          "link_ms": 0.281,
-          "validate_ms": 0.036,
-          "emit_ms": 0.843
+          "link_ms": 0.265,
+          "validate_ms": 0.039,
+          "emit_ms": 0.841
         },
         "success": true,
         "diagnostic_count": 0
@@ -3822,12 +3822,12 @@
         "name": "tavern_scene",
         "source_bytes": 545,
         "output_bytes": 2164,
-        "total_ms": 0.186,
+        "total_ms": 0.174,
         "phases": {
-          "parse_ms": 0.057,
+          "parse_ms": 0.053,
           "import_ms": 0.013,
-          "link_ms": 0.05,
-          "validate_ms": 0.008,
+          "link_ms": 0.041,
+          "validate_ms": 0.01,
           "emit_ms": 0.057
         },
         "success": true,
@@ -3837,12 +3837,12 @@
         "name": "two_room_key_puzzle",
         "source_bytes": 481,
         "output_bytes": 1914,
-        "total_ms": 0.183,
+        "total_ms": 0.175,
         "phases": {
-          "parse_ms": 0.061,
+          "parse_ms": 0.056,
           "import_ms": 0.013,
-          "link_ms": 0.048,
-          "validate_ms": 0.008,
+          "link_ms": 0.041,
+          "validate_ms": 0.01,
           "emit_ms": 0.054
         },
         "success": true,
@@ -3852,13 +3852,13 @@
         "name": "type_aliases",
         "source_bytes": 314,
         "output_bytes": 1152,
-        "total_ms": 0.148,
+        "total_ms": 0.146,
         "phases": {
-          "parse_ms": 0.048,
+          "parse_ms": 0.043,
           "import_ms": 0.013,
-          "link_ms": 0.035,
-          "validate_ms": 0.006,
-          "emit_ms": 0.046
+          "link_ms": 0.034,
+          "validate_ms": 0.009,
+          "emit_ms": 0.045
         },
         "success": true,
         "diagnostic_count": 0
@@ -3867,11 +3867,11 @@
     "aggregate": {
       "total_source_bytes": 41731,
       "total_output_bytes": 111967,
-      "total_ms": 3.15,
+      "total_ms": 3.02,
       "files_compiled": 7,
       "files_succeeded": 7,
-      "avg_ms_per_file": 0.45,
-      "bytes_per_ms": 13247.94
+      "avg_ms_per_file": 0.43,
+      "bytes_per_ms": 13818.21
     }
   }
 }
