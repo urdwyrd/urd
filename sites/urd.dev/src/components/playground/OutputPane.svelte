@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import type { CompileResult, Diagnostic } from './compiler-bridge';
+  import { validateSchema } from './schema-validator';
 
   // --- Props ---
 
@@ -24,6 +25,15 @@
 
   let outputContainer: HTMLDivElement | undefined = $state();
   let copied = $state(false);
+  let validationState: 'idle' | 'loading' | 'valid' | 'invalid' = $state('idle');
+  let validationErrors: string[] = $state([]);
+
+  // Reset validation when compile result changes
+  $effect(() => {
+    compileResult;
+    validationState = 'idle';
+    validationErrors = [];
+  });
 
   // --- Derived ---
 
@@ -60,6 +70,19 @@
       setTimeout(() => copied = false, 2000);
     } catch {
       // Clipboard API not available
+    }
+  }
+
+  async function runValidation() {
+    if (!compileResult?.world) return;
+    validationState = 'loading';
+    try {
+      const result = await validateSchema(compileResult.world);
+      validationState = result.valid ? 'valid' : 'invalid';
+      validationErrors = result.errors;
+    } catch {
+      validationState = 'invalid';
+      validationErrors = ['Schema validation failed to load.'];
     }
   }
 
@@ -121,10 +144,36 @@
     <!-- Compiled JSON -->
     <div class="output-header">
       <span class="compile-time">Compiled in {formattedTime}</span>
-      <button class="copy-btn" onclick={copyJson}>
-        {copied ? 'Copied' : 'Copy JSON'}
-      </button>
+      <div class="header-actions">
+        <button
+          class="validate-btn"
+          class:validate-valid={validationState === 'valid'}
+          class:validate-invalid={validationState === 'invalid'}
+          onclick={runValidation}
+          disabled={validationState === 'loading'}
+        >
+          {#if validationState === 'idle'}
+            Validate
+          {:else if validationState === 'loading'}
+            Validating…
+          {:else if validationState === 'valid'}
+            ◆ Valid
+          {:else}
+            ◆ Invalid
+          {/if}
+        </button>
+        <button class="copy-btn" onclick={copyJson}>
+          {copied ? 'Copied' : 'Copy JSON'}
+        </button>
+      </div>
     </div>
+    {#if validationState === 'invalid' && validationErrors.length > 0}
+      <div class="validation-errors" role="list" aria-label="Schema validation errors">
+        {#each validationErrors as err}
+          <div class="validation-error-row" role="listitem">{err}</div>
+        {/each}
+      </div>
+    {/if}
     <div class="json-output">
       <pre><code>{@html highlightedJson}</code></pre>
     </div>
@@ -258,6 +307,59 @@
   .copy-btn:hover {
     border-color: var(--gold-dim);
     color: var(--text);
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .validate-btn {
+    padding: 2px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--dim);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .validate-btn:hover:not(:disabled) {
+    border-color: var(--gold-dim);
+    color: var(--text);
+  }
+
+  .validate-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  .validate-valid {
+    color: var(--green-light);
+    border-color: var(--green-light);
+  }
+
+  .validate-invalid {
+    color: var(--rose);
+    border-color: var(--rose);
+  }
+
+  .validation-errors {
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--raise);
+    max-height: 120px;
+    overflow: auto;
+  }
+
+  .validation-error-row {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--rose);
+    padding: 1px 0;
   }
 
   /* --- JSON output --- */
