@@ -170,7 +170,7 @@
     <div class="output-header">
       <span class="compile-time">Compiled in {formattedTime}</span>
       <div class="header-actions">
-        <span class="validate-label">Auto-validation</span>
+        <span class="validate-label">Schema Check</span>
         <div class="validate-toggle" role="group" aria-label="Schema validation">
           <button
             class="validate-toggle-btn"
