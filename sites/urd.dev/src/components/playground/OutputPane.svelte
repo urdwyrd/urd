@@ -27,7 +27,8 @@
   let copied = $state(false);
   let validationState: 'idle' | 'loading' | 'valid' | 'invalid' = $state('idle');
   let validationErrors: string[] = $state([]);
-  let autoValidate = $state(true);
+  let autoValidate = $state(false);
+  let showErrors = $state(false);
 
   onMount(() => {
     const stored = localStorage.getItem('urd-auto-validate');
@@ -43,6 +44,7 @@
     }
     validationState = 'idle';
     validationErrors = [];
+    showErrors = false;
     if (autoValidate) {
       runValidation();
     }
@@ -99,11 +101,16 @@
     }
   }
 
-  function toggleAutoValidate() {
-    autoValidate = !autoValidate;
-    localStorage.setItem('urd-auto-validate', String(autoValidate));
-    if (autoValidate && compileResult?.success && compileResult.world) {
+  function setAutoValidate(on: boolean) {
+    autoValidate = on;
+    localStorage.setItem('urd-auto-validate', String(on));
+    if (on && compileResult?.success && compileResult.world) {
       runValidation();
+    }
+    if (!on) {
+      validationState = 'idle';
+      validationErrors = [];
+      showErrors = false;
     }
   }
 
@@ -166,41 +173,40 @@
     <div class="output-header">
       <span class="compile-time">Compiled in {formattedTime}</span>
       <div class="header-actions">
-        <div class="validate-group">
-          {#if validationState === 'loading'}
-            <span class="validate-status">Validating…</span>
-          {:else if validationState === 'valid'}
-            <span class="validate-status validate-valid">Valid</span>
-          {:else if validationState === 'invalid'}
-            <button class="validate-status validate-invalid" onclick={runValidation}>Invalid</button>
-          {:else if !autoValidate}
-            <button class="validate-btn" onclick={runValidation}>Validate</button>
-          {/if}
+        <span class="validate-label">Schema</span>
+        <div class="validate-toggle" role="group" aria-label="Schema validation">
           <button
-            class="auto-toggle"
-            class:auto-toggle-on={autoValidate}
-            onclick={toggleAutoValidate}
-            title={autoValidate ? 'Auto-validate on' : 'Auto-validate off'}
-            role="switch"
-            aria-checked={autoValidate}
-          >
-            <span class="auto-toggle-knob"></span>
-          </button>
+            class="validate-toggle-btn"
+            class:active={!autoValidate}
+            onclick={() => setAutoValidate(false)}
+          >Off</button>
+          <button
+            class="validate-toggle-btn"
+            class:active={autoValidate}
+            onclick={() => setAutoValidate(true)}
+          >On</button>
         </div>
         <button class="copy-btn" onclick={copyJson}>
           {copied ? 'Copied' : 'Copy JSON'}
         </button>
       </div>
     </div>
-    {#if validationState === 'invalid' && validationErrors.length > 0}
-      <div class="validation-errors" role="list" aria-label="Schema validation errors">
-        {#each validationErrors as err}
-          <div class="validation-error-row" role="listitem">{err}</div>
-        {/each}
+    <div class="json-output-wrapper">
+      <div class="json-output">
+        <pre><code>{@html highlightedJson}</code></pre>
       </div>
-    {/if}
-    <div class="json-output">
-      <pre><code>{@html highlightedJson}</code></pre>
+      {#if validationState === 'invalid'}
+        <button class="schema-pill" onclick={() => showErrors = !showErrors}>
+          Schema validation failed
+        </button>
+        {#if showErrors && validationErrors.length > 0}
+          <div class="schema-errors" role="list" aria-label="Schema validation errors">
+            {#each validationErrors as err}
+              <div class="schema-error-row" role="listitem">{err}</div>
+            {/each}
+          </div>
+        {/if}
+      {/if}
     </div>
   {:else}
     <!-- Diagnostics -->
@@ -340,120 +346,107 @@
     gap: 6px;
   }
 
-  .validate-group {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .auto-toggle {
-    position: relative;
-    width: 26px;
-    height: 14px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--surface);
-    cursor: pointer;
-    padding: 0;
-    transition: background 0.2s, border-color 0.2s;
+  .validate-label {
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    color: var(--faint);
     flex-shrink: 0;
   }
 
-  .auto-toggle-knob {
-    position: absolute;
-    top: 1px;
-    left: 1px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: var(--faint);
-    transition: transform 0.2s, background 0.2s;
-  }
-
-  .auto-toggle-on {
-    border-color: var(--green-light);
-  }
-
-  .auto-toggle-on .auto-toggle-knob {
-    transform: translateX(12px);
-    background: var(--green-light);
-  }
-
-  .auto-toggle:hover {
-    border-color: var(--dim);
-  }
-
-  .auto-toggle-on:hover {
-    border-color: var(--green-light);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .auto-toggle-knob {
-      transition: none;
-    }
-  }
-
-  .validate-status {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--faint);
-    border: none;
-    background: none;
-    padding: 0;
-  }
-
-  .validate-btn {
-    padding: 2px 10px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    background: var(--surface);
-    color: var(--dim);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    transition: border-color 0.15s, color 0.15s;
-  }
-
-  .validate-btn:hover {
-    border-color: var(--gold-dim);
-    color: var(--text);
-  }
-
-  .validate-valid {
-    color: var(--green-light);
-  }
-
-  .validate-invalid {
-    color: var(--rose);
-    cursor: pointer;
-  }
-
-  .validate-invalid:hover {
-    text-decoration: underline;
-  }
-
-  .validation-errors {
-    padding: 6px 12px;
-    border-bottom: 1px solid var(--border);
+  .validate-toggle {
+    display: flex;
+    gap: 3px;
+    flex-shrink: 0;
     background: var(--raise);
-    max-height: 120px;
-    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
   }
 
-  .validation-error-row {
-    font-family: var(--mono);
+  .validate-toggle-btn {
+    display: flex;
+    align-items: center;
+    font-family: var(--display);
     font-size: 11px;
-    line-height: 1.6;
-    color: var(--rose);
-    padding: 1px 0;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    color: var(--faint);
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    padding: 3px 8px;
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .validate-toggle-btn.active {
+    color: var(--gold);
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  .validate-toggle-btn:hover:not(.active) {
+    color: var(--dim);
+    background: var(--surface);
   }
 
   /* --- JSON output --- */
+
+  .json-output-wrapper {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
 
   .json-output {
     flex: 1;
     overflow: auto;
     padding: 12px;
+  }
+
+  .schema-pill {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 4px 10px;
+    border: 1px solid color-mix(in srgb, var(--rose) 40%, transparent);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--rose) 12%, var(--deep));
+    color: var(--rose);
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    z-index: 1;
+  }
+
+  .schema-pill:hover {
+    background: color-mix(in srgb, var(--rose) 20%, var(--deep));
+    border-color: color-mix(in srgb, var(--rose) 60%, transparent);
+  }
+
+  .schema-errors {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    border-top: 1px solid color-mix(in srgb, var(--rose) 25%, var(--border));
+    background: color-mix(in srgb, var(--rose) 5%, var(--raise));
+    max-height: 120px;
+    overflow: auto;
+  }
+
+  .schema-error-row {
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--rose);
+    padding: 1px 0;
   }
 
   .json-output pre {
