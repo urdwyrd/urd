@@ -28,7 +28,6 @@
   let validationState: 'idle' | 'loading' | 'valid' | 'invalid' = $state('idle');
   let validationErrors: string[] = $state([]);
   let autoValidate = $state(false);
-  let showErrors = $state(false);
 
   onMount(() => {
     const stored = localStorage.getItem('urd-auto-validate');
@@ -44,7 +43,6 @@
     }
     validationState = 'idle';
     validationErrors = [];
-    showErrors = false;
     if (autoValidate) {
       runValidation();
     }
@@ -110,7 +108,6 @@
     if (!on) {
       validationState = 'idle';
       validationErrors = [];
-      showErrors = false;
     }
   }
 
@@ -173,7 +170,7 @@
     <div class="output-header">
       <span class="compile-time">Compiled in {formattedTime}</span>
       <div class="header-actions">
-        <span class="validate-label">Schema</span>
+        <span class="validate-label">Auto-validation</span>
         <div class="validate-toggle" role="group" aria-label="Schema validation">
           <button
             class="validate-toggle-btn"
@@ -186,27 +183,19 @@
             onclick={() => setAutoValidate(true)}
           >On</button>
         </div>
+        <span
+          class="validate-light"
+          class:validate-light-valid={validationState === 'valid'}
+          class:validate-light-invalid={validationState === 'invalid'}
+          title={validationState === 'valid' ? 'Schema valid' : validationState === 'invalid' ? 'Schema validation failed' : 'Inactive'}
+        ></span>
         <button class="copy-btn" onclick={copyJson}>
           {copied ? 'Copied' : 'Copy JSON'}
         </button>
       </div>
     </div>
-    <div class="json-output-wrapper">
-      <div class="json-output">
-        <pre><code>{@html highlightedJson}</code></pre>
-      </div>
-      {#if validationState === 'invalid'}
-        <button class="schema-pill" onclick={() => showErrors = !showErrors}>
-          Schema validation failed
-        </button>
-        {#if showErrors && validationErrors.length > 0}
-          <div class="schema-errors" role="list" aria-label="Schema validation errors">
-            {#each validationErrors as err}
-              <div class="schema-error-row" role="listitem">{err}</div>
-            {/each}
-          </div>
-        {/if}
-      {/if}
+    <div class="json-output">
+      <pre><code>{@html highlightedJson}</code></pre>
     </div>
   {:else}
     <!-- Diagnostics -->
@@ -393,60 +382,29 @@
     background: var(--surface);
   }
 
-  /* --- JSON output --- */
-
-  .json-output-wrapper {
-    position: relative;
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+  .validate-light {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    flex-shrink: 0;
+    transition: background 0.2s ease;
   }
+
+  .validate-light-valid {
+    background: var(--green-light);
+  }
+
+  .validate-light-invalid {
+    background: var(--rose);
+  }
+
+  /* --- JSON output --- */
 
   .json-output {
     flex: 1;
     overflow: auto;
     padding: 12px;
-  }
-
-  .schema-pill {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 4px 10px;
-    border: 1px solid color-mix(in srgb, var(--rose) 40%, transparent);
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--rose) 12%, var(--deep));
-    color: var(--rose);
-    font-family: var(--display);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    z-index: 1;
-  }
-
-  .schema-pill:hover {
-    background: color-mix(in srgb, var(--rose) 20%, var(--deep));
-    border-color: color-mix(in srgb, var(--rose) 60%, transparent);
-  }
-
-  .schema-errors {
-    flex-shrink: 0;
-    padding: 8px 12px;
-    border-top: 1px solid color-mix(in srgb, var(--rose) 25%, var(--border));
-    background: color-mix(in srgb, var(--rose) 5%, var(--raise));
-    max-height: 120px;
-    overflow: auto;
-  }
-
-  .schema-error-row {
-    font-family: var(--mono);
-    font-size: 11px;
-    line-height: 1.6;
-    color: var(--rose);
-    padding: 1px 0;
   }
 
   .json-output pre {
