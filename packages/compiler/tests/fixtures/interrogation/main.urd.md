@@ -1,6 +1,6 @@
 ---
 world:
-  name: Interrogation
+  name: interrogation
   start: interrogation-room
 import: ./world.urd.md
 ---

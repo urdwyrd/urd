@@ -1,6 +1,6 @@
 ---
 world:
-  name: The Rusty Anchor
+  name: the-rusty-anchor
   start: the-rusty-anchor
 types:
   Character [interactable]:

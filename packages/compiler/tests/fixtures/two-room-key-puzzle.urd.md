@@ -1,6 +1,6 @@
 ---
 world:
-  name: Key Puzzle
+  name: key-puzzle
   start: cell
 types:
   Key [portable]:

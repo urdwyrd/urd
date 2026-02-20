@@ -1,6 +1,6 @@
 ---
 world:
-  name: The Locked Garden
+  name: the-locked-garden
   start: gatehouse
 
 types:

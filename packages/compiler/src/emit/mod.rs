@@ -583,9 +583,7 @@ fn build_actions(
             if let Some(c) = conds {
                 action_obj.insert("conditions".to_string(), c);
             }
-            if !effects.is_empty() {
-                action_obj.insert("effects".to_string(), Json::Array(effects));
-            }
+            action_obj.insert("effects".to_string(), Json::Array(effects));
         }
 
         actions.insert(id.clone(), Json::Object(action_obj));

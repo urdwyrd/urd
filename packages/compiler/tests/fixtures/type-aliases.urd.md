@@ -1,6 +1,6 @@
 ---
 world:
-  name: Alias Test
+  name: alias-test
   start: room
 types:
   Character [interactable]:

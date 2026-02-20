@@ -1,6 +1,6 @@
 ---
 world:
-  name: Monty Hall
+  name: monty-hall
   start: stage
 types:
   Door [interactable]:

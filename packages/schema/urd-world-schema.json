@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://urd.dev/schema/v1/urd-world-schema.json",
   "title": "Urd World Schema v1",
-  "description": "Validates compiled .urd.json world files. Structural validation only — cross-reference integrity is the compiler's responsibility.",
+  "description": "Validates compiled .urd.json world files. Structural validation only â€” cross-reference integrity is the compiler's responsibility.",
   "type": "object",
   "required": ["world"],
   "additionalProperties": false,
@@ -355,7 +355,7 @@
         },
         "advance": {
           "type": "string",
-          "pattern": "^(on_action|on_rule|on_condition \\S+|end)$"
+          "pattern": "^(on_action|on_rule|on_condition .+|end|auto|manual)$"
         },
         "condition": { "type": "string" }
       },
@@ -456,6 +456,16 @@
           "exits": {
             "type": "object",
             "additionalProperties": { "$ref": "#/$defs/exit" }
+          },
+          "on_enter": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/effect" },
+            "description": "Effects triggered when an entity enters this location."
+          },
+          "on_exit": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/effect" },
+            "description": "Effects triggered when an entity leaves this location."
           }
         }
       }

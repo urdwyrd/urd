@@ -74,7 +74,7 @@ fn e2e_key_puzzle_zero_error_diagnostics() {
 fn e2e_key_puzzle_world_block() {
     let json = compile_and_parse("two-room-key-puzzle.urd.md");
     let world = &json["world"];
-    assert_eq!(world["name"], "Key Puzzle");
+    assert_eq!(world["name"], "key-puzzle");
     assert_eq!(world["urd"], "1");
     assert_eq!(world["start"], "cell");
 }
@@ -247,7 +247,7 @@ fn e2e_tavern_compiles_successfully() {
 fn e2e_tavern_world_block() {
     let json = compile_and_parse("tavern-scene.urd.md");
     let world = &json["world"];
-    assert_eq!(world["name"], "The Rusty Anchor");
+    assert_eq!(world["name"], "the-rusty-anchor");
     assert_eq!(world["start"], "the-rusty-anchor");
 }
 
@@ -390,7 +390,7 @@ fn e2e_monty_hall_compiles_successfully() {
 fn e2e_monty_hall_world_block() {
     let json = compile_and_parse("monty-hall.urd.md");
     let world = &json["world"];
-    assert_eq!(world["name"], "Monty Hall");
+    assert_eq!(world["name"], "monty-hall");
     assert_eq!(world["start"], "stage");
 }
 
@@ -492,7 +492,7 @@ fn e2e_interrogation_compiles_successfully() {
 fn e2e_interrogation_world_block() {
     let json = compile_and_parse("interrogation/main.urd.md");
     let world = &json["world"];
-    assert_eq!(world["name"], "Interrogation");
+    assert_eq!(world["name"], "interrogation");
     assert_eq!(world["start"], "interrogation-room");
 }
 
@@ -640,7 +640,7 @@ fn e2e_locked_garden_zero_error_diagnostics() {
 fn e2e_locked_garden_world_block() {
     let json = compile_and_parse("locked-garden.urd.md");
     let world = &json["world"];
-    assert_eq!(world["name"], "The Locked Garden");
+    assert_eq!(world["name"], "the-locked-garden");
     assert_eq!(world["start"], "gatehouse");
     assert_eq!(world["urd"], "1");
 }
