@@ -108,9 +108,15 @@ fn build_world(graph: &DependencyGraph, symbol_table: &SymbolTable) -> Json {
                         for (key, val) in &wb.fields {
                             match key.as_str() {
                                 "name" => {
+                                    let raw = scalar_to_json(val);
+                                    let slugified = if let Json::String(s) = &raw {
+                                        Json::String(slugify(s))
+                                    } else {
+                                        raw
+                                    };
                                     world.insert(
                                         "name".to_string(),
-                                        scalar_to_json(val),
+                                        slugified,
                                     );
                                 }
                                 // urd is injected below, skip any author value.
