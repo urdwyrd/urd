@@ -934,11 +934,15 @@ Monty opened a door with a goat. Switch or stay?
             machine verification.
           </p>
           <p class="pres-reveal">
-            The next milestone is the <span class="hl">reference runtime: Wyrd</span>.
-            It loads <span class="pres-gold">.urd.json</span>, executes the world, and
-            produces events. The validation target: compile the Monty Hall problem, run
-            it ten thousand times, and prove the switching advantage converges to
-            two-thirds. The compiler is ready. Wyrd is next.
+            The next milestone is <span class="hl">alpha</span> — the point where all
+            the pieces exist end-to-end. That means the <span class="hl">Wyrd reference
+            runtime</span> loading <span class="pres-gold">.urd.json</span>, executing
+            all four canonical test cases, and proving the system works: compile the
+            Monty Hall problem, run it ten thousand times, verify the switching advantage
+            converges to two-thirds. After alpha, the
+            <span class="hl">v1 completion gate</span> defines what ships: full static
+            analysis, Monte Carlo validation, specification consistency, and boundary
+            enforcement across five acceptance gates.
           </p>
           <p class="pres-reveal">
             This site, <span class="pres-gold">urd.dev</span>, is the development journal.
