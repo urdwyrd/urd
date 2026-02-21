@@ -37,6 +37,7 @@ pnpm preview                # Preview production build
 pnpm build:full             # Run compiler tests + copy report + build site
 
 # Compiler
+pnpm compiler:bump          # Version bump — the ONLY way to bump the compiler
 pnpm compiler:test          # Run tests + benchmarks, generate test-report.json
 pnpm compiler:test:raw      # Raw cargo test output
 pnpm compiler:build         # Release build of the `urd` CLI binary
@@ -47,6 +48,17 @@ pnpm compiler:wasm:check    # Verify WASM target compiles
 pnpm grammar:test           # PEG validation corpus
 pnpm schema:test            # JSON Schema validation
 ```
+
+### Compiler version bumps
+
+**Always use `pnpm compiler:bump`** — never edit `Cargo.toml` version by hand. The script handles the full pipeline:
+
+1. Bumps the version in `Cargo.toml`
+2. Runs the test suite
+3. Regenerates the test report
+4. Rebuilds WASM and vendors it into the Astro site
+
+All generated artefacts (`test-report.json`, `compiler-test-report.json`, `urd_compiler_bg.wasm`) must be committed together with the version change. A pre-commit hook enforces this — it blocks commits where `Cargo.toml` is staged without the WASM binary and test report.
 
 ## Tech stack
 
@@ -108,6 +120,6 @@ Test report data flows: `compiler-test-report.mjs` → `packages/compiler/test-r
 ## Secrets and security
 
 - `.gitignore` covers `.env`, `.env.*`, `.dev.vars`, `.wrangler/`
-- Pre-commit hook: gitleaks scans staged changes
+- Pre-commit hooks: gitleaks scans staged changes; compiler artefact guard blocks incomplete version bumps
 - CI: `gitleaks/gitleaks-action@v2` runs on every push to main and all PRs
 - Never bypass the hook with `--no-verify`

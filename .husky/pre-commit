@@ -1,1 +1,18 @@
 gitleaks git --pre-commit --staged --verbose
+
+# Guard: if compiler Cargo.toml is staged, the WASM binary and test reports
+# should be staged too. Catches incomplete compiler bumps.
+if git diff --cached --name-only | grep -q 'packages/compiler/Cargo.toml'; then
+  missing=""
+  git diff --cached --name-only | grep -q 'sites/urd.dev/public/wasm/urd_compiler_bg.wasm' || missing="$missing  WASM binary (sites/urd.dev/public/wasm/urd_compiler_bg.wasm)\n"
+  git diff --cached --name-only | grep -q 'sites/urd.dev/src/data/compiler-test-report.json' || missing="$missing  Test report (sites/urd.dev/src/data/compiler-test-report.json)\n"
+  if [ -n "$missing" ]; then
+    echo ""
+    echo "WARNING: Cargo.toml is staged but these artefacts are not:"
+    echo -e "$missing"
+    echo "Did you forget to run 'pnpm compiler:bump'?"
+    echo "To proceed anyway: git commit --no-verify"
+    echo ""
+    exit 1
+  fi
+fi
