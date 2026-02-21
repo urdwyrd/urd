@@ -93,7 +93,7 @@ Urd is not a database-driven IF system in the historical sense. Past systems tha
 
 Urd is not an engine. It doesn't render anything. It doesn't handle physics, audio, or asset management. Unity, Godot, and Unreal do that. Urd is upstream of engines — it defines the world contract that engines consume.
 
-And Urd is not finished. The specification suite is complete and internally consistent, but the compiler and runtime are not yet built. The implementation plan is a sequence of fourteen engineering briefs, starting with specification hardening and proceeding through the compiler pipeline, the runtime, the testing framework, and packaging. The architecture is designed; the software is ahead.
+And Urd is not finished. The specification suite is complete and internally consistent. The compiler is built — five phases (PARSE, IMPORT, LINK, VALIDATE, EMIT) implemented in Rust with 480 tests and a 100% pass rate. Four canonical fixtures compile to valid `.urd.json`. The runtime is next. The architecture is designed; the implementation is underway.
 
 ## Who this is for
 
@@ -115,6 +115,6 @@ What you get in return is a world model that is deterministic, testable, portabl
 
 Define in Urd. Test in Wyrd. Ship anywhere.
 
-The [Architectural Boundaries](/documents/architectural-boundaries) document is published at [urd.dev](https://urd.dev). The full specification suite — schema, syntax, runtime contract, test strategy, and governance — is open and available. The compiler and runtime are next.
+The [Architectural Boundaries](/documents/architectural-boundaries) document is published at [urd.dev](https://urd.dev). The full specification suite — schema, syntax, runtime contract, test strategy, and governance — is open and available. The compiler is shipping. The runtime is next.
 
 *This article is part of the Urd development journal at [urd.dev](https://urd.dev).*

@@ -754,8 +754,12 @@ Monty opened a door with a goat. Switch or stay?
             <p>
               Writers describe worlds in a clean markdown syntax. The compiler produces a
               <span class="pres-gold">.urd.json</span> file — the contract. The
-              <span class="pres-purple">Wyrd</span> runtime reads that contract and runs the world.
-              The writer never sees JSON. The runtime never sees prose.
+              <span class="pres-purple">Wyrd</span> runtime reads that contract and
+              simulates the world: evaluating conditions, applying effects, producing
+              events. Everything the player actually sees and types is handled by a
+              replaceable <span class="hl">adapter layer</span> — a parser, a choice UI,
+              a graphical renderer, an AI agent. The writer never sees JSON. The runtime
+              never sees prose. The adapter never changes the world definition.
             </p>
           </div>
         </section>
@@ -839,15 +843,32 @@ Monty opened a door with a goat. Switch or stay?
             the same operation.
           </p>
           <p class="pres-reveal">
-            <span class="hl">Engine agnostic.</span> The <span class="pres-gold">.urd.json</span>
-            contract carries no rendering instructions. No pixel coordinates, no audio references,
-            no UI layouts. A Unity plugin, a Godot addon, a browser, or a plain terminal can
+            <span class="hl">The world is not the interface.</span> Every interactive world
+            system eventually absorbs its presentation layer — verb synonyms, text
+            composition, failure messages — until the world model <em>is</em> the UI. Urd draws a
+            permanent architectural boundary: the schema describes what exists, the runtime
+            simulates what happens, and everything the player sees or types belongs to a
+            replaceable adapter layer. That boundary is enforced by a governance document,
+            not by good intentions.
+          </p>
+          <p class="pres-reveal">
+            <span class="hl">Engine agnostic.</span> Because the <span class="pres-gold">.urd.json</span>
+            contract carries no rendering instructions — no pixel coordinates, no audio references,
+            no UI layouts — a Unity plugin, a Godot addon, a browser, or a plain terminal can
             all consume the same file.
           </p>
           <p class="pres-reveal">
             <span class="hl">AI native.</span> Every element is typed and unambiguous.
             An AI reading an Urd world does not need to guess what anything means. It is a
             formal contract, not documentation. But every world works perfectly without AI.
+          </p>
+          <p class="pres-reveal">
+            <span class="hl">Deterministic and testable.</span> Same world, same seed,
+            same actions, same result. The runtime produces no output except in response to
+            explicit action calls, and every state change is a typed event. The compiler can
+            check for unreachable locations, contradictory conditions, and dead-end dialogue
+            before the runtime ever loads the file. Run a world ten thousand times and assert
+            on the probability distribution. That is what a typed graph makes possible.
           </p>
         </section>
 
@@ -873,11 +894,12 @@ Monty opened a door with a goat. Switch or stay?
           </p>
           <p class="pres-reveal">
             Urd's answer — not yet built, but designed — is a
-            <span class="hl">lambda extension host</span>: a way for authors to
-            attach custom logic to entities and rules without leaving the schema.
-            The runtime provides guardrails; the lambda provides the behaviour
-            the declarative layer cannot express. Whether that boundary is in the
-            right place is one of the things this project exists to find out.
+            <span class="hl">lambda extension host</span>: a way for the runtime
+            to delegate specific behaviours to custom logic under strict constraints —
+            read-only state in, a list of effects out. The schema stays declarative.
+            The lambda is sandboxed imperative logic that the runtime supervises.
+            Whether that boundary is in the right place is one of the things this
+            project exists to find out.
           </p>
           <p class="pres-aside pres-reveal">
             If your first reaction is scepticism, good. That is the correct reaction
@@ -895,13 +917,17 @@ Monty opened a door with a goat. Switch or stay?
           <p class="pres-reveal">
             The specification is complete and formalised. A <span class="hl">PEG grammar</span>
             with 75 rules defines what valid input looks like. A <span class="hl">JSON Schema</span>
-            with 9 sub-schemas defines what valid output looks like. Six engineering briefs
-            specify every data structure, every diagnostic code, every phase contract
-            between the two.
+            with 9 sub-schemas defines what valid output looks like. An
+            <span class="hl">Architectural Boundaries</span> governance document defines what
+            belongs in the schema, what belongs in the runtime, and what is permanently
+            excluded from both — including a formal failure contract, deterministic
+            trigger semantics, and a five-question boundary test for evaluating every
+            proposed change. Six engineering briefs specify every data structure, every
+            diagnostic code, every phase contract.
           </p>
           <p class="pres-reveal">
             The <span class="hl">compiler is built</span>. Five phases — PARSE, IMPORT,
-            LINK, VALIDATE, EMIT — implemented in Rust with <span class="hl">390 tests
+            LINK, VALIDATE, EMIT — implemented in Rust with <span class="hl">480 tests
             and a 100% pass rate</span>. Four canonical fixtures compile to valid
             <span class="pres-gold">.urd.json</span>. The design documents were not
             amended once during implementation. Human specification, AI implementation,
