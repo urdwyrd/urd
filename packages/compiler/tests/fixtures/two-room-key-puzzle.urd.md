@@ -28,6 +28,8 @@ A dim stone cell.
   > @cell_door.locked = false
   > destroy @rusty_key
 
+The cell falls silent.
+
 # Corridor
 
 You made it out.

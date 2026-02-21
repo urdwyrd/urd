@@ -34,6 +34,8 @@ import: ./world.urd.md
     @suspect: Alright, alright...
     -> confession
 
+@detective: We'll continue this later.
+
 == confession
 
 @suspect: It was the butler.

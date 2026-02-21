@@ -19,10 +19,13 @@ mod entities;
 mod conditions;
 mod effects;
 
-use crate::ast::{ContentNode, FrontmatterValue};
+use std::collections::{HashSet, VecDeque};
+
+use crate::ast::{Choice, ConditionExpr, ContentNode, FrontmatterValue, PropertyComparison};
 use crate::diagnostics::DiagnosticCollector;
 use crate::graph::{DependencyGraph, WARN_CHOICE_NESTING_DEPTH, MAX_CHOICE_NESTING_DEPTH};
-use crate::symbol_table::SymbolTable;
+use crate::slugify::slugify;
+use crate::symbol_table::{PropertyType, SymbolTable};
 
 /// Valid advance modes for sequence phases.
 const VALID_ADVANCE_MODES: &[&str] = &["on_action", "on_rule", "on_condition", "end", "auto", "manual"];
@@ -59,6 +62,18 @@ pub fn validate(
 
     // Step 8: Nesting depth validation.
     validate_nesting_depth(graph, &ordered, diagnostics);
+
+    // Step 9: Unreachable location (S3).
+    validate_location_reachability(symbol_table, diagnostics);
+
+    // Step 10: Orphaned choice (S4).
+    validate_orphaned_choices(graph, &ordered, symbol_table, diagnostics);
+
+    // Step 11: Missing fallthrough (S6).
+    validate_section_fallthrough(graph, &ordered, symbol_table, diagnostics);
+
+    // Step 12: Section-exit shadowing (S8).
+    validate_section_exit_shadowing(graph, &ordered, symbol_table, diagnostics);
 }
 
 // ── Step 1: Global Configuration ──
@@ -346,5 +361,312 @@ fn check_nesting(
             }
         }
         _ => {}
+    }
+}
+
+// ── Step 9: Unreachable Location (S3) ──
+
+fn validate_location_reachability(
+    symbol_table: &SymbolTable,
+    diagnostics: &mut DiagnosticCollector,
+) {
+    // Skip if no world.start defined — unreachability is meaningless without a root.
+    let start_id = match &symbol_table.world_start {
+        Some(id) => id,
+        None => return,
+    };
+
+    // Skip if start location not in symbol table (URD404 already covers this).
+    if !symbol_table.locations.contains_key(start_id) {
+        return;
+    }
+
+    // BFS from start.
+    let mut visited: HashSet<&str> = HashSet::new();
+    let mut queue: VecDeque<&str> = VecDeque::new();
+    queue.push_back(start_id.as_str());
+    visited.insert(start_id.as_str());
+
+    while let Some(current) = queue.pop_front() {
+        if let Some(loc_sym) = symbol_table.locations.get(current) {
+            for exit in loc_sym.exits.values() {
+                if let Some(dest) = &exit.resolved_destination {
+                    if visited.insert(dest.as_str()) {
+                        queue.push_back(dest.as_str());
+                    }
+                }
+            }
+        }
+    }
+
+    // Report unreachable locations in insertion order.
+    for (loc_id, loc_sym) in &symbol_table.locations {
+        if !visited.contains(loc_id.as_str()) {
+            diagnostics.warning(
+                "URD430",
+                format!(
+                    "Location '{}' is unreachable. No path from the start location reaches it.",
+                    loc_id,
+                ),
+                loc_sym.declared_in.clone(),
+            );
+        }
+    }
+}
+
+// ── Step 10: Orphaned Choice (S4) ──
+
+fn validate_orphaned_choices(
+    graph: &DependencyGraph,
+    ordered_asts: &[String],
+    symbol_table: &SymbolTable,
+    diagnostics: &mut DiagnosticCollector,
+) {
+    for file_path in ordered_asts {
+        let node = match graph.nodes.get(file_path.as_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+
+        let mut current_section: Option<String> = None;
+
+        for content in &node.ast.content {
+            match content {
+                ContentNode::SectionLabel(sl) => {
+                    current_section = Some(sl.name.clone());
+                }
+                ContentNode::Choice(choice) => {
+                    check_choice_orphaned(
+                        choice,
+                        current_section.as_deref().unwrap_or("unnamed"),
+                        file_path,
+                        symbol_table,
+                        diagnostics,
+                    );
+                }
+                _ => {}
+            }
+        }
+    }
+}
+
+fn check_choice_orphaned(
+    choice: &Choice,
+    section_name: &str,
+    file_path: &str,
+    symbol_table: &SymbolTable,
+    diagnostics: &mut DiagnosticCollector,
+) {
+    for child in &choice.content {
+        match child {
+            ContentNode::Condition(cond) => {
+                if let ConditionExpr::PropertyComparison(pc) = &cond.expr {
+                    check_enum_condition(pc, choice, section_name, file_path, symbol_table, diagnostics);
+                }
+            }
+            ContentNode::OrConditionBlock(or_block) => {
+                for expr in &or_block.conditions {
+                    if let ConditionExpr::PropertyComparison(pc) = expr {
+                        check_enum_condition(pc, choice, section_name, file_path, symbol_table, diagnostics);
+                    }
+                }
+            }
+            ContentNode::Choice(nested) => {
+                check_choice_orphaned(nested, section_name, file_path, symbol_table, diagnostics);
+            }
+            _ => {}
+        }
+    }
+}
+
+fn check_enum_condition(
+    pc: &PropertyComparison,
+    choice: &Choice,
+    section_name: &str,
+    file_path: &str,
+    symbol_table: &SymbolTable,
+    diagnostics: &mut DiagnosticCollector,
+) {
+    // Skip rule: annotation must be fully resolved.
+    let ann = match &pc.annotation {
+        Some(a) => a,
+        None => return,
+    };
+    if ann.resolved_entity.is_none() || ann.resolved_type.is_none() || ann.resolved_property.is_none() {
+        return;
+    }
+
+    let resolved_type = ann.resolved_type.as_ref().unwrap();
+    let resolved_property = ann.resolved_property.as_ref().unwrap();
+
+    // Only check == operator on enum properties.
+    if pc.operator != "==" {
+        return;
+    }
+
+    let type_sym = match symbol_table.types.get(resolved_type) {
+        Some(t) => t,
+        None => return,
+    };
+    let prop = match type_sym.properties.get(resolved_property) {
+        Some(p) => p,
+        None => return,
+    };
+
+    if prop.property_type != PropertyType::Enum {
+        return;
+    }
+
+    if let Some(values) = &prop.values {
+        if !values.contains(&pc.value) {
+            diagnostics.warning(
+                "URD432",
+                format!(
+                    "Choice in section '{}' (file '{}') may never be available. Condition requires '{}' == '{}' but type '{}' only allows: [{}].",
+                    section_name,
+                    file_path,
+                    resolved_property,
+                    pc.value,
+                    resolved_type,
+                    values.join(", "),
+                ),
+                choice.span.clone(),
+            );
+        }
+    }
+}
+
+// ── Step 11: Missing Fallthrough (S6) ──
+
+fn validate_section_fallthrough(
+    graph: &DependencyGraph,
+    ordered_asts: &[String],
+    symbol_table: &SymbolTable,
+    diagnostics: &mut DiagnosticCollector,
+) {
+    for file_path in ordered_asts {
+        let node = match graph.nodes.get(file_path.as_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+
+        let file_stem = crate::graph::file_stem(file_path);
+        let content = &node.ast.content;
+
+        // Collect section start positions: (name, span, index).
+        let section_starts: Vec<(String, crate::span::Span, usize)> = content
+            .iter()
+            .enumerate()
+            .filter_map(|(i, c)| {
+                if let ContentNode::SectionLabel(sl) = c {
+                    Some((sl.name.clone(), sl.span.clone(), i))
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        for (idx, (section_name, section_span, start)) in section_starts.iter().enumerate() {
+            let end = if idx + 1 < section_starts.len() {
+                section_starts[idx + 1].2
+            } else {
+                content.len()
+            };
+
+            let section_content = &content[*start..end];
+
+            // Look up section in symbol table.
+            let compiled_id = format!("{}/{}", file_stem, section_name);
+            let section_sym = match symbol_table.sections.get(&compiled_id) {
+                Some(s) => s,
+                None => continue,
+            };
+
+            // Condition 4: No choices at all — skip.
+            if section_sym.choices.is_empty() {
+                continue;
+            }
+
+            // Condition 1: Has at least one sticky choice — safe.
+            if section_sym.choices.iter().any(|c| c.sticky) {
+                continue;
+            }
+
+            // Find last Choice node in section content.
+            let last_choice_idx = match section_content.iter().rposition(|c| matches!(c, ContentNode::Choice(_))) {
+                Some(idx) => idx,
+                None => continue,
+            };
+
+            // Conditions 2 and 3: check content after the last choice for fallthrough.
+            let has_fallthrough = section_content[last_choice_idx + 1..].iter().any(|c| {
+                matches!(
+                    c,
+                    ContentNode::Jump(_)
+                        | ContentNode::Prose(_)
+                        | ContentNode::EntitySpeech(_)
+                        | ContentNode::StageDirection(_)
+                )
+            });
+
+            if !has_fallthrough {
+                diagnostics.warning(
+                    "URD433",
+                    format!(
+                        "Section '{}' in file '{}' has only one-shot choices and no terminal jump or fallthrough text. It will exhaust to an empty state.",
+                        section_name, file_path,
+                    ),
+                    section_span.clone(),
+                );
+            }
+        }
+    }
+}
+
+// ── Step 12: Section-Exit Shadowing (S8) ──
+
+fn validate_section_exit_shadowing(
+    graph: &DependencyGraph,
+    ordered_asts: &[String],
+    symbol_table: &SymbolTable,
+    diagnostics: &mut DiagnosticCollector,
+) {
+    for file_path in ordered_asts {
+        let node = match graph.nodes.get(file_path.as_str()) {
+            Some(n) => n,
+            None => continue,
+        };
+
+        let mut current_location_id: Option<String> = None;
+
+        for content in &node.ast.content {
+            match content {
+                ContentNode::LocationHeading(lh) => {
+                    let slug = slugify(&lh.display_name);
+                    if symbol_table.locations.contains_key(&slug) {
+                        current_location_id = Some(slug);
+                    } else {
+                        current_location_id = None;
+                    }
+                }
+                ContentNode::SectionLabel(sl) => {
+                    if let Some(ref loc_id) = current_location_id {
+                        if let Some(loc_sym) = symbol_table.locations.get(loc_id) {
+                            if loc_sym.exits.contains_key(&sl.name) {
+                                diagnostics.warning(
+                                    "URD434",
+                                    format!(
+                                        "Section '{}' in location '{}' shares a name with exit '{}'. Jumps to '{}' will target the section, not the exit. Use -> exit:{} to target the exit explicitly.",
+                                        sl.name, loc_id, sl.name, sl.name, sl.name,
+                                    ),
+                                    sl.span.clone(),
+                                );
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
     }
 }

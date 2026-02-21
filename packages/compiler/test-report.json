@@ -1,17 +1,17 @@
 {
   "version": "1",
-  "timestamp": "2026-02-21T04:32:09.741Z",
+  "timestamp": "2026-02-21T18:28:11.088Z",
   "compiler": {
     "name": "urd-compiler",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "language": "rust"
   },
   "summary": {
-    "total_tests": 480,
-    "passed": 480,
+    "total_tests": 516,
+    "passed": 516,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 1442,
+    "duration_ms": 409,
     "pass_rate": 1
   },
   "phases": [
@@ -2177,8 +2177,8 @@
     {
       "name": "validate",
       "diagnostic_range": "400-499",
-      "tests": 74,
-      "passed": 74,
+      "tests": 106,
+      "passed": 106,
       "failed": 0,
       "skipped": 0,
       "duration_ms": 0,
@@ -2692,6 +2692,198 @@
             },
             {
               "name": "reveal_visible_warns",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "s3",
+          "tests": 8,
+          "passed": 8,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "s3_all_connected_no_warning",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_bidirectional_pair_no_path_from_start",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_chain_reachability",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_conditional_exit_still_counts",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_multiple_islands",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_no_start_declared",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_one_island",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s3_self_loop_plus_island",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "s4",
+          "tests": 7,
+          "passed": 7,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "s4_choice_outside_section",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s4_impossible_enum_condition",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s4_multiple_conditions_one_impossible",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s4_ne_operator_not_checked",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s4_non_enum_not_checked",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s4_unresolved_annotation_skip",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s4_valid_enum_no_warning",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "s6",
+          "tests": 11,
+          "passed": 11,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "s6_all_oneshot_no_fallthrough",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_entity_speech_after_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_inline_jumps_dont_protect_section",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_jump_nested_in_last_choice",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_mixed_sticky_oneshot",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_no_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_on_exhausted_content",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_oneshot_with_prose_fallthrough",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_oneshot_with_terminal_jump",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_only_effects_after_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s6_stage_direction_after_choices",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "s8",
+          "tests": 6,
+          "passed": 6,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "s8_different_location_no_collision",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s8_exit_direction_matches_section",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s8_exit_direction_vs_destination",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s8_name_collision",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s8_no_collision",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "s8_section_before_location",
               "status": "pass",
               "duration_ms": null
             }
@@ -3346,16 +3538,16 @@
     {
       "name": "e2e",
       "diagnostic_range": null,
-      "tests": 72,
-      "passed": 72,
+      "tests": 76,
+      "passed": 76,
       "failed": 0,
       "skipped": 0,
       "duration_ms": 10,
       "categories": [
         {
           "name": "e2e",
-          "tests": 72,
-          "passed": 72,
+          "tests": 76,
+          "passed": 76,
           "failed": 0,
           "test_names": [
             {
@@ -3619,6 +3811,11 @@
               "duration_ms": null
             },
             {
+              "name": "e2e_negative_missing_fallthrough_warns",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
               "name": "e2e_negative_missing_import",
               "status": "pass",
               "duration_ms": null
@@ -3629,12 +3826,27 @@
               "duration_ms": null
             },
             {
+              "name": "e2e_negative_orphaned_choice_warns",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_shadowed_exit_warns",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
               "name": "e2e_negative_type_mismatch",
               "status": "pass",
               "duration_ms": null
             },
             {
               "name": "e2e_negative_type_mismatch_has_validate_error",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_negative_unreachable_location_warns",
               "status": "pass",
               "duration_ms": null
             },
@@ -3760,15 +3972,15 @@
     "files": [
       {
         "name": "interrogation",
-        "source_bytes": 668,
-        "output_bytes": 3704,
-        "total_ms": 0.376,
+        "source_bytes": 708,
+        "output_bytes": 3814,
+        "total_ms": 0.381,
         "phases": {
-          "parse_ms": 0.067,
-          "import_ms": 0.136,
-          "link_ms": 0.058,
-          "validate_ms": 0.017,
-          "emit_ms": 0.095
+          "parse_ms": 0.069,
+          "import_ms": 0.139,
+          "link_ms": 0.063,
+          "validate_ms": 0.019,
+          "emit_ms": 0.09
         },
         "success": true,
         "diagnostic_count": 0
@@ -3777,28 +3989,28 @@
         "name": "locked_garden",
         "source_bytes": 1943,
         "output_bytes": 8041,
-        "total_ms": 0.338,
+        "total_ms": 0.332,
         "phases": {
-          "parse_ms": 0.113,
-          "import_ms": 0.014,
-          "link_ms": 0.066,
-          "validate_ms": 0.015,
-          "emit_ms": 0.128
+          "parse_ms": 0.102,
+          "import_ms": 0.017,
+          "link_ms": 0.069,
+          "validate_ms": 0.021,
+          "emit_ms": 0.123
         },
         "success": true,
-        "diagnostic_count": 0
+        "diagnostic_count": 1
       },
       {
         "name": "monty_hall",
-        "source_bytes": 622,
-        "output_bytes": 2299,
-        "total_ms": 0.237,
+        "source_bytes": 654,
+        "output_bytes": 2381,
+        "total_ms": 0.228,
         "phases": {
-          "parse_ms": 0.087,
-          "import_ms": 0.015,
-          "link_ms": 0.053,
-          "validate_ms": 0.013,
-          "emit_ms": 0.069
+          "parse_ms": 0.074,
+          "import_ms": 0.017,
+          "link_ms": 0.057,
+          "validate_ms": 0.015,
+          "emit_ms": 0.066
         },
         "success": true,
         "diagnostic_count": 0
@@ -3807,13 +4019,13 @@
         "name": "sunken_citadel",
         "source_bytes": 37158,
         "output_bytes": 92693,
-        "total_ms": 1.828,
+        "total_ms": 1.756,
         "phases": {
-          "parse_ms": 0.529,
-          "import_ms": 0.016,
-          "link_ms": 0.275,
-          "validate_ms": 0.041,
-          "emit_ms": 0.955
+          "parse_ms": 0.523,
+          "import_ms": 0.017,
+          "link_ms": 0.295,
+          "validate_ms": 0.056,
+          "emit_ms": 0.854
         },
         "success": true,
         "diagnostic_count": 0
@@ -3822,28 +4034,28 @@
         "name": "tavern_scene",
         "source_bytes": 545,
         "output_bytes": 2164,
-        "total_ms": 0.197,
+        "total_ms": 0.206,
         "phases": {
-          "parse_ms": 0.065,
-          "import_ms": 0.016,
-          "link_ms": 0.045,
-          "validate_ms": 0.011,
-          "emit_ms": 0.06
+          "parse_ms": 0.063,
+          "import_ms": 0.015,
+          "link_ms": 0.05,
+          "validate_ms": 0.014,
+          "emit_ms": 0.064
         },
         "success": true,
         "diagnostic_count": 0
       },
       {
         "name": "two_room_key_puzzle",
-        "source_bytes": 481,
-        "output_bytes": 1914,
-        "total_ms": 0.204,
+        "source_bytes": 505,
+        "output_bytes": 1988,
+        "total_ms": 0.207,
         "phases": {
-          "parse_ms": 0.07,
-          "import_ms": 0.016,
+          "parse_ms": 0.069,
+          "import_ms": 0.015,
           "link_ms": 0.049,
-          "validate_ms": 0.012,
-          "emit_ms": 0.057
+          "validate_ms": 0.013,
+          "emit_ms": 0.061
         },
         "success": true,
         "diagnostic_count": 0
@@ -3852,26 +4064,26 @@
         "name": "type_aliases",
         "source_bytes": 314,
         "output_bytes": 1152,
-        "total_ms": 0.175,
+        "total_ms": 0.17,
         "phases": {
-          "parse_ms": 0.052,
-          "import_ms": 0.014,
-          "link_ms": 0.048,
-          "validate_ms": 0.011,
-          "emit_ms": 0.049
+          "parse_ms": 0.051,
+          "import_ms": 0.017,
+          "link_ms": 0.042,
+          "validate_ms": 0.013,
+          "emit_ms": 0.046
         },
         "success": true,
         "diagnostic_count": 0
       }
     ],
     "aggregate": {
-      "total_source_bytes": 41731,
-      "total_output_bytes": 111967,
-      "total_ms": 3.36,
+      "total_source_bytes": 41827,
+      "total_output_bytes": 112233,
+      "total_ms": 3.28,
       "files_compiled": 7,
       "files_succeeded": 7,
-      "avg_ms_per_file": 0.48,
-      "bytes_per_ms": 12419.94
+      "avg_ms_per_file": 0.47,
+      "bytes_per_ms": 12752.13
     }
   }
 }

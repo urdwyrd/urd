@@ -66,6 +66,7 @@
 
   let diagnostics = $derived(compileResult?.diagnostics ?? []);
   let hasErrors = $derived(diagnostics.some(d => d.severity === 'error'));
+  let warnings = $derived(diagnostics.filter(d => d.severity !== 'error'));
 
   let formattedTime = $derived(
     compileTimeMs < 1
@@ -168,7 +169,12 @@
   {:else if compileResult.success}
     <!-- Compiled JSON -->
     <div class="output-header">
-      <span class="compile-time">Compiled in {formattedTime}</span>
+      <span class="compile-time">
+        Compiled in {formattedTime}
+        {#if warnings.length > 0}
+          <span class="warning-badge">{warnings.length} {warnings.length === 1 ? 'warning' : 'warnings'}</span>
+        {/if}
+      </span>
       <div class="header-actions">
         <span class="validate-label">Schema Check</span>
         <div class="validate-toggle" role="group" aria-label="Schema validation">
@@ -194,6 +200,22 @@
         </button>
       </div>
     </div>
+    {#if warnings.length > 0}
+      <div class="warnings-list" role="list" aria-label="Compilation warnings">
+        {#each warnings as d}
+          <button
+            class="diagnostic-row severity-{d.severity}"
+            role="listitem"
+            onclick={() => handleDiagnosticClick(d)}
+          >
+            <span class="diag-icon">{severityIcon(d.severity)}</span>
+            <span class="diag-code">{d.code}</span>
+            <span class="diag-line">L{d.span.start_line}</span>
+            <span class="diag-message">{d.message}</span>
+          </button>
+        {/each}
+      </div>
+    {/if}
     <div class="json-output">
       <pre><code>{@html highlightedJson}</code></pre>
     </div>
@@ -397,6 +419,26 @@
 
   .validate-light-invalid {
     background: var(--rose);
+  }
+
+  /* --- Warnings (success with diagnostics) --- */
+
+  .warning-badge {
+    margin-left: 8px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--amber-light) 15%, transparent);
+    color: var(--amber-light);
+    font-size: 10px;
+    font-weight: 500;
+  }
+
+  .warnings-list {
+    border-bottom: 1px solid var(--border);
+    padding: 2px 0;
+    flex-shrink: 0;
+    max-height: 30%;
+    overflow: auto;
   }
 
   /* --- JSON output --- */

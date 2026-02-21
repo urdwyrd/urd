@@ -1158,3 +1158,47 @@ fn e2e_negative_missing_import_has_import_error() {
         errors
     );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Negative: static analysis warnings (S3, S4, S6, S8)
+// ═══════════════════════════════════════════════════════════════════════════
+
+fn warning_codes(diagnostics: &urd_compiler::diagnostics::DiagnosticCollector) -> Vec<String> {
+    diagnostics
+        .all()
+        .iter()
+        .filter(|d| d.severity == Severity::Warning)
+        .map(|d| d.code.clone())
+        .collect()
+}
+
+#[test]
+fn e2e_negative_unreachable_location_warns() {
+    let result = compile_fixture("negative-unreachable-location.urd.md");
+    assert!(result.success, "Should compile (warnings only): {}", format_diagnostics(&result.diagnostics));
+    let warnings = warning_codes(&result.diagnostics);
+    assert!(warnings.contains(&"URD430".to_string()), "Expected URD430: {:?}", warnings);
+}
+
+#[test]
+fn e2e_negative_orphaned_choice_warns() {
+    let result = compile_fixture("negative-orphaned-choice.urd.md");
+    let warnings = warning_codes(&result.diagnostics);
+    assert!(warnings.contains(&"URD432".to_string()), "Expected URD432: {:?}", warnings);
+}
+
+#[test]
+fn e2e_negative_missing_fallthrough_warns() {
+    let result = compile_fixture("negative-missing-fallthrough.urd.md");
+    assert!(result.success, "Should compile (warnings only): {}", format_diagnostics(&result.diagnostics));
+    let warnings = warning_codes(&result.diagnostics);
+    assert!(warnings.contains(&"URD433".to_string()), "Expected URD433: {:?}", warnings);
+}
+
+#[test]
+fn e2e_negative_shadowed_exit_warns() {
+    let result = compile_fixture("negative-shadowed-exit.urd.md");
+    assert!(result.success, "Should compile (warnings only): {}", format_diagnostics(&result.diagnostics));
+    let warnings = warning_codes(&result.diagnostics);
+    assert!(warnings.contains(&"URD434".to_string()), "Expected URD434: {:?}", warnings);
+}

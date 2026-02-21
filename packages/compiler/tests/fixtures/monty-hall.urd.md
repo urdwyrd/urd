@@ -38,3 +38,5 @@ rule monty_reveals:
 * Switch doors -> any Door
   ? @door_1.revealed == false
 * Stay with your choice
+
+The host opens the final door.

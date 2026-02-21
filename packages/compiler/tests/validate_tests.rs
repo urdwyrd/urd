@@ -1664,3 +1664,690 @@ fn integration_monty_hall() {
     let diag = link_and_validate(single_file_cu(ast));
     assert_eq!(count_validate_errors(&diag), 0, "Monty Hall should have zero errors: {:?}", diag.all());
 }
+
+// ── Additional helpers for S3/S4/S6/S8 tests ──
+
+fn prose(text: &str) -> ContentNode {
+    ContentNode::Prose(Prose {
+        text: text.to_string(),
+        span: span("test.urd.md", 35),
+    })
+}
+
+fn jump(target: &str) -> ContentNode {
+    ContentNode::Jump(Jump {
+        target: target.to_string(),
+        is_exit_qualified: false,
+        indent_level: 0,
+        annotation: None,
+        span: span("test.urd.md", 36),
+    })
+}
+
+fn stage_direction(entity_ref: &str, text: &str) -> ContentNode {
+    ContentNode::StageDirection(StageDirection {
+        entity_ref: entity_ref.to_string(),
+        text: text.to_string(),
+        annotation: None,
+        span: span("test.urd.md", 37),
+    })
+}
+
+fn choice_with_content(label: &str, sticky: bool, content: Vec<ContentNode>) -> ContentNode {
+    ContentNode::Choice(Choice {
+        sticky,
+        label: label.to_string(),
+        target: None,
+        target_type: None,
+        content,
+        indent_level: 1,
+        annotation: None,
+        span: span("test.urd.md", 20),
+    })
+}
+
+fn effect_node(target_prop: &str, value: &str) -> ContentNode {
+    ContentNode::Effect(Effect {
+        effect_type: EffectType::Set {
+            target_prop: target_prop.to_string(),
+            operator: "=".to_string(),
+            value_expr: value.to_string(),
+        },
+        indent_level: 0,
+        annotation: None,
+        span: span("test.urd.md", 45),
+    })
+}
+
+// ═══════════════════════════════════════════════════════════
+// S3: Unreachable Location (URD430)
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn s3_all_connected_no_warning() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("north", "Harbor"),
+        location("Harbor"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD430"), "All connected: {:?}", diag.all());
+}
+
+#[test]
+fn s3_one_island() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("north", "Harbor"),
+        location("Harbor"),
+        location("Island"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD430"), "Island unreachable: {:?}", diag.all());
+}
+
+#[test]
+fn s3_no_start_declared() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![])), vec![
+        location("Tavern"),
+        exit_decl("north", "Harbor"),
+        location("Harbor"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD430"), "No start = no check: {:?}", diag.all());
+}
+
+#[test]
+fn s3_self_loop_plus_island() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("start".to_string())),
+        ])),
+    ])), vec![
+        location("Start"),
+        exit_decl("loop", "Start"),
+        location("Island"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD430"), "Island unreachable: {:?}", diag.all());
+}
+
+#[test]
+fn s3_chain_reachability() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("a".to_string())),
+        ])),
+    ])), vec![
+        location("A"),
+        exit_decl("east", "B"),
+        location("B"),
+        exit_decl("east", "C"),
+        location("C"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD430"), "All reachable via chain: {:?}", diag.all());
+}
+
+#[test]
+fn s3_multiple_islands() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("start".to_string())),
+        ])),
+    ])), vec![
+        location("Start"),
+        location("Island A"),
+        location("Island B"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    let urd430_count = diag.all().iter()
+        .filter(|d| d.code == "URD430" && d.severity == Severity::Warning)
+        .count();
+    assert_eq!(urd430_count, 2, "Two unreachable: {:?}", diag.all());
+}
+
+#[test]
+fn s3_bidirectional_pair_no_path_from_start() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("start".to_string())),
+        ])),
+    ])), vec![
+        location("Start"),
+        location("A"),
+        exit_decl("east", "B"),
+        location("B"),
+        exit_decl("west", "A"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    let urd430_count = diag.all().iter()
+        .filter(|d| d.code == "URD430" && d.severity == Severity::Warning)
+        .count();
+    assert_eq!(urd430_count, 2, "A and B unreachable from Start: {:?}", diag.all());
+}
+
+#[test]
+fn s3_conditional_exit_still_counts() {
+    // An exit with a condition child still creates a reachability edge.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("a".to_string())),
+        ])),
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property_with_values("mood", "enum", vec!["friendly", "hostile"]),
+        ])),
+        fm_entry("guard", make_entity_decl("guard", "Guard", vec![])),
+    ])), vec![
+        location("A"),
+        ContentNode::ExitDeclaration(ExitDeclaration {
+            direction: "north".to_string(),
+            destination: "B".to_string(),
+            children: vec![
+                property_comparison("guard", "mood", "==", "friendly"),
+            ],
+            annotation: None,
+            span: span("test.urd.md", 25),
+        }),
+        location("B"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD430"), "Conditional exit still counts: {:?}", diag.all());
+}
+
+// ═══════════════════════════════════════════════════════════
+// S4: Orphaned Choice (URD432)
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn s4_impossible_enum_condition() {
+    // ? @door.state == locked, where state is enum(closed, open) → URD432.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+        fm_entry("Door", make_type_def("Door", vec![], vec![
+            make_property_with_values("state", "enum", vec!["closed", "open"]),
+        ])),
+        fm_entry("door", make_entity_decl("door", "Door", vec![
+            ("state", Scalar::String("closed".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+        section("actions"),
+        choice_with_content("Try lock", false, vec![
+            property_comparison("door", "state", "==", "locked"),
+        ]),
+        prose("Nothing happens."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD432"), "Expected URD432: {:?}", diag.all());
+}
+
+#[test]
+fn s4_valid_enum_no_warning() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+        fm_entry("Door", make_type_def("Door", vec![], vec![
+            make_property_with_values("state", "enum", vec!["closed", "open"]),
+        ])),
+        fm_entry("door", make_entity_decl("door", "Door", vec![
+            ("state", Scalar::String("closed".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+        section("actions"),
+        choice_with_content("Open door", false, vec![
+            property_comparison("door", "state", "==", "closed"),
+        ]),
+        prose("Done."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD432"), "Valid enum: {:?}", diag.all());
+}
+
+#[test]
+fn s4_non_enum_not_checked() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property("trust", "integer"),
+        ])),
+        fm_entry("guard", make_entity_decl("guard", "Guard", vec![])),
+    ])), vec![
+        location("Room"),
+        section("actions"),
+        choice_with_content("Bribe", false, vec![
+            property_comparison("guard", "trust", ">", "50"),
+        ]),
+        prose("Done."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD432"), "Non-enum not checked: {:?}", diag.all());
+}
+
+#[test]
+fn s4_unresolved_annotation_skip() {
+    // @ghost doesn't exist — LINK won't resolve the annotation.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+        section("actions"),
+        choice_with_content("Ghost talk", false, vec![
+            property_comparison("ghost", "mood", "==", "happy"),
+        ]),
+        prose("Done."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD432"), "Unresolved annotation, skip: {:?}", diag.all());
+}
+
+#[test]
+fn s4_choice_outside_section() {
+    // Choice before any section label — still checked, section context is "unnamed".
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+        fm_entry("Door", make_type_def("Door", vec![], vec![
+            make_property_with_values("state", "enum", vec!["closed", "open"]),
+        ])),
+        fm_entry("door", make_entity_decl("door", "Door", vec![
+            ("state", Scalar::String("closed".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+        choice_with_content("Try lock", false, vec![
+            property_comparison("door", "state", "==", "locked"),
+        ]),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD432"), "Choice outside section still checked: {:?}", diag.all());
+}
+
+#[test]
+fn s4_ne_operator_not_checked() {
+    // != operator is not checked by the pragmatic S4.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+        fm_entry("Door", make_type_def("Door", vec![], vec![
+            make_property_with_values("state", "enum", vec!["closed", "open"]),
+        ])),
+        fm_entry("door", make_entity_decl("door", "Door", vec![
+            ("state", Scalar::String("closed".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+        section("actions"),
+        choice_with_content("Check", false, vec![
+            property_comparison("door", "state", "!=", "locked"),
+        ]),
+        prose("Done."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD432"), "!= not checked: {:?}", diag.all());
+}
+
+#[test]
+fn s4_multiple_conditions_one_impossible() {
+    // Choice with two conditions: one valid, one impossible. URD432 fires.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("room".to_string())),
+        ])),
+        fm_entry("Door", make_type_def("Door", vec![], vec![
+            make_property_with_values("state", "enum", vec!["closed", "open"]),
+        ])),
+        fm_entry("door", make_entity_decl("door", "Door", vec![
+            ("state", Scalar::String("closed".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+        section("actions"),
+        choice_with_content("Try lock", false, vec![
+            property_comparison("door", "state", "==", "closed"),
+            property_comparison("door", "state", "==", "locked"),
+        ]),
+        prose("Nothing happens."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD432"), "One impossible condition triggers URD432: {:?}", diag.all());
+}
+
+// ═══════════════════════════════════════════════════════════
+// S6: Missing Fallthrough (URD433)
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn s6_all_oneshot_no_fallthrough() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        choice("Goodbye", false),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD433"), "Expected URD433: {:?}", diag.all());
+}
+
+#[test]
+fn s6_oneshot_with_terminal_jump() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        choice("Goodbye", false),
+        jump("end"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "Terminal jump prevents URD433: {:?}", diag.all());
+}
+
+#[test]
+fn s6_oneshot_with_prose_fallthrough() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        choice("Goodbye", false),
+        prose("The tavern falls quiet."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "Prose fallthrough: {:?}", diag.all());
+}
+
+#[test]
+fn s6_mixed_sticky_oneshot() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        choice("Order", true),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "Sticky choice: {:?}", diag.all());
+}
+
+#[test]
+fn s6_no_choices() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("intro"),
+        prose("Welcome to the tavern."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "No choices: {:?}", diag.all());
+}
+
+#[test]
+fn s6_only_effects_after_choices() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![
+            make_property("done", "boolean"),
+        ])),
+        fm_entry("guard", make_entity_decl("guard", "Guard", vec![])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        effect_node("@guard.done", "true"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD433"), "Effects are not fallthrough: {:?}", diag.all());
+}
+
+#[test]
+fn s6_entity_speech_after_choices() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![])),
+        fm_entry("guard", make_entity_decl("guard", "Guard", vec![])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        choice("Goodbye", false),
+        entity_speech("guard", "Farewell."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "EntitySpeech is fallthrough: {:?}", diag.all());
+}
+
+#[test]
+fn s6_stage_direction_after_choices() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![])),
+        fm_entry("guard", make_entity_decl("guard", "Guard", vec![])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Hello", false),
+        choice("Goodbye", false),
+        stage_direction("guard", "turns away."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "StageDirection is fallthrough: {:?}", diag.all());
+}
+
+#[test]
+fn s6_inline_jumps_dont_protect_section() {
+    // Choices have targets (inline jumps) but the section itself has no fallthrough.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        ContentNode::Choice(Choice {
+            sticky: false,
+            label: "Go north".to_string(),
+            target: Some("harbor".to_string()),
+            target_type: None,
+            content: Vec::new(),
+            indent_level: 1,
+            annotation: None,
+            span: span("test.urd.md", 20),
+        }),
+        ContentNode::Choice(Choice {
+            sticky: false,
+            label: "Go south".to_string(),
+            target: Some("market".to_string()),
+            target_type: None,
+            content: Vec::new(),
+            indent_level: 1,
+            annotation: None,
+            span: span("test.urd.md", 21),
+        }),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD433"), "Inline jumps don't protect section: {:?}", diag.all());
+}
+
+#[test]
+fn s6_jump_nested_in_last_choice() {
+    // A -> jump inside the last choice's content does NOT protect the section.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice_with_content("Hello", false, vec![
+            prose("Hi there."),
+        ]),
+        choice_with_content("Farewell", false, vec![
+            jump("end"),
+        ]),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD433"), "Jump nested in choice doesn't protect section: {:?}", diag.all());
+}
+
+#[test]
+fn s6_on_exhausted_content() {
+    // Prose after all choices acts as on_exhausted content — prevents URD433.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice("Ask about weather", false),
+        choice("Ask about news", false),
+        choice("Ask about rumours", false),
+        prose("The barkeep has nothing more to say."),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD433"), "on_exhausted content prevents URD433: {:?}", diag.all());
+}
+
+// ═══════════════════════════════════════════════════════════
+// S8: Section-Exit Shadowing (URD434)
+// ═══════════════════════════════════════════════════════════
+
+#[test]
+fn s8_name_collision() {
+    // Section "north" in a location that has exit "north".
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("north", "Harbor"),
+        section("north"),
+        prose("Fallthrough."),
+        location("Harbor"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD434"), "Expected URD434: {:?}", diag.all());
+}
+
+#[test]
+fn s8_no_collision() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("north", "Harbor"),
+        section("topics"),
+        choice("Ask", true),
+        location("Harbor"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD434"), "No collision: {:?}", diag.all());
+}
+
+#[test]
+fn s8_section_before_location() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![])), vec![
+        section("intro"),
+        location("Tavern"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD434"), "No location context: {:?}", diag.all());
+}
+
+#[test]
+fn s8_different_location_no_collision() {
+    // Exit "harbor" in Tavern, section "harbor" in Harbor — different scope.
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("harbor", "Harbor"),
+        location("Harbor"),
+        section("harbor"),
+        choice("Ask", true),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD434"), "Different location: {:?}", diag.all());
+}
+
+#[test]
+fn s8_exit_direction_vs_destination() {
+    // Exit "-> north: Harbor". Section "== harbor". No collision (key is "north", not "harbor").
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("north", "Harbor"),
+        section("harbor"),
+        prose("Fallthrough."),
+        location("Harbor"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD434"), "Destination != exit key: {:?}", diag.all());
+}
+
+#[test]
+fn s8_exit_direction_matches_section() {
+    // Exit "-> harbor: Harbor Town". Section "== harbor". Collision on key "harbor".
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("start", Scalar::String("tavern".to_string())),
+        ])),
+    ])), vec![
+        location("Tavern"),
+        exit_decl("harbor", "Harbor Town"),
+        section("harbor"),
+        prose("Fallthrough."),
+        location("Harbor Town"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_warning(&diag, "URD434"), "Exit key matches section: {:?}", diag.all());
+}
