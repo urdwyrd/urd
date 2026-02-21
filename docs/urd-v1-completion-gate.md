@@ -2,9 +2,11 @@
 
 *Everything that must be true before Urd v1 can be called done*
 
-> **Document status: PLANNING**
-> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion. This document is the acceptance gate for declaring v1 complete.
-> February 2026.
+> **Document status: LIVING GATE**
+> This document is the acceptance gate for declaring v1 complete. It is a living document — progress is recorded here as items are completed. Status fields on individual items track what is done, what is in progress, and what remains.
+>
+> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion.
+> February 2026. Last updated: 21 February 2026.
 
 ---
 
@@ -45,7 +47,8 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | Dialogue sections, jumps, sticky/one-shot choices | ✓ Implemented |
 | `any:` OR conditions | ✓ Implemented |
 | Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) | ✓ Compiling |
-| 480 tests, 100% pass rate | ✓ Current |
+| Static analysis: all eight checks (S1–S8) | ✓ Implemented (compiler 0.1.5) |
+| 516 tests, 100% pass rate | ✓ Current |
 
 ### Runtime (Wyrd)
 
@@ -60,7 +63,7 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | Schema validation against JSON Schema | Partial (JSON Schema exists, tooling not wrapped) |
 | Playthrough simulation | ✗ Not started |
 | Statistical validation (Monte Carlo) | ✗ Not started |
-| Static analysis checks | ✗ Not started |
+| Static analysis checks | ✓ Complete — all eight checks (S1–S8) implemented. |
 
 ### Specifications
 
@@ -119,46 +122,42 @@ Everything below is specified. Nothing requires new design work.
 
 ### C. Static Analysis (Compiler)
 
-These are specified in the Architecture and Test Case Strategy. Some may already be partially implemented in VALIDATE phase — needs audit.
+These are specified in the Architecture and Test Case Strategy. All eight checks are now implemented as of compiler 0.1.5.
 
 | # | Check | Source | Status |
 |---|-------|--------|--------|
-| S1 | Undefined entity reference | Test Case Strategy §Static Analysis | Likely ✓ (LINK phase) |
-| S2 | Type mismatch (property set to invalid value) | Test Case Strategy §Static Analysis | Likely ✓ (VALIDATE phase) |
-| S3 | Unreachable location (no incoming exit, not start) | Test Case Strategy §Static Analysis | Needs implementation |
-| S4 | Orphaned action (conditions can never be satisfied) | Test Case Strategy §Static Analysis | Needs implementation |
-| S5 | Duplicate IDs across compilation unit | Test Case Strategy §Static Analysis | ✓ Implemented |
-| S6 | Missing fallthrough (one-shot-only section, no terminal jump) | Test Case Strategy §Static Analysis | Needs implementation |
-| S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented |
-| S8 | Shadowed exit (section name matches exit name) | Test Case Strategy §Static Analysis | Needs implementation |
+| S1 | Undefined entity reference | Test Case Strategy §Static Analysis | ✓ Implemented (LINK phase, URD301) |
+| S2 | Type mismatch (property set to invalid value) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD410+) |
+| S3 | Unreachable location (not reachable from `world.start` via exits) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD430) |
+| S4 | Orphaned action (choice-scoped in v1: a choice whose conditions can never be satisfied) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD432) |
+| S5 | Duplicate IDs across compilation unit | Test Case Strategy §Static Analysis | ✓ Implemented (LINK phase, URD302+) |
+| S6 | Missing fallthrough (one-shot-only section, no terminal jump) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD433) |
+| S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented (IMPORT phase, URD202) |
+| S8 | Shadowed exit (section name matches exit name in same location) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD434) |
 
 ### D. Specification Consistency Audit
 
-Items surfaced during today's architectural review that may not be reflected in all documents.
+Items surfaced during architectural review that may not be reflected in all documents.
 
-| # | Issue | Action |
-|---|-------|--------|
-| D1 | Three-layer model (Urd, Wyrd, Adapter) must be consistent across all docs | Verify Architecture doc names the adapter layer explicitly |
-| D2 | Failure contract (structured result, two categories, no mutation, no event) now specified in governance doc | Verify Wyrd Reference Runtime spec includes or references this |
-| D3 | `on_enter`/`on_exit` added to JSON Schema as erratum | Verify Schema Spec prose matches JSON Schema |
-| D4 | `on_condition` expressions — regex pattern in JSON Schema was overly restrictive | Verify fix is in published JSON Schema |
-| D5 | "text composition" terminology — consistent across governance, presentation, essay | Verify Schema Markdown spec doesn't use "conditional text" in a conflicting way |
-| D6 | Lambda reframe — runtime-supervised sandboxed logic, not schema-embedded | Verify product vision and architecture doc use consistent framing |
-| D7 | Graph model paragraph — consider adding informative section to Schema Spec naming the graph structure explicitly | Optional, informative only |
+| # | Item | Risk | Status |
+|---|------|------|--------|
+| D1 | Three-layer model (Schema → Runtime → Adapter) — verify all spec documents use consistent terminology | Low | Not started |
+| D2 | Failure contract in Wyrd spec — verify Wyrd spec includes the two-category failure model from Architectural Boundaries | Medium | Not started |
+| D3 | `on_enter` / `on_exit` fields in JSON Schema — verify the erratum (adding these fields) has been applied | High | Not started |
+| D4 | `on_condition` regex pattern in JSON Schema — verify the pattern accepts all valid condition expressions | Medium | Not started |
+| D5 | Text composition terminology — verify consistent naming across Schema Spec, Schema Markdown, and Wyrd Spec | Low | Not started |
+| D6 | Lambda reframe — verify the "extension host slot" framing is consistent between Architecture, Boundaries, and Future Proposals | Low | Not started |
+| D7 | Graph model paragraph — optional: add a paragraph in Architecture describing the graph derivation model | Optional | Not started |
 
 ---
 
-## What the Soufflé Discussion Adds to v1
+## What the Runtime Must Be Able to Derive
 
-The Soufflé/Datalog discussion surfaced capabilities that belong in the system. The critical distinction: **derived state computation belongs in Wyrd's API, not in the schema or as author-exposed logic.**
+These are capabilities the runtime computes from base facts (the `.urd.json` world definition). They are not stored in the schema. They are the "derived state" that makes Urd worlds queryable.
 
-### In Scope for v1 (Wyrd API surface)
-
-These are read-only queries the runtime computes from world state. They pass the boundary test (Question 3: describes how state is evaluated → Wyrd). They don't add schema primitives or author-facing features.
-
-| Capability | What It Does | Why It Matters |
-|-----------|-------------|----------------|
-| Reachability query | Given current state, which locations can the player reach? | Static analysis (S3), testing, adapter tooling |
+| Derived Property | What It Means | Where It's Used |
+|-----------------|--------------|----------------|
+| Reachability | Given current state, which locations are reachable from this location? | Dead-end detection, world graph visualisation |
 | Available actions query | Given current state, which actions have satisfiable conditions? | Already implicit in `getAvailableActions()` API |
 | Containment tree query | Transitive containment — what's inside what, recursively | Inventory display, adapter tooling, visibility auditing |
 | Visible entities query | Given a location and a viewer, which entities and properties are visible? | Visibility auditing (Architecture §Testing), adapter rendering |
@@ -225,7 +224,7 @@ These are legitimate future features that pass the boundary test but are not in 
 ### Compiler Gate
 
 - [ ] All nine compiler requirements (C1–C9 from Architecture §v1 Acceptance Checklist) pass
-- [ ] All eight static analysis checks (S1–S8) implemented and tested
+- [x] All eight static analysis checks (S1–S8) implemented and tested
 - [ ] Four canonical fixtures compile without warnings
 - [ ] Compiled JSON validates against published JSON Schema
 - [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations
@@ -264,10 +263,10 @@ These are legitimate future features that pass the boundary test but are not in 
 
 ## Implementation Sequence (Recommended)
 
-This is a suggested order, not a mandate. Dependencies are noted.
+This is a suggested order, not a mandate. Dependencies are noted. The sequence was updated to reflect the decision to implement static analysis checks before the spec audit, since S3/S4/S6/S8 are additive Warning-only diagnostics that use existing data and are unlikely to require rework from the audit.
 
-1. **Spec audit** (D1–D7) — catch inconsistencies before building against them
-2. **Static analysis gaps** (S3, S4, S6, S8) — compiler improvements, no runtime dependency
+1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5. URD430, URD432, URD433, URD434.
+2. **Spec audit** (D1–D7) — catch inconsistencies before building the runtime
 3. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
 4. **Wyrd sequences** (R11) — phase management, advance modes
 5. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
@@ -279,6 +278,6 @@ Each step produces a testable increment. Nothing depends on something later in t
 
 ---
 
-*This document is the single reference for what "v1 complete" means. When every gate passes, v1 ships.*
+*This document is the single reference for what "v1 complete" means. It is updated as items are completed. When every gate passes, v1 ships.*
 
 *End of Document*

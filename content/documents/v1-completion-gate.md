@@ -73,7 +73,8 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | Dialogue sections, jumps, sticky/one-shot choices | ✓ Implemented |
 | `any:` OR conditions | ✓ Implemented |
 | Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) | ✓ Compiling |
-| 480 tests, 100% pass rate | ✓ Current |
+| Static analysis: all eight checks (S1–S8) | ✓ Implemented (compiler 0.1.5) |
+| 516 tests, 100% pass rate | ✓ Current |
 
 ### Runtime (Wyrd)
 
@@ -88,7 +89,7 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | Schema validation against JSON Schema | Partial (JSON Schema exists, tooling not wrapped) |
 | Playthrough simulation | ✗ Not started |
 | Statistical validation (Monte Carlo) | ✗ Not started |
-| Static analysis checks | ✗ Not started |
+| Static analysis checks | ✓ Complete — all eight checks (S1–S8) implemented. |
 
 ### Specifications
 
@@ -147,18 +148,18 @@ Everything below is specified. Nothing requires new design work.
 
 ### C. Static Analysis (Compiler)
 
-These are specified in the Architecture and Test Case Strategy. Some may already be partially implemented in VALIDATE phase — needs audit.
+These are specified in the Architecture and Test Case Strategy. All eight checks are now implemented as of compiler 0.1.5.
 
 | # | Check | Source | Status |
 |---|-------|--------|--------|
-| S1 | Undefined entity reference | Test Case Strategy §Static Analysis | Likely ✓ (LINK phase) |
-| S2 | Type mismatch (property set to invalid value) | Test Case Strategy §Static Analysis | Likely ✓ (VALIDATE phase) |
-| S3 | Unreachable location (no incoming exit, not start) | Test Case Strategy §Static Analysis | Needs implementation |
-| S4 | Orphaned action (conditions can never be satisfied) | Test Case Strategy §Static Analysis | Needs implementation |
-| S5 | Duplicate IDs across compilation unit | Test Case Strategy §Static Analysis | ✓ Implemented |
-| S6 | Missing fallthrough (one-shot-only section, no terminal jump) | Test Case Strategy §Static Analysis | Needs implementation |
-| S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented |
-| S8 | Shadowed exit (section name matches exit name) | Test Case Strategy §Static Analysis | Needs implementation |
+| S1 | Undefined entity reference | Test Case Strategy §Static Analysis | ✓ Implemented (LINK phase, URD301) |
+| S2 | Type mismatch (property set to invalid value) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD410+) |
+| S3 | Unreachable location (not reachable from `world.start` via exits) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD430) |
+| S4 | Orphaned action (choice-scoped in v1: a choice whose conditions can never be satisfied) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD432) |
+| S5 | Duplicate IDs across compilation unit | Test Case Strategy §Static Analysis | ✓ Implemented (LINK phase, URD302+) |
+| S6 | Missing fallthrough (one-shot-only section, no terminal jump) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD433) |
+| S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented (IMPORT phase, URD202) |
+| S8 | Shadowed exit (section name matches exit name in same location) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD434) |
 
 ### D. Specification Consistency Audit
 
@@ -253,7 +254,7 @@ These are legitimate future features that pass the boundary test but are not in 
 ### Compiler Gate
 
 - [ ] All nine compiler requirements (C1–C9 from Architecture §v1 Acceptance Checklist) pass
-- [ ] All eight static analysis checks (S1–S8) implemented and tested
+- [x] All eight static analysis checks (S1–S8) implemented and tested
 - [ ] Four canonical fixtures compile without warnings
 - [ ] Compiled JSON validates against published JSON Schema
 - [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations
@@ -294,8 +295,8 @@ These are legitimate future features that pass the boundary test but are not in 
 
 This is a suggested order, not a mandate. Dependencies are noted.
 
-1. **Spec audit** (D1–D7) — catch inconsistencies before building against them
-2. **Static analysis gaps** (S3, S4, S6, S8) — compiler improvements, no runtime dependency
+1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5. URD430, URD432, URD433, URD434.
+2. **Spec audit** (D1–D7) — catch inconsistencies before building the runtime
 3. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
 4. **Wyrd sequences** (R11) — phase management, advance modes
 5. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
