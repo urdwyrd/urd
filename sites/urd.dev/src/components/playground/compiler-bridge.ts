@@ -8,10 +8,85 @@ declare const __WASM_CACHE_BUST__: string;
 
 // --- Types ---
 
+export interface FactSite {
+  kind: 'choice' | 'exit' | 'rule';
+  id: string;
+}
+
+export interface FactSpan {
+  file: string;
+  start_line: number;
+  start_col: number;
+  end_line: number;
+  end_col: number;
+}
+
+export interface PropertyRead {
+  site: FactSite;
+  entity_type: string;
+  property: string;
+  operator: string;
+  value_literal: string;
+  value_kind: string;
+  span: FactSpan;
+}
+
+export interface PropertyWrite {
+  site: FactSite;
+  entity_type: string;
+  property: string;
+  operator: string;
+  value_expr: string;
+  value_kind: string | null;
+  span: FactSpan;
+}
+
+export interface ExitEdge {
+  from_location: string;
+  to_location: string;
+  exit_name: string;
+  is_conditional: boolean;
+  guard_reads: number[];
+  span: FactSpan;
+}
+
+export interface JumpEdge {
+  from_section: string;
+  target: { kind: 'section' | 'exit' | 'end'; id?: string };
+  span: FactSpan;
+}
+
+export interface ChoiceFact {
+  section: string;
+  choice_id: string;
+  label: string;
+  sticky: boolean;
+  condition_reads: number[];
+  effect_writes: number[];
+  span: FactSpan;
+}
+
+export interface RuleFact {
+  rule_id: string;
+  condition_reads: number[];
+  effect_writes: number[];
+  span: FactSpan;
+}
+
+export interface FactSet {
+  reads: PropertyRead[];
+  writes: PropertyWrite[];
+  exits: ExitEdge[];
+  jumps: JumpEdge[];
+  choices: ChoiceFact[];
+  rules: RuleFact[];
+}
+
 export interface CompileResult {
   success: boolean;
   world: string | null;
   diagnostics: Diagnostic[];
+  facts: FactSet | null;
 }
 
 export interface ParseResult {

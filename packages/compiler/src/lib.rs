@@ -11,6 +11,7 @@ pub mod ast;
 pub mod diagnostics;
 pub mod graph;
 pub mod span;
+pub mod facts;
 pub mod slugify;
 pub mod symbol_table;
 
@@ -31,7 +32,6 @@ use import::FileReader;
 use span::FilePath;
 
 /// The result of a compilation.
-#[derive(Debug)]
 pub struct CompilationResult {
     /// `true` if compilation succeeded with zero errors.
     pub success: bool,
@@ -39,6 +39,9 @@ pub struct CompilationResult {
     pub world: Option<String>,
     /// All diagnostics (errors, warnings, info) from all phases.
     pub diagnostics: DiagnosticCollector,
+    /// Normalized analysis IR. `Some` whenever LINK succeeds, even if
+    /// VALIDATE emits errors. `None` only on PARSE or IMPORT failure.
+    pub fact_set: Option<facts::FactSet>,
 }
 
 /// Compile a single `.urd.md` source string (no import resolution).
@@ -87,6 +90,7 @@ pub fn compile_source_with_reader(
                 success: false,
                 world: None,
                 diagnostics,
+                fact_set: None,
             };
         }
     };
@@ -101,11 +105,15 @@ pub fn compile_source_with_reader(
             success: false,
             world: None,
             diagnostics,
+            fact_set: None,
         };
     }
 
     // Phase 3: LINK
     let linked = link::link(compilation_unit, &mut diagnostics);
+
+    // Phase 3a: Extract facts (always succeeds when LINK completes)
+    let fact_set = Some(facts::extract_facts(&linked.graph, &linked.symbol_table));
 
     // Phase 4: VALIDATE
     validate::validate(&linked.graph, &linked.symbol_table, &mut diagnostics);
@@ -116,6 +124,7 @@ pub fn compile_source_with_reader(
             success: false,
             world: None,
             diagnostics,
+            fact_set,
         };
     }
 
@@ -125,6 +134,7 @@ pub fn compile_source_with_reader(
         success: true,
         world: Some(json),
         diagnostics,
+        fact_set,
     }
 }
 
@@ -156,6 +166,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
                 success: false,
                 world: None,
                 diagnostics,
+                fact_set: None,
             };
         }
     };

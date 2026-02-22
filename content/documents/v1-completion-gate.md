@@ -38,7 +38,7 @@ details:
 
 ## What "v1 Complete" Means
 
-v1 complete is not "the compiler runs." The compiler already runs — five phases, 480 tests, 100% pass rate, four canonical fixtures compiling to valid `.urd.json`.
+v1 complete is not "the compiler runs." The compiler already runs — five phases, 547 tests, 100% pass rate, five canonical fixtures compiling to valid `.urd.json`.
 
 v1 complete means:
 
@@ -72,9 +72,10 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | `.urd.json` emission conforming to schema | ✓ Implemented |
 | Dialogue sections, jumps, sticky/one-shot choices | ✓ Implemented |
 | `any:` OR conditions | ✓ Implemented |
-| Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) | ✓ Compiling |
+| Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) + Sunken Citadel | ✓ Compiling |
 | Static analysis: all eight checks (S1–S8) | ✓ Implemented (compiler 0.1.5) |
-| 516 tests, 100% pass rate | ✓ Current |
+| FactSet analysis IR (F1–F8): six fact types, PropertyDependencyIndex, WASM serialisation | ✓ Implemented (compiler 0.1.6) |
+| 547 tests, 100% pass rate | ✓ Current |
 
 ### Runtime (Wyrd)
 
@@ -161,19 +162,34 @@ These are specified in the Architecture and Test Case Strategy. All eight checks
 | S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented (IMPORT phase, URD202) |
 | S8 | Shadowed exit (section name matches exit name in same location) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD434) |
 
-### D. Specification Consistency Audit
+### D. Analysis IR: FactSet (Compiler Infrastructure)
+
+The FactSet is a normalized, immutable, deterministic intermediate representation extracted after LINK. It projects the resolved world into flat relational tuples — exits, jumps, choices, rules, property reads, and property writes — queryable without AST traversal. Implemented in compiler 0.1.6 with 31 dedicated tests across all five canonical fixtures. WASM output includes serialised facts for playground tooling.
+
+| # | Requirement | Source | Status |
+|---|------------|--------|--------|
+| F1 | FactSet container type — immutable, deterministic, complete | Analysis IR Brief §Core Invariant | ✓ Implemented |
+| F2 | Fact types: ExitEdge, JumpEdge, ChoiceFact, RuleFact, PropertyRead, PropertyWrite | Analysis IR Brief §Fact Types | ✓ Implemented |
+| F3 | PropertyKey normalization | Analysis IR Brief §Identity Types | ✓ Implemented |
+| F4 | FactSite uniform address space | Analysis IR Brief §FactSite | ✓ Implemented |
+| F5 | `extract_facts()` produces facts for all five canonical fixtures | Analysis IR Brief §Extraction Algorithm | ✓ Implemented |
+| F6 | PropertyDependencyIndex with query helpers | Analysis IR Brief §Part 2 | ✓ Implemented |
+| F7 | FactSetBuilder enforces referential integrity at construction time | Analysis IR Brief §Implementation Notes | ✓ Implemented |
+| F8 | Referential integrity, uniqueness constraints, no partial facts | Analysis IR Brief §Invariants | ✓ Implemented |
+
+### E. Specification Consistency Audit
 
 Items surfaced during today's architectural review that may not be reflected in all documents.
 
 | # | Issue | Action |
 |---|-------|--------|
-| D1 | Three-layer model (Urd, Wyrd, Adapter) must be consistent across all docs | Verify Architecture doc names the adapter layer explicitly |
-| D2 | Failure contract (structured result, two categories, no mutation, no event) now specified in governance doc | Verify Wyrd Reference Runtime spec includes or references this |
-| D3 | `on_enter`/`on_exit` added to JSON Schema as erratum | Verify Schema Spec prose matches JSON Schema |
-| D4 | `on_condition` expressions — regex pattern in JSON Schema was overly restrictive | Verify fix is in published JSON Schema |
-| D5 | "text composition" terminology — consistent across governance, presentation, essay | Verify Schema Markdown spec doesn't use "conditional text" in a conflicting way |
-| D6 | Lambda reframe — runtime-supervised sandboxed logic, not schema-embedded | Verify product vision and architecture doc use consistent framing |
-| D7 | Graph model paragraph — consider adding informative section to Schema Spec naming the graph structure explicitly | Optional, informative only |
+| E1 | Three-layer model (Urd, Wyrd, Adapter) must be consistent across all docs | Verify Architecture doc names the adapter layer explicitly |
+| E2 | Failure contract (structured result, two categories, no mutation, no event) now specified in governance doc | Verify Wyrd Reference Runtime spec includes or references this |
+| E3 | `on_enter`/`on_exit` added to JSON Schema as erratum | Verify Schema Spec prose matches JSON Schema |
+| E4 | `on_condition` expressions — regex pattern in JSON Schema was overly restrictive | Verify fix is in published JSON Schema |
+| E5 | "text composition" terminology — consistent across governance, presentation, essay | Verify Schema Markdown spec doesn't use "conditional text" in a conflicting way |
+| E6 | Lambda reframe — runtime-supervised sandboxed logic, not schema-embedded | Verify product vision and architecture doc use consistent framing |
+| E7 | Graph model paragraph — consider adding informative section to Schema Spec naming the graph structure explicitly | Optional, informative only |
 
 ---
 
@@ -255,7 +271,8 @@ These are legitimate future features that pass the boundary test but are not in 
 
 - [ ] All nine compiler requirements (C1–C9 from Architecture §v1 Acceptance Checklist) pass
 - [x] All eight static analysis checks (S1–S8) implemented and tested
-- [ ] Four canonical fixtures compile without warnings
+- [x] FactSet extraction (F1–F8) implemented: produces facts for all five canonical fixtures, determinism verified, referential integrity enforced
+- [ ] Five canonical fixtures compile without warnings
 - [ ] Compiled JSON validates against published JSON Schema
 - [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations
 
@@ -277,7 +294,7 @@ These are legitimate future features that pass the boundary test but are not in 
 
 ### Specification Gate
 
-- [ ] All D1–D7 consistency items verified or resolved
+- [ ] All E1–E7 consistency items verified or resolved
 - [ ] No contradictions between Schema Spec, JSON Schema, Schema Markdown Spec, Wyrd Spec, and Architectural Boundaries
 - [ ] Published JSON Schema matches all compiler outputs
 
@@ -296,13 +313,14 @@ These are legitimate future features that pass the boundary test but are not in 
 This is a suggested order, not a mandate. Dependencies are noted.
 
 1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5. URD430, URD432, URD433, URD434.
-2. **Spec audit** (D1–D7) — catch inconsistencies before building the runtime
-3. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
-4. **Wyrd sequences** (R11) — phase management, advance modes
-5. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
-6. **Wyrd contracts** (R17–R21) — immutable state, events, determinism, failure contract
-7. **Testing framework** (T1–T5) — schema validation, playthrough simulation, Monte Carlo
-8. **Acceptance verification** — run all gates, fix what fails
+2. ~~**FactSet extraction** (F1–F8)~~ — ✓ Complete. Compiler 0.1.6. Six fact types, PropertyDependencyIndex, WASM serialisation, 31 tests across all five fixtures.
+3. **Spec audit** (E1–E7) — catch inconsistencies before building the runtime
+4. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
+5. **Wyrd sequences** (R11) — phase management, advance modes
+6. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
+7. **Wyrd contracts** (R17–R21) — immutable state, events, determinism, failure contract
+8. **Testing framework** (T1–T5) — schema validation, playthrough simulation, Monte Carlo
+9. **Acceptance verification** — run all gates, fix what fails
 
 Each step produces a testable increment. Nothing depends on something later in the sequence.
 

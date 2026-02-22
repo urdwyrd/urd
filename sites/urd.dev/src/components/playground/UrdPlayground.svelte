@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import OutputPane from './OutputPane.svelte';
+  import FactSetView from './FactSetView.svelte';
   import {
     initCompiler,
     compileSource,
@@ -123,6 +124,8 @@ Overgrown paths wind between crumbling statues.
   let parseValid = $state(true);
   let splitPercent = $state(50);
   let mobileTab: 'editor' | 'output' = $state('editor');
+  let factsOpen = $state(true);
+  let factsExpanded = $state(false);
 
   // DOM refs
   let editorContainer: HTMLDivElement | undefined = $state();
@@ -324,84 +327,121 @@ Overgrown paths wind between crumbling statues.
 <div
   class="playground"
   bind:this={playgroundEl}
-  style="--split: {splitPercent}%"
   role="region"
   aria-label="Urd Playground"
 >
-  <!-- Mobile tab bar -->
-  <div class="mobile-tabs">
-    <button
-      class="tab"
-      class:active={mobileTab === 'editor'}
-      onclick={() => mobileTab = 'editor'}
+  <!-- Main area: editor + output side by side -->
+  <div class="main-area" style="--split: {splitPercent}%">
+    <!-- Mobile tab bar -->
+    <div class="mobile-tabs">
+      <button
+        class="tab"
+        class:active={mobileTab === 'editor'}
+        onclick={() => mobileTab = 'editor'}
+      >
+        Editor
+      </button>
+      <button
+        class="tab"
+        class:active={mobileTab === 'output'}
+        onclick={() => mobileTab = 'output'}
+      >
+        Output
+        {#if compileResult && !compileResult.success}
+          <span class="tab-badge error">
+            {compileResult.diagnostics.length}
+          </span>
+        {/if}
+      </button>
+      <span class="parse-indicator" class:valid={parseValid} class:invalid={!parseValid}
+        title={parseValid ? 'Syntax valid' : 'Syntax errors detected'}
+      ></span>
+    </div>
+
+    <!-- Editor pane -->
+    <div
+      class="pane editor-pane"
+      class:mobile-hidden={mobileTab !== 'editor'}
+      role="region"
+      aria-label="Schema Markdown editor"
     >
-      Editor
-    </button>
-    <button
-      class="tab"
-      class:active={mobileTab === 'output'}
-      onclick={() => mobileTab = 'output'}
+      <div class="editor-mount" bind:this={editorContainer}></div>
+    </div>
+
+    <!-- Divider (desktop only) -->
+    <div
+      class="divider"
+      bind:this={dividerEl}
+      onpointerdown={onDividerPointerDown}
+      role="separator"
+      aria-orientation="vertical"
+    ></div>
+
+    <!-- Output pane -->
+    <div
+      class="pane output-pane-container"
+      class:mobile-hidden={mobileTab !== 'output'}
+      role="region"
+      aria-label="Compilation output"
     >
-      Output
-      {#if compileResult && !compileResult.success}
-        <span class="tab-badge error">
-          {compileResult.diagnostics.length}
-        </span>
+      <OutputPane
+        {compileResult}
+        {compileTimeMs}
+        {compilerReady}
+        {loadError}
+        onDiagnosticClick={handleDiagnosticClick}
+      />
+    </div>
+  </div>
+
+  <!-- Facts panel -->
+  {#if compileResult?.facts}
+    <div class="facts-panel" class:facts-open={factsOpen}>
+      <button class="facts-header" onclick={() => factsOpen = !factsOpen}>
+        <span class="facts-toggle">{factsOpen ? '▾' : '▸'}</span>
+        <span class="facts-title">Analysis</span>
+        <span class="facts-count">{
+          compileResult.facts.exits.length +
+          compileResult.facts.choices.length +
+          compileResult.facts.reads.length +
+          compileResult.facts.writes.length +
+          compileResult.facts.jumps.length +
+          compileResult.facts.rules.length
+        } facts</span>
+        {#if factsOpen}
+          <button
+            class="facts-size-btn"
+            title={factsExpanded ? 'Reduce' : 'Expand'}
+            onclick={(e) => { e.stopPropagation(); factsExpanded = !factsExpanded; }}
+          >{factsExpanded ? '▵' : '▿'}</button>
+        {/if}
+      </button>
+      {#if factsOpen}
+        <div class="facts-body" class:facts-expanded={factsExpanded}>
+          <FactSetView facts={compileResult.facts} onDiagnosticClick={handleDiagnosticClick} />
+        </div>
       {/if}
-    </button>
-    <span class="parse-indicator" class:valid={parseValid} class:invalid={!parseValid}
-      title={parseValid ? 'Syntax valid' : 'Syntax errors detected'}
-    ></span>
-  </div>
-
-  <!-- Editor pane -->
-  <div
-    class="pane editor-pane"
-    class:mobile-hidden={mobileTab !== 'editor'}
-    role="region"
-    aria-label="Schema Markdown editor"
-  >
-    <div class="editor-mount" bind:this={editorContainer}></div>
-  </div>
-
-  <!-- Divider (desktop only) -->
-  <div
-    class="divider"
-    bind:this={dividerEl}
-    onpointerdown={onDividerPointerDown}
-    role="separator"
-    aria-orientation="vertical"
-  ></div>
-
-  <!-- Output pane -->
-  <div
-    class="pane output-pane-container"
-    class:mobile-hidden={mobileTab !== 'output'}
-    role="region"
-    aria-label="Compilation output"
-  >
-    <OutputPane
-      {compileResult}
-      {compileTimeMs}
-      {compilerReady}
-      {loadError}
-      onDiagnosticClick={handleDiagnosticClick}
-    />
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>
   .playground {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--deep);
+  }
+
+  .main-area {
     display: grid;
     grid-template-columns: var(--split) 4px 1fr;
     grid-template-rows: 1fr;
     height: 70vh;
     min-height: 400px;
     max-height: 800px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--deep);
   }
 
   /* --- Mobile tabs --- */
@@ -512,15 +552,92 @@ Overgrown paths wind between crumbling statues.
 
   /* --- Responsive --- */
 
+  /* --- Facts panel --- */
+
+  .facts-panel {
+    border-top: 1px solid var(--border);
+  }
+
+  .facts-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    padding: 5px 12px;
+    border: none;
+    background: var(--raise);
+    color: var(--text);
+    font-family: var(--display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .facts-header:hover {
+    background: var(--surface);
+  }
+
+  .facts-toggle {
+    color: var(--faint);
+    width: 10px;
+    font-size: 10px;
+  }
+
+  .facts-title {
+    text-transform: uppercase;
+  }
+
+  .facts-count {
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 400;
+    margin-left: auto;
+  }
+
+  .facts-size-btn {
+    padding: 1px 6px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--faint);
+    font-family: var(--mono);
+    font-size: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    margin-left: 6px;
+  }
+
+  .facts-size-btn:hover {
+    border-color: var(--gold-dim);
+    color: var(--text);
+  }
+
+  .facts-body {
+    max-height: 280px;
+    overflow: auto;
+    border-top: 1px solid var(--border);
+    transition: max-height 0.2s ease;
+  }
+
+  .facts-body.facts-expanded {
+    max-height: 70vh;
+  }
+
+  /* --- Responsive --- */
+
   @media (max-width: 1023px) {
-    .playground {
+    .main-area {
       grid-template-columns: var(--split) 4px 1fr;
       --split: 55%;
     }
   }
 
   @media (max-width: 767px) {
-    .playground {
+    .main-area {
       display: flex;
       flex-direction: column;
       grid-template-columns: unset;
@@ -541,6 +658,10 @@ Overgrown paths wind between crumbling statues.
     .pane {
       flex: 1;
       min-height: 0;
+    }
+
+    .facts-body {
+      max-height: 200px;
     }
   }
 </style>

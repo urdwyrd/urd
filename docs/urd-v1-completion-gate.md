@@ -2,17 +2,15 @@
 
 *Everything that must be true before Urd v1 can be called done*
 
-> **Document status: LIVING GATE**
-> This document is the acceptance gate for declaring v1 complete. It is a living document — progress is recorded here as items are completed. Status fields on individual items track what is done, what is in progress, and what remains.
->
-> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion.
-> February 2026. Last updated: 21 February 2026.
+> **Document status: PLANNING**
+> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion. This document is the acceptance gate for declaring v1 complete.
+> February 2026.
 
 ---
 
 ## What "v1 Complete" Means
 
-v1 complete is not "the compiler runs." The compiler already runs — five phases, 480 tests, 100% pass rate, four canonical fixtures compiling to valid `.urd.json`.
+v1 complete is not "the compiler runs." The compiler already runs — five phases, S1–S8 static analysis checks, five canonical fixtures compiling to valid `.urd.json`.
 
 v1 complete means:
 
@@ -21,9 +19,10 @@ v1 complete means:
 3. The JSON Schema validates every compiler output and rejects invalid hand-authored JSON
 4. The static analysis checks specified in the Architecture and Test Case Strategy are implemented
 5. The boundary is enforced — nothing in the schema or runtime that belongs in the adapter layer
-6. The four test cases pass as both compilation targets and runtime playthroughs
+6. The five canonical fixtures pass as compilation targets and the four original test cases pass as runtime playthroughs
 7. The Wyrd reference runtime executes all four test cases correctly
 8. The testing framework can run scripted playthroughs and statistical validation
+9. The FactSet analysis IR is extracted, queryable, and deterministic
 
 This is not Phase 1 of the product roadmap. This is the point at which the system's foundational claims are provable, not just specified.
 
@@ -46,9 +45,10 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | `.urd.json` emission conforming to schema | ✓ Implemented |
 | Dialogue sections, jumps, sticky/one-shot choices | ✓ Implemented |
 | `any:` OR conditions | ✓ Implemented |
-| Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) | ✓ Compiling |
+| Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) + Sunken Citadel | ✓ Compiling |
 | Static analysis: all eight checks (S1–S8) | ✓ Implemented (compiler 0.1.5) |
-| 516 tests, 100% pass rate | ✓ Current |
+| FactSet analysis IR (F1–F8): six fact types, PropertyDependencyIndex, WASM serialisation | ✓ Implemented (compiler 0.1.6) |
+| 547 tests, 100% pass rate | ✓ Current |
 
 ### Runtime (Wyrd)
 
@@ -63,7 +63,7 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | Schema validation against JSON Schema | Partial (JSON Schema exists, tooling not wrapped) |
 | Playthrough simulation | ✗ Not started |
 | Statistical validation (Monte Carlo) | ✗ Not started |
-| Static analysis checks | ✓ Complete — all eight checks (S1–S8) implemented. |
+| Static analysis checks | ✓ Implemented (S1–S8) |
 
 ### Specifications
 
@@ -122,7 +122,7 @@ Everything below is specified. Nothing requires new design work.
 
 ### C. Static Analysis (Compiler)
 
-These are specified in the Architecture and Test Case Strategy. All eight checks are now implemented as of compiler 0.1.5.
+These are specified in the Architecture and Test Case Strategy. All eight checks are implemented as of compiler 0.1.5.
 
 | # | Check | Source | Status |
 |---|-------|--------|--------|
@@ -135,29 +135,52 @@ These are specified in the Architecture and Test Case Strategy. All eight checks
 | S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented (IMPORT phase, URD202) |
 | S8 | Shadowed exit (section name matches exit name in same location) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD434) |
 
-### D. Specification Consistency Audit
+### D. Analysis IR: FactSet (Compiler Infrastructure)
 
-Items surfaced during architectural review that may not be reflected in all documents.
+The FactSet is a normalized, immutable, deterministic intermediate representation extracted after LINK. It projects the resolved world into flat relational tuples — exits, jumps, choices, rules, property reads, and property writes — queryable without AST traversal. This is the layer that moves Urd from a syntax-driven validator to a queryable semantic graph of interactive worlds.
 
-| # | Item | Risk | Status |
-|---|------|------|--------|
-| D1 | Three-layer model (Schema → Runtime → Adapter) — verify all spec documents use consistent terminology | Low | Not started |
-| D2 | Failure contract in Wyrd spec — verify Wyrd spec includes the two-category failure model from Architectural Boundaries | Medium | Not started |
-| D3 | `on_enter` / `on_exit` fields in JSON Schema — verify the erratum (adding these fields) has been applied | High | Not started |
-| D4 | `on_condition` regex pattern in JSON Schema — verify the pattern accepts all valid condition expressions | Medium | Not started |
-| D5 | Text composition terminology — verify consistent naming across Schema Spec, Schema Markdown, and Wyrd Spec | Low | Not started |
-| D6 | Lambda reframe — verify the "extension host slot" framing is consistent between Architecture, Boundaries, and Future Proposals | Low | Not started |
-| D7 | Graph model paragraph — optional: add a paragraph in Architecture describing the graph derivation model | Optional | Not started |
+**Why this is in v1 gate:** Without the FactSet, the doc review presents a compiler that validates but cannot answer "why" questions. The FactSet makes Urd's value proposition tangible — static analysis becomes queries over relations, explain mode has a data source, and the Soufflé/Datalog path is unlocked without commitment. It is a read-only projection of already-resolved data, adds no new language features, and does not change any existing gate criteria. The FactSet is not used by the runtime to evaluate game logic — it is compiler infrastructure only.
+
+Implemented in compiler 0.1.6 with 31 dedicated tests across all five canonical fixtures. WASM output includes serialised facts for playground tooling.
+
+| # | Requirement | Source | Status |
+|---|------------|--------|--------|
+| F1 | FactSet container type — immutable, deterministic, complete | Analysis IR Brief §Core Invariant | ✓ Implemented |
+| F2 | Fact types: ExitEdge, JumpEdge, ChoiceFact, RuleFact, PropertyRead, PropertyWrite | Analysis IR Brief §Fact Types | ✓ Implemented |
+| F3 | PropertyKey normalization | Analysis IR Brief §Identity Types | ✓ Implemented |
+| F4 | FactSite uniform address space | Analysis IR Brief §FactSite | ✓ Implemented |
+| F5 | `extract_facts()` produces facts for all five canonical fixtures | Analysis IR Brief §Extraction Algorithm | ✓ Implemented |
+| F6 | PropertyDependencyIndex with query helpers | Analysis IR Brief §Part 2 | ✓ Implemented |
+| F7 | FactSetBuilder enforces referential integrity at construction time | Analysis IR Brief §Implementation Notes | ✓ Implemented |
+| F8 | Referential integrity, uniqueness constraints, no partial facts | Analysis IR Brief §Invariants | ✓ Implemented |
+
+### E. Specification Consistency Audit
+
+Items surfaced during today's architectural review that may not be reflected in all documents.
+
+| # | Issue | Action |
+|---|-------|--------|
+| E1 | Three-layer model (Urd, Wyrd, Adapter) must be consistent across all docs | Verify Architecture doc names the adapter layer explicitly |
+| E2 | Failure contract (structured result, two categories, no mutation, no event) now specified in governance doc | Verify Wyrd Reference Runtime spec includes or references this |
+| E3 | `on_enter`/`on_exit` added to JSON Schema as erratum | Verify Schema Spec prose matches JSON Schema |
+| E4 | `on_condition` expressions — regex pattern in JSON Schema was overly restrictive | Verify fix is in published JSON Schema |
+| E5 | "text composition" terminology — consistent across governance, presentation, essay | Verify Schema Markdown spec doesn't use "conditional text" in a conflicting way |
+| E6 | Lambda reframe — runtime-supervised sandboxed logic, not schema-embedded | Verify product vision and architecture doc use consistent framing |
+| E7 | Graph model paragraph — consider adding informative section to Schema Spec naming the graph structure explicitly | Optional, informative only |
 
 ---
 
-## What the Runtime Must Be Able to Derive
+## What the Soufflé Discussion Adds to v1
 
-These are capabilities the runtime computes from base facts (the `.urd.json` world definition). They are not stored in the schema. They are the "derived state" that makes Urd worlds queryable.
+The Soufflé/Datalog discussion surfaced capabilities that belong in the system. The critical distinction: **derived state computation belongs in Wyrd's API, not in the schema or as author-exposed logic.**
 
-| Derived Property | What It Means | Where It's Used |
-|-----------------|--------------|----------------|
-| Reachability | Given current state, which locations are reachable from this location? | Dead-end detection, world graph visualisation |
+### In Scope for v1 (Wyrd API surface)
+
+These are read-only queries the runtime computes from world state. They pass the boundary test (Question 3: describes how state is evaluated → Wyrd). They don't add schema primitives or author-facing features.
+
+| Capability | What It Does | Why It Matters |
+|-----------|-------------|----------------|
+| Reachability query | Given current state, which locations can the player reach? | Static analysis (S3), testing, adapter tooling |
 | Available actions query | Given current state, which actions have satisfiable conditions? | Already implicit in `getAvailableActions()` API |
 | Containment tree query | Transitive containment — what's inside what, recursively | Inventory display, adapter tooling, visibility auditing |
 | Visible entities query | Given a location and a viewer, which entities and properties are visible? | Visibility auditing (Architecture §Testing), adapter rendering |
@@ -180,7 +203,7 @@ These are the "Datalog-derived" properties — base facts (world definition) + r
 | Implicit derivation exposed to writers (Datalog-style rule authoring) | Crosses from "constrained graph transformations" into "logic programming." The moment authors write recursive derivation, you lose the halting-decidability that makes static analysis work. | Architectural Boundaries §Purpose |
 | Fixpoint evaluation / forward-chaining inference | Urd performs controlled, event-driven transitions in response to explicit actions. No implicit propagation. No convergence semantics. | Schema Spec §Evaluation Order |
 
-**The line:** Wyrd can internally compute anything derivable from the world graph. It can expose derived properties through its API. But the schema never contains derivation rules, and authors never write inference logic. The schema is base facts + conditional transitions. The runtime does the rest.
+**The line:** Wyrd can internally compute anything derivable from the world graph. It can expose derived properties through its API. But the schema never contains derivation rules, and authors never write inference logic. The schema is base facts + conditional transitions. The runtime does the rest. This preserves decidability of static analysis and guarantees termination — properties that are lost the moment recursive inference is introduced.
 
 ---
 
@@ -225,7 +248,8 @@ These are legitimate future features that pass the boundary test but are not in 
 
 - [ ] All nine compiler requirements (C1–C9 from Architecture §v1 Acceptance Checklist) pass
 - [x] All eight static analysis checks (S1–S8) implemented and tested
-- [ ] Four canonical fixtures compile without warnings
+- [x] FactSet extraction (F1–F8) implemented: produces facts for all five canonical fixtures, determinism verified, referential integrity enforced
+- [ ] Five canonical fixtures compile without warnings
 - [ ] Compiled JSON validates against published JSON Schema
 - [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations
 
@@ -247,7 +271,7 @@ These are legitimate future features that pass the boundary test but are not in 
 
 ### Specification Gate
 
-- [ ] All D1–D7 consistency items verified or resolved
+- [ ] All E1–E7 consistency items verified or resolved
 - [ ] No contradictions between Schema Spec, JSON Schema, Schema Markdown Spec, Wyrd Spec, and Architectural Boundaries
 - [ ] Published JSON Schema matches all compiler outputs
 
@@ -263,21 +287,22 @@ These are legitimate future features that pass the boundary test but are not in 
 
 ## Implementation Sequence (Recommended)
 
-This is a suggested order, not a mandate. Dependencies are noted. The sequence was updated to reflect the decision to implement static analysis checks before the spec audit, since S3/S4/S6/S8 are additive Warning-only diagnostics that use existing data and are unlikely to require rework from the audit.
+This is a suggested order, not a mandate. Dependencies are noted.
 
 1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5. URD430, URD432, URD433, URD434.
-2. **Spec audit** (D1–D7) — catch inconsistencies before building the runtime
-3. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
-4. **Wyrd sequences** (R11) — phase management, advance modes
-5. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
-6. **Wyrd contracts** (R17–R21) — immutable state, events, determinism, failure contract
-7. **Testing framework** (T1–T5) — schema validation, playthrough simulation, Monte Carlo
-8. **Acceptance verification** — run all gates, fix what fails
+2. ~~**FactSet extraction** (F1–F8)~~ — ✓ Complete. Compiler 0.1.6. Six fact types, PropertyDependencyIndex, WASM serialisation, 31 tests across all five fixtures.
+3. **Spec audit** (E1–E7) — catch inconsistencies before building the runtime
+4. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
+5. **Wyrd sequences** (R11) — phase management, advance modes
+6. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
+7. **Wyrd contracts** (R17–R21) — immutable state, events, determinism, failure contract
+8. **Testing framework** (T1–T5) — schema validation, playthrough simulation, Monte Carlo
+9. **Acceptance verification** — run all gates, fix what fails
 
 Each step produces a testable increment. Nothing depends on something later in the sequence.
 
 ---
 
-*This document is the single reference for what "v1 complete" means. It is updated as items are completed. When every gate passes, v1 ships.*
+*This document is the single reference for what "v1 complete" means. When every gate passes, v1 ships.*
 
 *End of Document*
