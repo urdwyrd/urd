@@ -1,10 +1,10 @@
 ---
-title: "v1 Completion Gate"
+title: "v1 Completion Gate: Compiler"
 slug: "v1-completion-gate"
-description: "Everything that must be true before Urd v1 can be called done. Acceptance criteria across five gates — compiler, runtime, testing, specification, and boundary — with current status, implementation sequence, and permanent exclusions."
+description: "Everything that must be true before the Urd compiler can be called v1 complete. Acceptance criteria for the compiler gate — primitives, static analysis, FactSet, specification consistency, and schema validation."
 category: "architecture"
 format: "Planning Document"
-date: "2026-02-21"
+date: "2026-02-22"
 status: "planning"
 order: 3
 tags:
@@ -12,52 +12,48 @@ tags:
   - planning
   - v1
   - acceptance
-  - runtime
-  - testing
+  - compiler
 details:
-  - "Eight-point definition of what v1 complete means"
-  - "Current status audit: compiler, runtime, testing, specifications"
-  - "21 runtime requirements (R1–R21) from the specification suite"
-  - "5 testing framework requirements (T1–T5)"
-  - "8 static analysis checks (S1–S8) with implementation status"
-  - "7 specification consistency items (D1–D7)"
-  - "Five acceptance gates: compiler, runtime, testing, specification, boundary"
-  - "Recommended implementation sequence"
+  - "Nine compiler requirements (C1–C9) with individual status"
+  - "Eight static analysis checks (S1–S8) — all implemented"
+  - "Eight FactSet requirements (F1–F8) — all implemented"
+  - "Seven specification consistency items (E1–E7)"
+  - "Compiler acceptance checklist"
+  - "Implementation sequence for remaining items"
   - "Permanent exclusions and post-v1 deferrals"
 ---
 
-# Urd — v1 Completion Gate
+# Urd — v1 Completion Gate: Compiler
 
-*Everything that must be true before Urd v1 can be called done*
+*Everything that must be true before the Urd compiler can be called v1 complete*
 
 > **Document status: PLANNING**
-> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion. This document is the acceptance gate for declaring v1 complete.
+> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion. This document is the acceptance gate for declaring the compiler v1 complete.
 > February 2026.
+>
+> Runtime, testing framework, and system-level acceptance criteria are in the separate [System Gate](/documents/system-gate) document.
 
 ---
 
-## What "v1 Complete" Means
+## What "Compiler v1 Complete" Means
 
-v1 complete is not "the compiler runs." The compiler already runs — five phases, 547 tests, 100% pass rate, five canonical fixtures compiling to valid `.urd.json`.
+Compiler v1 complete is not "the compiler runs." The compiler already runs — five phases, 547 tests, 100% pass rate, five canonical fixtures compiling to valid `.urd.json`.
 
-v1 complete means:
+Compiler v1 complete means:
 
-1. The specification suite is internally consistent (no contradictions between docs)
-2. The compiler implements every specified primitive
-3. The JSON Schema validates every compiler output and rejects invalid hand-authored JSON
-4. The static analysis checks specified in the Architecture and Test Case Strategy are implemented
-5. The boundary is enforced — nothing in the schema or runtime that belongs in the adapter layer
-6. The four test cases pass as both compilation targets and runtime playthroughs
-7. The Wyrd reference runtime executes all four test cases correctly
-8. The testing framework can run scripted playthroughs and statistical validation
+1. The compiler implements every specified primitive (C1–C9)
+2. All eight static analysis checks are implemented and tested (S1–S8)
+3. The FactSet analysis IR is implemented and verified (F1–F8)
+4. The JSON Schema validates every compiler output and rejects invalid hand-authored JSON
+5. The specification suite is internally consistent (no contradictions between docs)
+6. All canonical fixtures compile without warnings
+7. The negative test corpus is rejected with correct error locations
 
-This is not Phase 1 of the product roadmap. This is the point at which the system's foundational claims are provable, not just specified.
+This is the point at which the compiler's foundational claims are provable, not just specified. The runtime and system-level claims (deterministic replay, multi-interface portability) are gated separately in the [System Gate](/documents/system-gate).
 
 ---
 
-## Current State: What Exists
-
-### Compiler (Urd)
+## Current State
 
 | Capability | Status |
 |-----------|--------|
@@ -72,84 +68,34 @@ This is not Phase 1 of the product roadmap. This is the point at which the syste
 | `.urd.json` emission conforming to schema | ✓ Implemented |
 | Dialogue sections, jumps, sticky/one-shot choices | ✓ Implemented |
 | `any:` OR conditions | ✓ Implemented |
-| Four canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation) + Sunken Citadel | ✓ Compiling |
+| Five canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation, Sunken Citadel) | ✓ Compiling |
 | Static analysis: all eight checks (S1–S8) | ✓ Implemented (compiler 0.1.5) |
 | FactSet analysis IR (F1–F8): six fact types, PropertyDependencyIndex, WASM serialisation | ✓ Implemented (compiler 0.1.6) |
 | 547 tests, 100% pass rate | ✓ Current |
 
-### Runtime (Wyrd)
+---
 
-| Capability | Status |
-|-----------|--------|
-| Reference runtime | ✗ Not started |
+## Compiler Requirements (C1–C9)
 
-### Testing Framework
+From Architecture §v1 Acceptance Checklist.
 
-| Capability | Status |
-|-----------|--------|
-| Schema validation against JSON Schema | Partial (JSON Schema exists, tooling not wrapped) |
-| Playthrough simulation | ✗ Not started |
-| Statistical validation (Monte Carlo) | ✗ Not started |
-| Static analysis checks | ✓ Complete — all eight checks (S1–S8) implemented. |
-
-### Specifications
-
-| Document | Status |
-|----------|--------|
-| Schema Specification | ✓ Stable, normative |
-| Schema Markdown Syntax Specification | ✓ Stable, normative |
-| JSON Schema (`urd-world-schema.json`) | ✓ Published (with known errata fixed) |
-| Architecture | ✓ Stable |
-| Architectural Boundaries (governance) | ✓ Finalised — three layers, boundary test, permanent exclusions, failure contract |
-| Wyrd Reference Runtime Specification | ✓ Stable |
-| Test Case Strategy | ✓ Stable |
-| Formal Grammar Brief | ✓ Stable |
+| # | Requirement | Source | Status |
+|---|------------|--------|--------|
+| C1 | Parse Urd frontmatter without a general-purpose YAML parser. Reject anchors, aliases, merge keys, custom tags, block-style lists, and implicit type coercion. | Schema Specification §Frontmatter Grammar | ✓ Implemented |
+| C2 | Resolve `import:` declarations. Imports are explicit and non-transitive. | Schema Markdown Specification §Import Resolution Rules | ✓ Implemented |
+| C3 | Detect circular imports of any cycle length. Report full cycle path. | Schema Markdown Specification §Import Resolution Rules | ✓ Implemented (URD202) |
+| C4 | Reject duplicate entity IDs across the full compilation unit with diagnostics showing all declaration sites. | Schema Markdown Specification §Import Resolution Rules | ✓ Implemented (URD302+) |
+| C5 | Reject duplicate type names across the compilation unit. | Schema Markdown Specification §Import Resolution Rules | ✓ Implemented (URD302+) |
+| C6 | Validate that every `@entity` reference, `->` jump, and property access resolves to a declared target. | Architecture §Compiler Responsibilities | ✓ Implemented (URD301) |
+| C7 | Validate property values against declared types, enum sets, and ref constraints. | Schema Specification §Property Schema | ✓ Implemented (URD410+) |
+| C8 | Emit `.urd.json` conforming to the Schema Specification. Set `urd: "1"` automatically. Warn and override if author sets it. | Schema Specification §world block | Partial — injection works, warning on author override not yet implemented |
+| C9 | Enforce nesting depth: warn at 3 levels, error at 4+. | Schema Markdown Specification §Nesting Rules | ✗ Not yet implemented |
 
 ---
 
-## What Must Be Built for v1 Complete
+## Static Analysis (S1–S8)
 
-### A. Runtime (Wyrd) — The Critical Path
-
-Everything below is specified. Nothing requires new design work.
-
-| # | Requirement | Source | Notes |
-|---|------------|--------|-------|
-| R1 | Load and validate `.urd.json` | Schema Spec §Evaluation Order | Reject unknown `urd` version |
-| R2 | World state initialisation | Schema Spec §Entity Defaults | Create entities with defaults, place in declared containers |
-| R3 | Condition evaluation engine | Schema Spec §Expressions | `==`, `!=`, `>`, `<`, `>=`, `<=`, `in`, `not in`, boolean combinators |
-| R4 | `any:` OR condition blocks | Schema Spec §Conditions | Already in JSON Schema; runtime must evaluate |
-| R5 | All five effect types: `set`, `move`, `reveal`, `destroy`, `spawn` | Schema Spec §Effect Declarations | `spawn` is specified but not yet test-covered |
-| R6 | Containment model | Schema Spec §Containment Model | `move` is sole spatial operation, implicit `player` entity |
-| R7 | All four visibility levels: `visible`, `hidden`, `owner`, `conditional` | Schema Spec §Visibility Model | `conditional` is specified but not yet test-covered |
-| R8 | Rule execution with trigger matching | Schema Spec §Rules | Five trigger types: `phase_is`, `action`, `enter`, `state_change`, `always` |
-| R9 | `select` block with seeded uniform random | Schema Spec §The select Block | Determinism contract: identical seed → identical result |
-| R10 | Action resolution (conditions → effects → rule triggers) | Schema Spec §Actions | `getAvailableActions()` API |
-| R11 | Sequence management with four advance modes | Schema Spec §Sequences | `on_action`, `on_rule`, `on_condition`, `end` |
-| R12 | Dialogue state management | Schema Spec §Dialogue | Active section, consumed choices, `goto` jumps |
-| R13 | Sticky vs one-shot choice tracking | Schema Spec §Dialogue | `+` persists, `*` consumed after selection |
-| R14 | Exhaustion as runtime predicate | Schema Spec §Dialogue | Computed, never stored. All choices consumed or gated → exhausted |
-| R15 | `on_exhausted` fallthrough content | Schema Spec §Dialogue | Displayed when section exhausts |
-| R16 | `on_enter` / `on_exit` effects on locations | Schema Spec §Locations + JSON Schema erratum | Fire when entity moves into/out of location |
-| R17 | Immutable state transitions | Architecture §Wyrd | Each action → new WorldState, not mutation |
-| R18 | Event sourcing | Architecture §Wyrd | Every mutation produces a typed event |
-| R19 | Determinism contract | Schema Spec §Determinism Contract | Same JSON + same seed + same actions = same event stream |
-| R20 | `world.seed` API | Schema Spec §Determinism Contract | Accept seed from JSON or via API |
-| R21 | Structured failure result from `perform()` | Architectural Boundaries §Failure Contract | Two categories: validation failure vs world-state failure. Structured result, not event. No state mutation on failure. Never in event stream. |
-
-### B. Testing Framework
-
-| # | Requirement | Source |
-|---|------------|--------|
-| T1 | Schema validation — validate `.urd.json` against JSON Schema | Architecture §Testing |
-| T2 | Scripted playthrough execution (`Wyrd.simulate(actions)`) | Test Case Strategy §Test Execution Model |
-| T3 | State assertions at any point during playthrough | Test Case Strategy §Test Definition Format |
-| T4 | Monte Carlo mode — thousands of seeded playthroughs, aggregate assertions | Test Case Strategy §Statistical Validation |
-| T5 | Four test cases passing as runtime playthroughs | Test Case Strategy §The Four Test Cases |
-
-### C. Static Analysis (Compiler)
-
-These are specified in the Architecture and Test Case Strategy. All eight checks are now implemented as of compiler 0.1.5.
+All eight checks are implemented as of compiler 0.1.5.
 
 | # | Check | Source | Status |
 |---|-------|--------|--------|
@@ -162,7 +108,9 @@ These are specified in the Architecture and Test Case Strategy. All eight checks
 | S7 | Circular imports | Test Case Strategy §Static Analysis | ✓ Implemented (IMPORT phase, URD202) |
 | S8 | Shadowed exit (section name matches exit name in same location) | Test Case Strategy §Static Analysis | ✓ Implemented (VALIDATE phase, URD434) |
 
-### D. Analysis IR: FactSet (Compiler Infrastructure)
+---
+
+## Analysis IR: FactSet (F1–F8)
 
 The FactSet is a normalized, immutable, deterministic intermediate representation extracted after LINK. It projects the resolved world into flat relational tuples — exits, jumps, choices, rules, property reads, and property writes — queryable without AST traversal. Implemented in compiler 0.1.6 with 31 dedicated tests across all five canonical fixtures. WASM output includes serialised facts for playground tooling.
 
@@ -177,9 +125,11 @@ The FactSet is a normalized, immutable, deterministic intermediate representatio
 | F7 | FactSetBuilder enforces referential integrity at construction time | Analysis IR Brief §Implementation Notes | ✓ Implemented |
 | F8 | Referential integrity, uniqueness constraints, no partial facts | Analysis IR Brief §Invariants | ✓ Implemented |
 
-### E. Specification Consistency Audit
+---
 
-Items surfaced during today's architectural review that may not be reflected in all documents.
+## Specification Consistency Audit (E1–E7)
+
+Items surfaced during architectural review that may not be reflected in all documents.
 
 | # | Issue | Action |
 |---|-------|--------|
@@ -193,44 +143,22 @@ Items surfaced during today's architectural review that may not be reflected in 
 
 ---
 
-## What the Soufflé Discussion Adds to v1
+## Specifications
 
-The Soufflé/Datalog discussion surfaced capabilities that belong in the system. The critical distinction: **derived state computation belongs in Wyrd's API, not in the schema or as author-exposed logic.**
-
-### In Scope for v1 (Wyrd API surface)
-
-These are read-only queries the runtime computes from world state. They pass the boundary test (Question 3: describes how state is evaluated → Wyrd). They don't add schema primitives or author-facing features.
-
-| Capability | What It Does | Why It Matters |
-|-----------|-------------|----------------|
-| Reachability query | Given current state, which locations can the player reach? | Static analysis (S3), testing, adapter tooling |
-| Available actions query | Given current state, which actions have satisfiable conditions? | Already implicit in `getAvailableActions()` API |
-| Containment tree query | Transitive containment — what's inside what, recursively | Inventory display, adapter tooling, visibility auditing |
-| Visible entities query | Given a location and a viewer, which entities and properties are visible? | Visibility auditing (Architecture §Testing), adapter rendering |
-| Exhaustion check | Is a given dialogue section exhausted? | Already specified as runtime predicate |
-
-These are the "Datalog-derived" properties — base facts (world definition) + rules (conditions/effects) = derived state (reachable, visible, available). The runtime computes them. Authors don't write derivation logic.
-
-### Not in Scope for v1 (Post-v1 Wyrd Enhancement)
-
-| Capability | Why Not Now | Where It Goes |
-|-----------|-----------|---------------|
-| Full graph query API (`getReachableLocations()`, `getContainmentTree()`) as first-class Wyrd methods | Useful but not required for the four test cases to pass. The runtime can compute these internally; exposing them as API is a convenience. | Future Proposals — post-v1 Wyrd API extension |
-| Derived state caching / incremental recomputation | Performance optimisation, not correctness | Future Proposals |
-
-### Permanently Excluded (Boundary Violation)
-
-| Capability | Why Excluded | Governance Reference |
-|-----------|-------------|---------------------|
-| Author-exposed recursive derivation rules | Introduces Turing-completeness risk. Recursive rules can diverge. Fails boundary test Q2a (declarative and verifiable). Urd's static analysis properties depend on the absence of open-ended inference. | Architectural Boundaries §Q2 |
-| Implicit derivation exposed to writers (Datalog-style rule authoring) | Crosses from "constrained graph transformations" into "logic programming." The moment authors write recursive derivation, you lose the halting-decidability that makes static analysis work. | Architectural Boundaries §Purpose |
-| Fixpoint evaluation / forward-chaining inference | Urd performs controlled, event-driven transitions in response to explicit actions. No implicit propagation. No convergence semantics. | Schema Spec §Evaluation Order |
-
-**The line:** Wyrd can internally compute anything derivable from the world graph. It can expose derived properties through its API. But the schema never contains derivation rules, and authors never write inference logic. The schema is base facts + conditional transitions. The runtime does the rest.
+| Document | Status |
+|----------|--------|
+| Schema Specification | ✓ Stable, normative |
+| Schema Markdown Syntax Specification | ✓ Stable, normative |
+| JSON Schema (`urd-world-schema.json`) | ✓ Published (with known errata fixed) |
+| Architecture | ✓ Stable |
+| Architectural Boundaries (governance) | ✓ Finalised — three layers, boundary test, permanent exclusions, failure contract |
+| Wyrd Reference Runtime Specification | ✓ Stable |
+| Test Case Strategy | ✓ Stable |
+| Formal Grammar Brief | ✓ Stable |
 
 ---
 
-## What Is Permanently Excluded from v1 (and All Future Versions)
+## What Is Permanently Excluded (All Versions)
 
 These are not deferrals. They are architectural exclusions per the governance document.
 
@@ -241,15 +169,13 @@ These are not deferrals. They are architectural exclusions per the governance do
 | Player experience feedback | No "fumble" actions, "attempt failed" events, adapter-specific side effects on condition failure. Wyrd returns structured failure results. The adapter decides the experience. | Permanent Exclusion §3 |
 | Time and pacing | No clock, tick, turn, beat, or real-time duration. `always` fires per-action, not per-tick. Pacing is adapter-layer. | Permanent Exclusion §4 |
 | Persistence and save/load | No save-file format in schema. No session management in runtime. `getState()` and state injection via API. Everything else is external. | Permanent Exclusion §5 |
-| On-attempt / failure-triggered rules | World rules never fire on failed actions. "Attempting and failing" is an adapter-interaction concept. If a game needs a fumble counter, the adapter detects failure and performs a separate valid action. | Architectural Boundaries §on_attempt evaluation |
+| On-attempt / failure-triggered rules | World rules never fire on failed actions. "Attempting and failing" is an adapter-interaction concept. | Architectural Boundaries §on_attempt evaluation |
 | Parser grammar block | Verb synonyms and grammar hints belong in adapter sidecar files, not `.urd.json`. | Architectural Boundaries §parser grammar evaluation |
 | Conditional room descriptions | The schema provides state booleans. The adapter queries them and selects text. No `description_lit` / `description_dark` patterns. | Architectural Boundaries §conditional descriptions evaluation |
 
 ---
 
 ## What Is Deferred to Post-v1 (But Not Excluded)
-
-These are legitimate future features that pass the boundary test but are not in scope for v1.
 
 | Feature | Why Deferred | v1 Workaround |
 |---------|-------------|---------------|
@@ -261,36 +187,28 @@ These are legitimate future features that pass the boundary test but are not in 
 | Knowledge model (what each entity knows) | Future schema extension. | Use hidden properties and visibility gating. |
 | Time system (world clock, schedules) | Would extend runtime, not schema. | No v1 workaround — design content without time dependence. |
 | Numeric subsystems (economy, health, reputation) | Future schema extension. | Use integer properties with rules. |
-| Graph query API as first-class Wyrd methods | Convenience, not correctness. | Runtime computes internally; not exposed as named API methods yet. |
 
 ---
 
-## Acceptance Criteria: When Is v1 Done?
+## Acceptance Criteria: When Is the Compiler Done?
 
 ### Compiler Gate
 
-- [ ] All nine compiler requirements (C1–C9 from Architecture §v1 Acceptance Checklist) pass
+- [ ] All nine compiler requirements (C1–C9) pass
+  - [x] C1: Constrained frontmatter parsing (no general-purpose YAML)
+  - [x] C2: Import resolution (explicit, non-transitive)
+  - [x] C3: Circular import detection with full cycle path (URD202)
+  - [x] C4: Duplicate entity ID rejection across compilation unit (URD302+)
+  - [x] C5: Duplicate type name rejection across compilation unit (URD302+)
+  - [x] C6: All @entity references, -> jumps, and property accesses resolve (URD301)
+  - [x] C7: Property value validation against types, enums, ref constraints (URD410+)
+  - [ ] C8: Emit `.urd.json` with `urd: "1"` injected; warn and override if author sets it — injection works, warning on author override not yet implemented
+  - [ ] C9: Nesting depth enforcement (warn at 3, error at 4+) — not yet implemented
 - [x] All eight static analysis checks (S1–S8) implemented and tested
 - [x] FactSet extraction (F1–F8) implemented: produces facts for all five canonical fixtures, determinism verified, referential integrity enforced
-- [ ] Five canonical fixtures compile without warnings
-- [ ] Compiled JSON validates against published JSON Schema
-- [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations
-
-### Runtime Gate
-
-- [ ] All twenty-one runtime requirements (R1–R21) implemented
-- [ ] Determinism contract verified: same JSON + same seed + same actions = identical event stream across runs
-- [ ] Monty Hall 10,000-run Monte Carlo: switching advantage converges to 2/3 (0.6 < ratio < 0.7)
-- [ ] Key Puzzle: pick up key → unlock door → key destroyed → reach corridor
-- [ ] Tavern Scene: sticky choices persist, one-shot choices disappear, exhaustion triggers fallthrough
-- [ ] Interrogation: multi-topic hub, conditional branches, containment transfer in dialogue, state-dependent farewell
-
-### Testing Gate
-
-- [ ] All four test cases pass as automated playthroughs
-- [ ] Monte Carlo mode operational
-- [ ] State assertions work at arbitrary playthrough points
-- [ ] Schema validation catches malformed `.urd.json`
+- [ ] Five canonical fixtures compile without warnings — needs explicit verification as gate condition
+- [ ] Compiled JSON validates against published JSON Schema — schema exists, validation tooling not wrapped
+- [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations — seven negative fixtures exist, error location accuracy needs gate-level verification
 
 ### Specification Gate
 
@@ -298,34 +216,35 @@ These are legitimate future features that pass the boundary test but are not in 
 - [ ] No contradictions between Schema Spec, JSON Schema, Schema Markdown Spec, Wyrd Spec, and Architectural Boundaries
 - [ ] Published JSON Schema matches all compiler outputs
 
-### Boundary Gate
+---
 
-- [ ] No schema field or runtime behaviour that fails the five-question boundary test
-- [ ] All hint fields (`description`, `blocked_message`, `prompt`) remain optional and non-load-bearing
-- [ ] Runtime `perform()` returns structured failure results per the failure contract
-- [ ] No events emitted on failed actions
-- [ ] No state mutation on failed actions
+## Implementation Sequence (Remaining Items)
+
+1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5.
+2. ~~**FactSet extraction** (F1–F8)~~ — ✓ Complete. Compiler 0.1.6.
+3. **C8 completion** — add warning diagnostic when author sets `urd:` in frontmatter
+4. **C9 implementation** — nesting depth enforcement in VALIDATE
+5. **Spec audit** (E1–E7) — verify consistency across all normative documents
+6. **Schema validation tooling** — wrap JSON Schema validation for gate verification
+7. **Fixture and negative corpus verification** — explicit gate-level pass on all fixtures and negative tests
+8. **Gate closure** — run all compiler acceptance criteria, fix what fails
+
+Each step is independent. Nothing depends on the runtime or testing framework.
 
 ---
 
-## Implementation Sequence (Recommended)
+## What Comes After Compiler v1
 
-This is a suggested order, not a mandate. Dependencies are noted.
+Once the compiler gate closes, two paths open:
 
-1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5. URD430, URD432, URD433, URD434.
-2. ~~**FactSet extraction** (F1–F8)~~ — ✓ Complete. Compiler 0.1.6. Six fact types, PropertyDependencyIndex, WASM serialisation, 31 tests across all five fixtures.
-3. **Spec audit** (E1–E7) — catch inconsistencies before building the runtime
-4. **Wyrd core engine** (R1–R10) — state management, conditions, effects, rules, actions
-5. **Wyrd sequences** (R11) — phase management, advance modes
-6. **Wyrd dialogue** (R12–R16) — sections, choices, exhaustion, on_enter/on_exit
-7. **Wyrd contracts** (R17–R21) — immutable state, events, determinism, failure contract
-8. **Testing framework** (T1–T5) — schema validation, playthrough simulation, Monte Carlo
-9. **Acceptance verification** — run all gates, fix what fails
+**FactSet-derived tooling.** The FactSet enables an entire class of compiler-side work that does not require Wyrd: derived diagnostics (property read but never written, write-set conflict detection), visualization (location graphs, dialogue flow graphs, dependency maps), LSP foundations (go-to-definition, find-all-references on properties), and structural analysis that tools and AI can consume. This work compounds the FactSet investment and can proceed independently.
 
-Each step produces a testable increment. Nothing depends on something later in the sequence.
+**System gate.** The runtime (Wyrd), testing framework, and system-level acceptance criteria are defined in the [System Gate](/documents/system-gate) document. That gate covers the 21 runtime requirements, the four test case playthroughs, Monte Carlo validation, and the boundary gate. It can be approached incrementally — a Wyrd proof-of-concept scoped to the Monty Hall fixture, then progressive expansion to the full test case suite.
+
+The compiler gate does not block either path. Both can begin once the compiler is v1 complete.
 
 ---
 
-*This document is the single reference for what "v1 complete" means. When every gate passes, v1 ships.*
+*This document is the single reference for what "compiler v1 complete" means. When every criterion passes, the compiler gate closes.*
 
 *End of Document*

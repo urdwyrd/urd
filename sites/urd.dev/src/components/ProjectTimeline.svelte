@@ -9,6 +9,7 @@
     description: string;
     link: string | null;
     linkLabel: string | null;
+    progress: number | null;
   }
 
   interface Props {
@@ -63,9 +64,19 @@
           </p>
           <h3 class="phase-title">{phase.title}</h3>
           <p class="phase-subtitle">{phase.subtitle}</p>
-          <p class="phase-desc">{phase.description}</p>
-          {#if phase.link}
-            <a class="phase-link" href={phase.link}>{phase.linkLabel ?? 'Learn more →'}</a>
+          <p class="phase-desc">
+            {phase.description}
+            {#if phase.link}
+              <a class="phase-link" href={phase.link}>{phase.linkLabel ?? 'Learn more →'}</a>
+            {/if}
+          </p>
+          {#if phase.progress != null}
+            <div class="phase-progress">
+              <div class="progress-track">
+                <div class="progress-fill" style="width: {phase.progress}%"></div>
+              </div>
+              <span class="progress-label">{phase.progress}%</span>
+            </div>
           {/if}
         </div>
       {/each}
@@ -211,13 +222,44 @@
     margin-top: 4px;
   }
 
+  .phase-progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+  }
+
+  .progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--gold);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold-dim);
+    flex-shrink: 0;
+    min-width: 32px;
+    text-align: right;
+  }
+
   .phase-link {
     font-family: var(--display);
     font-size: 12px;
     font-weight: 500;
     color: var(--gold-dim);
     text-decoration: none;
-    margin-top: 6px;
+    white-space: nowrap;
     transition: color 0.15s ease;
   }
 
