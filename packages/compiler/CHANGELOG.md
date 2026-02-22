@@ -4,6 +4,17 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.7] — 2026-02-22
+
+### Added
+
+- **C8/C9 gate verification:** Dedicated tests proving URD411 (`urd:` override warning) and URD410 (nesting depth warn at 3, error at 4+) work correctly. Both were already implemented — this release adds gate-level evidence.
+- **Gate verification tests:** `gate_canonical_fixtures_zero_warnings` (all five canonical fixtures compile clean), `gate_negative_corpus_correct_codes` (nine negative fixtures rejected with expected diagnostic codes and valid span locations), `gate_json_schema_validates_all_fixtures` (compiled JSON from all fixtures validates against published JSON Schema).
+- **JSON Schema validation:** Added `jsonschema` crate as dev-dependency. Schema validation is now part of `cargo test`.
+- 2 new negative fixtures: `negative-urd-override.urd.md` (URD411 warning), `negative-nesting-depth.urd.md` (URD410 error at depth 4).
+- 7 new tests (unit + e2e + gate). Total: 554 tests (also fixes test report to include 31 previously uncounted FactSet tests).
+- **Compiler gate:** All compiler-side acceptance criteria (C1–C9, S1–S8, F1–F8, fixture verification, schema validation, negative corpus) now pass. Specification audit (E1–E7) remains.
+
 ## [0.1.6] — 2026-02-22
 
 ### Added

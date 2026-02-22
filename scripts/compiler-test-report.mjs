@@ -32,6 +32,7 @@ const BINARY_PHASE_MAP = {
   'link_tests': 'link',
   'validate_tests': 'validate',
   'emit_tests': 'emit',
+  'facts_tests': 'facts',
   'e2e_tests': 'e2e',
 };
 
@@ -46,6 +47,7 @@ const DIAGNOSTIC_CODES = {
     ...expandRange('URD', 422, 428),
   ],
   emit: [],
+  facts: [],
   e2e: [],
   scaffolding: [],
 };
@@ -57,6 +59,7 @@ const DIAGNOSTIC_RANGES = {
   link: '300-399',
   validate: '400-499',
   emit: '500-599',
+  facts: null,
   e2e: null,
   scaffolding: null,
 };
@@ -72,7 +75,7 @@ const COMPLIANCE = [
 ];
 
 /** Ordered list of phases for output. */
-const PHASE_ORDER = ['parse', 'import', 'link', 'validate', 'emit', 'e2e', 'scaffolding'];
+const PHASE_ORDER = ['parse', 'import', 'link', 'validate', 'emit', 'facts', 'e2e', 'scaffolding'];
 
 // ---------------------------------------------------------------------------
 // Helpers

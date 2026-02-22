@@ -1043,6 +1043,20 @@ fn urd_override_warning() {
 }
 
 #[test]
+fn c8_no_warning_without_urd_field() {
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("world", make_world_block(vec![
+            ("name", Scalar::String("test".to_string())),
+            ("start", Scalar::String("room".to_string())),
+        ])),
+    ])), vec![
+        location("Room"),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(!has_warning(&diag, "URD411"), "No urd field means no URD411: {:?}", diag.all());
+}
+
+#[test]
 fn player_valid_traits() {
     let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
         fm_entry("Hero", make_type_def("Hero", vec!["mobile", "container"], vec![])),
@@ -1193,6 +1207,26 @@ fn nesting_depth_4_errors() {
     ]);
     let diag = link_and_validate(single_file_cu(ast));
     assert!(has_error(&diag, "URD410"), "Expected URD410 error, got: {:?}", diag.all());
+}
+
+#[test]
+fn c9_nesting_depth_mixed() {
+    // One branch at depth 2 (safe) and another at depth 4 (error).
+    let ast = make_file_ast("test.urd.md", Some(make_frontmatter(vec![
+        fm_entry("Guard", make_type_def("Guard", vec![], vec![])),
+    ])), vec![
+        location("Tavern"),
+        section("greet"),
+        choice_at_depth("Safe branch", 2),
+        choice_at_depth("Deep branch", 4),
+    ]);
+    let diag = link_and_validate(single_file_cu(ast));
+    assert!(has_error(&diag, "URD410"), "Depth 4 should produce URD410 error: {:?}", diag.all());
+    // Depth 2 should not contribute any diagnostic
+    let urd410_count = diag.all().iter()
+        .filter(|d| d.code == "URD410")
+        .count();
+    assert_eq!(urd410_count, 1, "Only the depth-4 branch should trigger URD410: {:?}", diag.all());
 }
 
 // ═══════════════════════════════════════════════════════════

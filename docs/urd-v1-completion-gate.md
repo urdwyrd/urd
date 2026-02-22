@@ -12,7 +12,7 @@
 
 ## What "Compiler v1 Complete" Means
 
-Compiler v1 complete is not "the compiler runs." The compiler already runs — five phases, 547 tests, 100% pass rate, five canonical fixtures compiling to valid `.urd.json`.
+Compiler v1 complete is not "the compiler runs." The compiler already runs — five phases, 554 tests, 100% pass rate, five canonical fixtures compiling to valid `.urd.json`.
 
 Compiler v1 complete means:
 
@@ -46,7 +46,7 @@ This is the point at which the compiler's foundational claims are provable, not 
 | Five canonical fixtures (Tavern, Monty Hall, Key Puzzle, Interrogation, Sunken Citadel) | ✓ Compiling |
 | Static analysis: all eight checks (S1–S8) | ✓ Implemented (compiler 0.1.5) |
 | FactSet analysis IR (F1–F8): six fact types, PropertyDependencyIndex, WASM serialisation | ✓ Implemented (compiler 0.1.6) |
-| 547 tests, 100% pass rate | ✓ Current |
+| 554 tests, 100% pass rate | ✓ Current |
 
 ---
 
@@ -63,8 +63,8 @@ From Architecture §v1 Acceptance Checklist.
 | C5 | Reject duplicate type names across the compilation unit. | Schema Markdown Specification §Import Resolution Rules | ✓ Implemented (URD302+) |
 | C6 | Validate that every `@entity` reference, `->` jump, and property access resolves to a declared target. | Architecture §Compiler Responsibilities | ✓ Implemented (URD301) |
 | C7 | Validate property values against declared types, enum sets, and ref constraints. | Schema Specification §Property Schema | ✓ Implemented (URD410+) |
-| C8 | Emit `.urd.json` conforming to the Schema Specification. Set `urd: "1"` automatically. Warn and override if author sets it. | Schema Specification §world block | Partial — injection works, warning on author override not yet implemented |
-| C9 | Enforce nesting depth: warn at 3 levels, error at 4+. | Schema Markdown Specification §Nesting Rules | ✗ Not yet implemented |
+| C8 | Emit `.urd.json` conforming to the Schema Specification. Set `urd: "1"` automatically. Warn and override if author sets it. | Schema Specification §world block | ✓ Implemented and tested (URD411, compiler 0.1.7) |
+| C9 | Enforce nesting depth: warn at 3 levels, error at 4+. | Schema Markdown Specification §Nesting Rules | ✓ Implemented and tested (URD410, compiler 0.1.7) |
 
 ---
 
@@ -169,7 +169,7 @@ These are not deferrals. They are architectural exclusions per the governance do
 
 ### Compiler Gate
 
-- [ ] All nine compiler requirements (C1–C9) pass
+- [x] All nine compiler requirements (C1–C9) pass
   - [x] C1: Constrained frontmatter parsing (no general-purpose YAML)
   - [x] C2: Import resolution (explicit, non-transitive)
   - [x] C3: Circular import detection with full cycle path (URD202)
@@ -177,13 +177,13 @@ These are not deferrals. They are architectural exclusions per the governance do
   - [x] C5: Duplicate type name rejection across compilation unit (URD302+)
   - [x] C6: All @entity references, -> jumps, and property accesses resolve (URD301)
   - [x] C7: Property value validation against types, enums, ref constraints (URD410+)
-  - [ ] C8: Emit `.urd.json` with `urd: "1"` injected; warn and override if author sets it — injection works, warning on author override not yet implemented
-  - [ ] C9: Nesting depth enforcement (warn at 3, error at 4+) — not yet implemented
+  - [x] C8: Emit `.urd.json` with `urd: "1"` injected; warn and override if author sets it (URD411, compiler 0.1.7)
+  - [x] C9: Nesting depth enforcement (warn at 3, error at 4+) (URD410, compiler 0.1.7)
 - [x] All eight static analysis checks (S1–S8) implemented and tested
 - [x] FactSet extraction (F1–F8) implemented: produces facts for all five canonical fixtures, determinism verified, referential integrity enforced
-- [ ] Five canonical fixtures compile without warnings — needs explicit verification as gate condition
-- [ ] Compiled JSON validates against published JSON Schema — schema exists, validation tooling not wrapped
-- [ ] Negative test corpus (bad-*.urd.md files) rejected with correct error locations — seven negative fixtures exist, error location accuracy needs gate-level verification
+- [x] Five canonical fixtures compile without warnings — verified by `gate_canonical_fixtures_zero_warnings` test (compiler 0.1.7)
+- [x] Compiled JSON validates against published JSON Schema — verified by `gate_json_schema_validates_all_fixtures` test using `jsonschema` crate (compiler 0.1.7)
+- [x] Negative test corpus rejected with correct error locations — nine negative fixtures verified by `gate_negative_corpus_correct_codes` test with span location checks (compiler 0.1.7)
 
 ### Specification Gate
 
@@ -197,11 +197,11 @@ These are not deferrals. They are architectural exclusions per the governance do
 
 1. ~~**Static analysis gaps** (S3, S4, S6, S8)~~ — ✓ Complete. Compiler 0.1.5.
 2. ~~**FactSet extraction** (F1–F8)~~ — ✓ Complete. Compiler 0.1.6.
-3. **C8 completion** — add warning diagnostic when author sets `urd:` in frontmatter
-4. **C9 implementation** — nesting depth enforcement in VALIDATE
+3. ~~**C8 verification** — `urd:` override warning (URD411)~~ — ✓ Complete. Compiler 0.1.7.
+4. ~~**C9 verification** — nesting depth enforcement (URD410)~~ — ✓ Complete. Compiler 0.1.7.
 5. **Spec audit** (E1–E7) — verify consistency across all normative documents
-6. **Schema validation tooling** — wrap JSON Schema validation for gate verification
-7. **Fixture and negative corpus verification** — explicit gate-level pass on all fixtures and negative tests
+6. ~~**Schema validation tooling** — JSON Schema validation wrapped as `gate_json_schema_validates_all_fixtures` test~~ — ✓ Complete. Compiler 0.1.7.
+7. ~~**Fixture and negative corpus verification** — `gate_canonical_fixtures_zero_warnings` and `gate_negative_corpus_correct_codes` tests~~ — ✓ Complete. Compiler 0.1.7.
 8. **Gate closure** — run all compiler acceptance criteria, fix what fails
 
 Each step is independent. Nothing depends on the runtime or testing framework.

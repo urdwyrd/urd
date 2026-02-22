@@ -1,17 +1,17 @@
 {
   "version": "1",
-  "timestamp": "2026-02-22T01:24:45.025Z",
+  "timestamp": "2026-02-22T12:40:18.737Z",
   "compiler": {
     "name": "urd-compiler",
-    "version": "0.1.6",
+    "version": "0.1.7",
     "language": "rust"
   },
   "summary": {
-    "total_tests": 516,
-    "passed": 516,
+    "total_tests": 554,
+    "passed": 554,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 353,
+    "duration_ms": 682,
     "pass_rate": 1
   },
   "phases": [
@@ -22,7 +22,7 @@
       "passed": 124,
       "failed": 0,
       "skipped": 0,
-      "duration_ms": 0,
+      "duration_ms": 10,
       "categories": [
         {
           "name": "bad",
@@ -2177,8 +2177,8 @@
     {
       "name": "validate",
       "diagnostic_range": "400-499",
-      "tests": 106,
-      "passed": 106,
+      "tests": 108,
+      "passed": 108,
       "failed": 0,
       "skipped": 0,
       "duration_ms": 0,
@@ -2258,6 +2258,32 @@
             },
             {
               "name": "boolean_valid",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "c8",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "c8_no_warning_without_urd_field",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        },
+        {
+          "name": "c9",
+          "tests": 1,
+          "passed": 1,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "c9_nesting_depth_mixed",
               "status": "pass",
               "duration_ms": null
             }
@@ -3536,20 +3562,205 @@
       "diagnostics": []
     },
     {
-      "name": "e2e",
+      "name": "facts",
       "diagnostic_range": null,
-      "tests": 76,
-      "passed": 76,
+      "tests": 31,
+      "passed": 31,
       "failed": 0,
       "skipped": 0,
-      "duration_ms": 10,
+      "duration_ms": 20,
+      "categories": [
+        {
+          "name": "facts",
+          "tests": 31,
+          "passed": 31,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "facts_citadel_exit_density",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_citadel_rule_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_citadel_scale_smoke",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_determinism",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_index_readers_key_puzzle",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_index_writers_key_puzzle",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_interrogation_choice_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_interrogation_cross_file_spans",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_interrogation_exit_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_interrogation_jumps",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_interrogation_property_reads",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_interrogation_property_writes",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_jump_section_targets",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_jump_target_exit_resolution",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_key_puzzle_choice_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_key_puzzle_conditional_exit",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_key_puzzle_effect_writes",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_key_puzzle_exit_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_key_puzzle_reads_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_monty_hall_choice_condition",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_monty_hall_choices",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_monty_hall_no_exits",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_monty_hall_rule_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_roundtrip_consistency",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_site_choice_resolution",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_site_exit_resolution",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_site_rule_resolution",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_tavern_choice_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_tavern_exit_count",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_tavern_no_reads",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "facts_tavern_property_writes",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
+        }
+      ],
+      "diagnostics": []
+    },
+    {
+      "name": "e2e",
+      "diagnostic_range": null,
+      "tests": 81,
+      "passed": 81,
+      "failed": 0,
+      "skipped": 0,
+      "duration_ms": 240,
       "categories": [
         {
           "name": "e2e",
-          "tests": 76,
-          "passed": 76,
+          "tests": 78,
+          "passed": 78,
           "failed": 0,
           "test_names": [
+            {
+              "name": "e2e_c8_urd_override_in_output",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "e2e_c9_nesting_error_blocks_compilation",
+              "status": "pass",
+              "duration_ms": null
+            },
             {
               "name": "e2e_interrogation_compiles_successfully",
               "status": "pass",
@@ -3931,6 +4142,29 @@
               "duration_ms": null
             }
           ]
+        },
+        {
+          "name": "gate",
+          "tests": 3,
+          "passed": 3,
+          "failed": 0,
+          "test_names": [
+            {
+              "name": "gate_canonical_fixtures_zero_warnings",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "gate_json_schema_validates_all_fixtures",
+              "status": "pass",
+              "duration_ms": null
+            },
+            {
+              "name": "gate_negative_corpus_correct_codes",
+              "status": "pass",
+              "duration_ms": null
+            }
+          ]
         }
       ],
       "diagnostics": []
@@ -3974,13 +4208,13 @@
         "name": "interrogation",
         "source_bytes": 708,
         "output_bytes": 3814,
-        "total_ms": 0.359,
+        "total_ms": 0.337,
         "phases": {
-          "parse_ms": 0.059,
-          "import_ms": 0.134,
-          "link_ms": 0.061,
-          "validate_ms": 0.018,
-          "emit_ms": 0.086
+          "parse_ms": 0.054,
+          "import_ms": 0.121,
+          "link_ms": 0.059,
+          "validate_ms": 0.019,
+          "emit_ms": 0.085
         },
         "success": true,
         "diagnostic_count": 0
@@ -3989,13 +4223,13 @@
         "name": "locked_garden",
         "source_bytes": 1943,
         "output_bytes": 8041,
-        "total_ms": 0.316,
+        "total_ms": 0.309,
         "phases": {
-          "parse_ms": 0.097,
-          "import_ms": 0.017,
-          "link_ms": 0.066,
+          "parse_ms": 0.089,
+          "import_ms": 0.016,
+          "link_ms": 0.067,
           "validate_ms": 0.019,
-          "emit_ms": 0.116
+          "emit_ms": 0.118
         },
         "success": true,
         "diagnostic_count": 1
@@ -4004,13 +4238,13 @@
         "name": "monty_hall",
         "source_bytes": 654,
         "output_bytes": 2381,
-        "total_ms": 0.206,
+        "total_ms": 0.211,
         "phases": {
-          "parse_ms": 0.064,
-          "import_ms": 0.017,
-          "link_ms": 0.05,
-          "validate_ms": 0.013,
-          "emit_ms": 0.062
+          "parse_ms": 0.065,
+          "import_ms": 0.016,
+          "link_ms": 0.054,
+          "validate_ms": 0.015,
+          "emit_ms": 0.061
         },
         "success": true,
         "diagnostic_count": 0
@@ -4019,13 +4253,13 @@
         "name": "sunken_citadel",
         "source_bytes": 37158,
         "output_bytes": 92693,
-        "total_ms": 1.671,
+        "total_ms": 1.663,
         "phases": {
           "parse_ms": 0.506,
-          "import_ms": 0.017,
-          "link_ms": 0.27,
-          "validate_ms": 0.051,
-          "emit_ms": 0.815
+          "import_ms": 0.016,
+          "link_ms": 0.275,
+          "validate_ms": 0.053,
+          "emit_ms": 0.803
         },
         "success": true,
         "diagnostic_count": 0
@@ -4036,11 +4270,11 @@
         "output_bytes": 2164,
         "total_ms": 0.19,
         "phases": {
-          "parse_ms": 0.058,
-          "import_ms": 0.017,
-          "link_ms": 0.045,
-          "validate_ms": 0.012,
-          "emit_ms": 0.058
+          "parse_ms": 0.052,
+          "import_ms": 0.015,
+          "link_ms": 0.048,
+          "validate_ms": 0.013,
+          "emit_ms": 0.062
         },
         "success": true,
         "diagnostic_count": 0
@@ -4049,11 +4283,11 @@
         "name": "two_room_key_puzzle",
         "source_bytes": 505,
         "output_bytes": 1988,
-        "total_ms": 0.191,
+        "total_ms": 0.184,
         "phases": {
-          "parse_ms": 0.061,
-          "import_ms": 0.017,
-          "link_ms": 0.045,
+          "parse_ms": 0.056,
+          "import_ms": 0.015,
+          "link_ms": 0.044,
           "validate_ms": 0.013,
           "emit_ms": 0.056
         },
@@ -4064,13 +4298,13 @@
         "name": "type_aliases",
         "source_bytes": 314,
         "output_bytes": 1152,
-        "total_ms": 0.155,
+        "total_ms": 0.139,
         "phases": {
-          "parse_ms": 0.046,
-          "import_ms": 0.018,
-          "link_ms": 0.034,
-          "validate_ms": 0.011,
-          "emit_ms": 0.046
+          "parse_ms": 0.038,
+          "import_ms": 0.013,
+          "link_ms": 0.037,
+          "validate_ms": 0.012,
+          "emit_ms": 0.039
         },
         "success": true,
         "diagnostic_count": 0
@@ -4079,11 +4313,11 @@
     "aggregate": {
       "total_source_bytes": 41827,
       "total_output_bytes": 112233,
-      "total_ms": 3.09,
+      "total_ms": 3.03,
       "files_compiled": 7,
       "files_succeeded": 7,
-      "avg_ms_per_file": 0.44,
-      "bytes_per_ms": 13536.25
+      "avg_ms_per_file": 0.43,
+      "bytes_per_ms": 13804.29
     }
   }
 }

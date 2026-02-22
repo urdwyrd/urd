@@ -1202,3 +1202,160 @@ fn e2e_negative_shadowed_exit_warns() {
     let warnings = warning_codes(&result.diagnostics);
     assert!(warnings.contains(&"URD434".to_string()), "Expected URD434: {:?}", warnings);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// C8: urd field override (URD411)
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn e2e_c8_urd_override_in_output() {
+    let result = compile_fixture("negative-urd-override.urd.md");
+    assert!(result.success, "URD411 is a warning, should still compile: {}", format_diagnostics(&result.diagnostics));
+    let warnings = warning_codes(&result.diagnostics);
+    assert!(warnings.contains(&"URD411".to_string()), "Expected URD411: {:?}", warnings);
+    // Output JSON must contain urd: "1", not "99"
+    let json_str = result.world.expect("Expected world JSON");
+    let json: serde_json::Value = serde_json::from_str(&json_str).unwrap();
+    assert_eq!(json["world"]["urd"], "1", "EMIT must override author urd value to \"1\"");
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// C9: nesting depth (URD410)
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn e2e_c9_nesting_error_blocks_compilation() {
+    let result = compile_fixture("negative-nesting-depth.urd.md");
+    assert!(!result.success, "Depth 4 nesting should block compilation");
+    assert!(result.diagnostics.has_errors());
+    let errors = error_codes(&result.diagnostics);
+    assert!(errors.contains(&"URD410".to_string()), "Expected URD410 error: {:?}", errors);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Gate verification: canonical fixtures compile with zero warnings
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn gate_canonical_fixtures_zero_warnings() {
+    let fixtures = [
+        "tavern-scene.urd.md",
+        "monty-hall.urd.md",
+        "two-room-key-puzzle.urd.md",
+        "interrogation/main.urd.md",
+        "sunken-citadel.urd.md",
+    ];
+    for fixture in &fixtures {
+        let result = compile_fixture(fixture);
+        assert!(
+            result.success,
+            "Canonical fixture {} should compile successfully. Diagnostics:\n{}",
+            fixture, format_diagnostics(&result.diagnostics)
+        );
+        let warnings = warning_codes(&result.diagnostics);
+        assert!(
+            warnings.is_empty(),
+            "Canonical fixture {} should have zero warnings, got: {:?}",
+            fixture, warnings
+        );
+        let errors = error_codes(&result.diagnostics);
+        assert!(
+            errors.is_empty(),
+            "Canonical fixture {} should have zero errors, got: {:?}",
+            fixture, errors
+        );
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Gate verification: negative corpus rejected with correct codes
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn gate_negative_corpus_correct_codes() {
+    // (fixture, expected_code, is_error)
+    let expectations: Vec<(&str, &str, bool)> = vec![
+        ("negative-missing-fallthrough.urd.md", "URD433", false),
+        ("negative-missing-import.urd.md", "URD201", true),
+        ("negative-orphaned-choice.urd.md", "URD432", false),
+        ("negative-shadowed-exit.urd.md", "URD434", false),
+        ("negative-type-mismatch.urd.md", "URD401", true),
+        ("negative-unreachable-location.urd.md", "URD430", false),
+        ("negative-unresolved-entity.urd.md", "URD301", true),
+        ("negative-urd-override.urd.md", "URD411", false),
+        ("negative-nesting-depth.urd.md", "URD410", true),
+    ];
+
+    for (fixture, expected_code, is_error) in &expectations {
+        let result = compile_fixture(fixture);
+        let all_codes: Vec<String> = result.diagnostics.all().iter().map(|d| d.code.clone()).collect();
+
+        if *is_error {
+            assert!(
+                error_codes(&result.diagnostics).iter().any(|c| c.starts_with(&expected_code[..4])),
+                "Fixture {} should produce {} range error, got: {:?}",
+                fixture, expected_code, all_codes
+            );
+        } else {
+            let warnings = warning_codes(&result.diagnostics);
+            assert!(
+                warnings.contains(&expected_code.to_string()),
+                "Fixture {} should produce {} warning, got: {:?}",
+                fixture, expected_code, all_codes
+            );
+        }
+
+        // Verify spans are non-zero (correct error locations)
+        let relevant = result.diagnostics.all().iter()
+            .find(|d| d.code.starts_with(&expected_code[..4]));
+        assert!(
+            relevant.is_some(),
+            "Fixture {} should produce a diagnostic in the {} range",
+            fixture, expected_code
+        );
+        let diag = relevant.unwrap();
+        assert!(
+            diag.span.start_line > 0 || diag.span.end_line > 0,
+            "Fixture {} diagnostic {} should have non-zero span location, got: {:?}",
+            fixture, diag.code, diag.span
+        );
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Gate verification: compiled JSON validates against published JSON Schema
+// ═══════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn gate_json_schema_validates_all_fixtures() {
+    let schema_path = format!("{}/../../packages/schema/urd-world-schema.json", env!("CARGO_MANIFEST_DIR"));
+    let schema_str = std::fs::read_to_string(&schema_path)
+        .unwrap_or_else(|e| panic!("Failed to read JSON Schema at {}: {}", schema_path, e));
+    let schema_value: serde_json::Value = serde_json::from_str(&schema_str)
+        .expect("JSON Schema should be valid JSON");
+    let validator = jsonschema::validator_for(&schema_value)
+        .expect("JSON Schema should be a valid schema");
+
+    let fixtures = [
+        "tavern-scene.urd.md",
+        "monty-hall.urd.md",
+        "two-room-key-puzzle.urd.md",
+        "interrogation/main.urd.md",
+        "sunken-citadel.urd.md",
+    ];
+
+    for fixture in &fixtures {
+        let result = compile_fixture(fixture);
+        assert!(result.success, "Fixture {} should compile: {}", fixture, format_diagnostics(&result.diagnostics));
+        let json_str = result.world.expect("Expected world JSON");
+        let json: serde_json::Value = serde_json::from_str(&json_str)
+            .expect("Compiled output should be valid JSON");
+        let errors: Vec<_> = validator.iter_errors(&json).collect();
+        assert!(
+            errors.is_empty(),
+            "Fixture {} should validate against JSON Schema. Errors:\n{}",
+            fixture,
+            errors.iter().map(|e| format!("  - {}", e)).collect::<Vec<_>>().join("\n")
+        );
+    }
+}
