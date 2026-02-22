@@ -7,6 +7,7 @@
     description: string;
     link: string | null;
     milestone: boolean;
+    highlight: 'epic' | null;
   }
 
   interface Props {
@@ -67,20 +68,27 @@
     {#key page}
     <div class="log-entries">
       {#each visibleUpdates as update, i}
-        <article class="log-entry log-entry-appear{update.milestone ? ' log-entry-milestone' : ''}" style="animation-delay: {i * 60}ms">
-          <span class="log-date">{#if update.milestone}<span class="log-milestone-mark">◆</span>{/if}{formatDate(update.date)}</span>
+        <article class="log-entry log-entry-appear{update.highlight === 'epic' ? ' log-entry-epic' : update.milestone ? ' log-entry-milestone' : ''}" style="animation-delay: {i * 60}ms">
+          <span class="log-date">{#if update.highlight === 'epic'}<span class="log-epic-mark">★</span>{:else if update.milestone}<span class="log-milestone-mark">◆</span>{/if}{formatDate(update.date)}</span>
           <div class="log-content">
             {#if update.link}
               <h3 class="log-entry-title">
                 <a href={update.link} class="log-entry-link">{update.title}</a>
-                {#if update.milestone}
+                {#if update.highlight === 'epic'}
+                  <span class="log-entry-pill log-entry-pill-epic">Epic</span>
+                {:else if update.milestone}
                   <span class="log-entry-pill log-entry-pill-milestone">Milestone</span>
                 {:else}
                   <span class="log-entry-pill">Article</span>
                 {/if}
               </h3>
             {:else}
-              <h3 class="log-entry-title">{update.title}</h3>
+              <h3 class="log-entry-title">
+                {update.title}
+                {#if update.highlight === 'epic'}
+                  <span class="log-entry-pill log-entry-pill-epic">Epic</span>
+                {/if}
+              </h3>
             {/if}
             <p class="log-entry-description">{update.description}</p>
           </div>
@@ -248,6 +256,31 @@
   .log-entry-pill-milestone {
     color: var(--gold);
     background: color-mix(in srgb, var(--gold) 12%, transparent);
+  }
+
+  .log-entry-epic {
+    background: color-mix(in srgb, var(--rose) 6%, transparent);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 4px -20px;
+    border-top: none;
+    border-left: 2px solid color-mix(in srgb, var(--rose) 40%, transparent);
+  }
+
+  .log-epic-mark {
+    color: var(--rose);
+    font-size: 9px;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+
+  .log-entry-epic .log-entry-link:hover {
+    color: var(--rose);
+  }
+
+  .log-entry-pill-epic {
+    color: var(--rose);
+    background: color-mix(in srgb, var(--rose) 12%, transparent);
   }
 
   .log-entry-description {

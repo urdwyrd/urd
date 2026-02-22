@@ -71,6 +71,8 @@ The four components:
 
 > **The critical boundary:** The `.urd.json` file is the contract between authoring and execution. The compiler produces it. The runtime consumes it. The testing framework validates it. No component on the execution side ever sees `.urd.md` source. No component on the authoring side needs to know how the runtime works.
 
+> **Architectural layers.** These four components map onto the three-layer architectural model defined in the Architectural Boundaries document: Urd (schema + compiler), Wyrd (runtime), and the Adapter/Presentation layer (game engines, text runners, web demos). The Testing Framework and Developer Tooling are cross-cutting concerns that operate on the contract boundary between layers. See Architectural Boundaries §The Three Layers for the canonical layer definitions and boundary rules.
+
 ## Component 1: The Compiler
 
 The compiler transforms Schema Markdown source files into a single, validated, self contained JSON world file. It is the most critical component. Everything downstream depends on its correctness.

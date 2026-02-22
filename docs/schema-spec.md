@@ -533,6 +533,8 @@ sequences:
 | on_action | Advance after the player completes a listed action. |
 | on_rule | Advance after the phase's rule fires. |
 | on_condition \<expr\> | Advance when the expression becomes true. |
+| auto | Advance immediately after phase effects are applied. No trigger required. |
+| manual | Phase remains active until explicitly advanced by external trigger. Default if no advance mode is specified. |
 | end | The sequence ends. No further phases. |
 
 ## The `dialogue` Block
@@ -599,7 +601,7 @@ The dialogue block is a flat map. All sections from all files in the compilation
 | description | string | No | Prose narration before the prompt. Compiled from plain text at the start of a section, before any `@speaker:` line. |
 | choices | array | No | List of available choices in this section. |
 | conditions | expression list | No | Conditions that must be true for the section to be accessible. Not authored in v1 Schema Markdown; reserved for future use. May appear in hand-authored or tool-generated JSON. |
-| on_exhausted | object | No | Content shown when all choices are consumed or gated. Contains `text` (string) and optionally `speaker` (entity ref). This is a content payload, not a boolean. Whether a section *is* exhausted is a runtime-evaluated predicate. |
+| on_exhausted | object | No | Content shown when all choices are consumed or gated. Contains `text` (string), optionally `speaker` (entity ref), and optionally `goto` (section ID to jump to when exhausted). This is a content payload, not a boolean. Whether a section *is* exhausted is a runtime-evaluated predicate. The `goto` field supports hub-and-spoke dialogue patterns where an exhausted section redirects to another section. |
 
 ### Choice Fields
 
@@ -937,7 +939,7 @@ A v1 runtime MUST implement all of the following:
 - All five effect types: `set`, `move`, `reveal`, `destroy`, `spawn`.
 - All five trigger types: `phase_is`, `action`, `enter`, `state_change`, `always`.
 - The `select` block with uniform random selection and the determinism contract (§Determinism Contract).
-- All four advance modes: `on_action`, `on_rule`, `on_condition`, `end`.
+- All six advance modes: `on_action`, `on_rule`, `on_condition`, `auto`, `manual`, `end`.
 - Dialogue: sections, sticky and one-shot choices, `goto` jumps, `on_exhausted` fallthrough, exhaustion as a runtime predicate.
 - `any:` OR conditions.
 - Event sourcing: every state mutation produces a typed event.

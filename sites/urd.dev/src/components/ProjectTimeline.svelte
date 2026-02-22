@@ -244,6 +244,10 @@
     transition: width 0.3s ease;
   }
 
+  .phase-complete .progress-fill {
+    background: var(--green-light);
+  }
+
   .progress-label {
     font-family: var(--mono);
     font-size: 11px;
@@ -251,6 +255,10 @@
     flex-shrink: 0;
     min-width: 32px;
     text-align: right;
+  }
+
+  .phase-complete .progress-label {
+    color: var(--green-light);
   }
 
   .phase-link {

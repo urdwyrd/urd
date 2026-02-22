@@ -3,9 +3,9 @@ title: "v1 Completion Gate: Compiler"
 slug: "v1-completion-gate"
 description: "Everything that must be true before the Urd compiler can be called v1 complete. Acceptance criteria for the compiler gate — primitives, static analysis, FactSet, specification consistency, and schema validation."
 category: "architecture"
-format: "Planning Document"
+format: "Gate Document"
 date: "2026-02-22"
-status: "planning"
+status: "closed"
 order: 3
 tags:
   - architecture
@@ -27,9 +27,8 @@ details:
 
 *Everything that must be true before the Urd compiler can be called v1 complete*
 
-> **Document status: PLANNING**
-> Synthesised from the Schema Specification, Architecture, Architectural Boundaries governance, Test Case Strategy, Formal Grammar Brief, and the Soufflé/graph-model discussion. This document is the acceptance gate for declaring the compiler v1 complete.
-> February 2026.
+> **Document status: CLOSED — 2026-02-22**
+> The compiler gate is closed. All acceptance criteria are met: C1–C9 implemented and tested, S1–S8 static analysis complete, F1–F8 FactSet analysis IR verified, E1–E7 specification consistency audit passed, JSON Schema validates all compiler outputs, negative corpus rejected with correct codes. 554 tests, 100% pass rate, compiler 0.1.7.
 >
 > Runtime, testing framework, and system-level acceptance criteria are in the separate [System Gate](/documents/system-gate) document.
 
@@ -131,15 +130,15 @@ The FactSet is a normalized, immutable, deterministic intermediate representatio
 
 Items surfaced during architectural review that may not be reflected in all documents.
 
-| # | Issue | Action |
-|---|-------|--------|
-| E1 | Three-layer model (Urd, Wyrd, Adapter) must be consistent across all docs | Verify Architecture doc names the adapter layer explicitly |
-| E2 | Failure contract (structured result, two categories, no mutation, no event) now specified in governance doc | Verify Wyrd Reference Runtime spec includes or references this |
-| E3 | `on_enter`/`on_exit` added to JSON Schema as erratum | Verify Schema Spec prose matches JSON Schema |
-| E4 | `on_condition` expressions — regex pattern in JSON Schema was overly restrictive | Verify fix is in published JSON Schema |
-| E5 | "text composition" terminology — consistent across governance, presentation, essay | Verify Schema Markdown spec doesn't use "conditional text" in a conflicting way |
-| E6 | Lambda reframe — runtime-supervised sandboxed logic, not schema-embedded | Verify product vision and architecture doc use consistent framing |
-| E7 | Graph model paragraph — consider adding informative section to Schema Spec naming the graph structure explicitly | Optional, informative only |
+| # | Issue | Action | Status |
+|---|-------|--------|--------|
+| E1 | Three-layer model (Urd, Wyrd, Adapter) must be consistent across all docs | Verify Architecture doc names the adapter layer explicitly | ✓ Resolved (AR updated) |
+| E2 | Failure contract (structured result, two categories, no mutation, no event) now specified in governance doc | Verify Wyrd Reference Runtime spec includes or references this | ✓ Resolved (WR updated) |
+| E3 | `on_enter`/`on_exit` added to JSON Schema as erratum | Verify Schema Spec prose matches JSON Schema | ✓ Consistent |
+| E4 | `on_condition` expressions — regex pattern in JSON Schema was overly restrictive | Verify fix is in published JSON Schema | ✓ Verified |
+| E5 | "text composition" terminology — consistent across governance, presentation, essay | Verify Schema Markdown spec doesn't use "conditional text" in a conflicting way | ✓ Consistent |
+| E6 | Lambda reframe — runtime-supervised sandboxed logic, not schema-embedded | Verify product vision and architecture doc use consistent framing | ✓ Consistent |
+| E7 | Graph model paragraph — consider adding informative section to Schema Spec naming the graph structure explicitly | Optional, informative only | ✓ Skipped (FactSet canonical) |
 
 ---
 
@@ -212,9 +211,9 @@ These are not deferrals. They are architectural exclusions per the governance do
 
 ### Specification Gate
 
-- [ ] All E1–E7 consistency items verified or resolved
-- [ ] No contradictions between Schema Spec, JSON Schema, Schema Markdown Spec, Wyrd Spec, and Architectural Boundaries
-- [ ] Published JSON Schema matches all compiler outputs
+- [x] All E1–E7 consistency items verified or resolved — audit completed 2026-02-22
+- [x] No contradictions between Schema Spec, JSON Schema, Schema Markdown Spec, Wyrd Spec, and Architectural Boundaries — one CRITICAL finding (on_exhausted goto) resolved, three MINOR findings resolved
+- [x] Published JSON Schema matches all compiler outputs — re-verified after schema edit (exhaustedContent definition added)
 
 ---
 
@@ -224,10 +223,10 @@ These are not deferrals. They are architectural exclusions per the governance do
 2. ~~**FactSet extraction** (F1–F8)~~ — ✓ Complete. Compiler 0.1.6.
 3. ~~**C8 verification** — `urd:` override warning (URD411)~~ — ✓ Complete. Compiler 0.1.7.
 4. ~~**C9 verification** — nesting depth enforcement (URD410)~~ — ✓ Complete. Compiler 0.1.7.
-5. **Spec audit** (E1–E7) — verify consistency across all normative documents
+5. ~~**Spec audit** (E1–E7) — verify consistency across all normative documents~~ — ✓ Complete. Audit 2026-02-22.
 6. ~~**Schema validation tooling** — JSON Schema validation wrapped as `gate_json_schema_validates_all_fixtures` test~~ — ✓ Complete. Compiler 0.1.7.
 7. ~~**Fixture and negative corpus verification** — `gate_canonical_fixtures_zero_warnings` and `gate_negative_corpus_correct_codes` tests~~ — ✓ Complete. Compiler 0.1.7.
-8. **Gate closure** — run all compiler acceptance criteria, fix what fails
+8. ~~**Gate closure** — run all compiler acceptance criteria, fix what fails~~ — ✓ Closed. 2026-02-22.
 
 Each step is independent. Nothing depends on the runtime or testing framework.
 
@@ -245,6 +244,45 @@ The compiler gate does not block either path. Both can begin once the compiler i
 
 ---
 
-*This document is the single reference for what "compiler v1 complete" means. When every criterion passes, the compiler gate closes.*
+*This document is the single reference for what "compiler v1 complete" means.*
+
+---
+
+## Gate Closed — 2026-02-22
+
+**Compiler version:** 0.1.7
+**Test count:** 554 (6 lib + 81 e2e + 68 emit + 31 facts + 55 import + 81 link + 124 parse + 108 validate)
+**Pass rate:** 100%
+**Schema tests:** 39 (7 positive + 25 negative + 7 compiler output)
+
+### Specification Consistency Audit Record
+
+| Item | Status | Severity | Finding |
+|------|--------|----------|---------|
+| E1 | FAIL | MINOR | AR uses 4-component model without naming the Adapter layer. Fixed: added architectural layers paragraph to AR referencing AB §The Three Layers. |
+| E2 | FAIL | MINOR | WR omits failure contract. Fixed: added failure contract paragraph to WR §Public API referencing AB §Layer 2. |
+| E3 | PASS | — | JS and SS agree on `on_enter`/`on_exit`. SM correctly omits (not writer-facing syntax). Compiler does not emit these fields (hand-authored JSON only). |
+| E4 | PASS | — | JS advance pattern `on_condition .+` is sufficiently permissive. |
+| E5 | PASS | — | SM uses "dialogue"/"prose"/"narrative" — no conflict with AB's "text composition" terminology. |
+| E6 | PASS | — | All documents consistently frame lambdas as runtime extensions (Wyrd Extension Host), deferred to post-v1. |
+| E7 | INFO | — | SS does not mention graph structure. Recommendation: skip. FactSet analysis IR is canonical for graph structure formalisation. |
+| on_exhausted | FAIL | CRITICAL | Compiler emits `goto` on `on_exhausted` but JS (`speech` type) disallows it and SS does not document it. No canonical fixture triggers this path. Fixed: added `exhaustedContent` definition to JS, updated SS to document `goto` on `on_exhausted`. Re-verified: all 39 schema tests pass. |
+| Check 1 | PASS | — | All five effect types (set, move, reveal, destroy, spawn) consistent across SS, JS, SM. |
+| Check 2 | PASS | — | Five trigger types consistent across SS and JS pattern. |
+| Check 3 | PASS | — | Four visibility levels consistent across SS and JS. |
+| Check 4 | PASS | — | Condition expression format (AND array, OR `any:` object) consistent across SS and JS. |
+| Check 5 | PASS | — | Dialogue section fields consistent. on_exhausted divergence resolved (see above). |
+| Check 6 | FAIL | MINOR | SS lists 4 advance modes; JS and compiler support 6 (adds `auto`, `manual`). Fixed: added `auto` and `manual` to SS advance modes table. |
+| Check 7 | PASS | — | Four traits (container, portable, mobile, interactable) consistent across SS, JS, and compiler. |
+| Check 8 | PASS | — | All gate-referenced diagnostic codes exist in DC with correct severity and phase. No compiler codes absent from DC. |
+
+### Documents edited during audit
+
+| Document | Edit |
+|----------|------|
+| `packages/schema/urd-world-schema.json` | Added `exhaustedContent` definition; changed `on_exhausted` reference from `speech` to `exhaustedContent` |
+| `docs/schema-spec.md` | Added `goto` to `on_exhausted` description; added `auto` and `manual` to advance modes table; updated "four" to "six" advance modes |
+| `docs/wyrd-reference-runtime.md` | Added failure contract paragraph to §Public API |
+| `docs/architecture.md` | Added architectural layers paragraph referencing AB §The Three Layers |
 
 *End of Document*

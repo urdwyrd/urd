@@ -927,22 +927,22 @@ Monty opened a door with a goat. Switch or stay?
           </p>
           <p class="pres-reveal">
             The <span class="hl">compiler is built</span>. Five phases — PARSE, IMPORT,
-            LINK, VALIDATE, EMIT — implemented in Rust with <span class="hl">480 tests
-            and a 100% pass rate</span>. Four canonical fixtures compile to valid
+            LINK, VALIDATE, EMIT — implemented in Rust with <span class="hl">554 tests
+            and a 100% pass rate</span>. Five canonical fixtures compile to valid
             <span class="pres-gold">.urd.json</span>. The design documents were not
             amended once during implementation. Human specification, AI implementation,
             machine verification.
           </p>
           <p class="pres-reveal">
-            The next milestone is <span class="hl">alpha</span> — the point where all
-            the pieces exist end-to-end. That means the <span class="hl">Wyrd reference
+            The <span class="hl">v1 completion gate is closed</span>. All 32
+            acceptance criteria — nine compiler requirements, eight static analysis
+            checks, eight FactSet requirements, and seven specification consistency
+            items — verified and documented. The next milestone is
+            <span class="hl">alpha</span>: the <span class="hl">Wyrd reference
             runtime</span> loading <span class="pres-gold">.urd.json</span>, executing
-            all four canonical test cases, and proving the system works: compile the
+            the canonical test cases, and proving the system works end-to-end — compile the
             Monty Hall problem, run it ten thousand times, verify the switching advantage
-            converges to two-thirds. After alpha, the
-            <span class="hl">v1 completion gate</span> defines what ships: full static
-            analysis, Monte Carlo validation, specification consistency, and boundary
-            enforcement across five acceptance gates.
+            converges to two-thirds.
           </p>
           <p class="pres-reveal">
             This site, <span class="pres-gold">urd.dev</span>, is the development journal.

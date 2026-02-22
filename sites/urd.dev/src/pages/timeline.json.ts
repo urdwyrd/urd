@@ -5,16 +5,16 @@ import { getCollection } from 'astro:content';
 function computeGateProgress(body: string): number {
   let total = 0;
   let done = 0;
+  const seen = new Set<string>();
 
-  // C, S, F sections have a Status column with ✓ markers
-  for (const match of body.matchAll(/^\| ([CSF]\d+) \|.+\|(.+)\|$/gm)) {
+  // C, S, F, E sections have a Status column with ✓ markers.
+  // Deduplicate by ID — the audit record table reuses the same IDs.
+  for (const match of body.matchAll(/^\| ([CSFE]\d+) \|.+\|(.+)\|$/gm)) {
+    const id = match[1];
+    if (seen.has(id)) continue;
+    seen.add(id);
     total++;
     if (match[2].trim().startsWith('✓')) done++;
-  }
-
-  // E section rows have no status column — count as incomplete
-  for (const _match of body.matchAll(/^\| (E\d+) \|/gm)) {
-    total++;
   }
 
   return total > 0 ? Math.round((done / total) * 100) : 0;

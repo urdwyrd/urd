@@ -1,6 +1,6 @@
 ---
 title: Validation
-status: finalising
+status: complete
 subtitle: "Compiler and the proof loop."
 order: 4
 link: "/documents/v1-completion-gate"

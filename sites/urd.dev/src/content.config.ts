@@ -8,6 +8,7 @@ const updates = defineCollection({
     date: z.string(),
     link: z.string().optional(),
     milestone: z.boolean().optional(),
+    highlight: z.enum(['epic']).optional(),
   }),
 });
 

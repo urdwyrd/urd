@@ -299,6 +299,22 @@
       }
     },
 
+    "exhaustedContent": {
+      "type": "object",
+      "required": ["text"],
+      "additionalProperties": false,
+      "properties": {
+        "speaker": { "type": "string" },
+        "text": { "type": "string", "minLength": 1 },
+        "goto": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Section ID to jump to when the section is exhausted."
+        }
+      },
+      "description": "Content shown when all choices in a section are consumed or gated. Extends speech with an optional goto for hub-and-spoke dialogue patterns."
+    },
+
     "exit": {
       "type": "object",
       "required": ["to"],
@@ -550,7 +566,7 @@
             "minItems": 1
           },
           "conditions": { "$ref": "#/$defs/conditionExpr" },
-          "on_exhausted": { "$ref": "#/$defs/speech" }
+          "on_exhausted": { "$ref": "#/$defs/exhaustedContent" }
         }
       }
     }

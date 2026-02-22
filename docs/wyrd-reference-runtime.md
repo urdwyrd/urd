@@ -132,6 +132,8 @@ The API is intentionally small. Everything a consumer needs is: load, inspect, a
 
 **Event types.** Every `perform` or `choose` call returns an array of events. Event types include: `dialogue` (NPC speech), `narration` (descriptive text), `move` (entity moved), `reveal` (property revealed), `set` (property changed), `destroy` (entity removed), `spawn` (entity created), `section_enter` (dialogue section activated), `exhausted` (section exhausted). The presentation layer maps these to UI updates; the test harness asserts on them.
 
+**Failure contract.** Not every `perform` or `choose` call succeeds. When a call cannot be executed, Wyrd returns a structured failure result — not an event. Failures fall into two categories: request validation failures (unrecognised action, invalid parameters) and world state failures (conditions not met, exit blocked, choice unavailable). Neither category mutates world state. Failures never appear in the event stream. See Architectural Boundaries §Layer 2: Wyrd for the full failure contract specification.
+
 ## What Wyrd Is Not
 
 Drawing the boundaries clearly:
