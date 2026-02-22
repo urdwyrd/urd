@@ -618,92 +618,67 @@
           <h2 class="pres-heading pres-reveal">The proof</h2>
           <p class="pres-reveal">
             Ideas are cheap. Here is a concrete one. The Monty Hall problem — three
-            doors, a car, two goats, and a host who knows the secret — split across
-            two files. One defines what the world <em>is</em>. The other defines
-            what the player <em>does</em>.
-          </p>
-
-          <div class="pres-code pres-reveal">
-            <div class="pres-code-header">
-              <span class="pres-code-filename">world.urd.md</span>
-              <span class="pres-code-badge">World Model</span>
-            </div>
-            <pre class="pres-code-block"><code>world: monty-hall
-start: stage
-entry: game
-
-types:
-  Door [interactable]:
-    <span class="code-hidden">~</span>prize: enum(goat, car)
-    state: enum(closed, open) = closed
-    chosen: bool = false
-
-  Host:
-    name: string
-
-entities:
-  <span class="code-entity">@door_1</span>: Door &#123; prize: car &#125;
-  <span class="code-entity">@door_2</span>: Door &#123; prize: goat &#125;
-  <span class="code-entity">@door_3</span>: Door &#123; prize: goat &#125;
-  <span class="code-entity">@monty</span>: Host &#123; name: "Monty Hall" &#125;
-
-rule monty_reveals:
-  <span class="code-entity">@monty</span> selects target from [<span class="code-entity">@door_1</span>, <span class="code-entity">@door_2</span>, <span class="code-entity">@door_3</span>]
-  where target.prize != car
-  where target.chosen == false
-  where target.state == closed
-  <span class="code-effect">&gt;</span> target.state = open</code></pre>
-          </div>
-
-          <p class="pres-reveal">
-            The engineer owns this file — types, entities, and rules. Now the
-            designer writes the player-facing flow:
+            doors, a car, two goats, and a host who knows the secret — in a single
+            file. The frontmatter defines what the world <em>is</em>. The body
+            defines what the player <em>does</em>. This is a working test fixture
+            that compiles today.
           </p>
 
           <div class="pres-code pres-reveal">
             <div class="pres-code-header">
               <span class="pres-code-filename">monty-hall.urd.md</span>
-              <span class="pres-code-badge">Narrative Flow</span>
+              <span class="pres-code-badge">Working Fixture</span>
             </div>
-            <pre class="pres-code-block"><code>import: ./world.urd.md
+            <pre class="pres-code-block"><code>---
+world:
+  name: monty-hall
+  start: stage
+types:
+  Door [interactable]:
+    <span class="code-hidden">~</span>prize: enum(goat, car)
+    revealed: bool = false
+entities:
+  <span class="code-entity">@door_1</span>: Door &#123; prize: "goat" &#125;
+  <span class="code-entity">@door_2</span>: Door &#123; prize: "goat" &#125;
+  <span class="code-entity">@door_3</span>: Door &#123; prize: "car" &#125;
+  <span class="code-entity">@host</span>: Door
+---
 
 # Stage
 
-A game show stage with three closed doors.
+[<span class="code-entity">@door_1</span>, <span class="code-entity">@door_2</span>, <span class="code-entity">@door_3</span>]
 
-[<span class="code-entity">@door_1</span>, <span class="code-entity">@door_2</span>, <span class="code-entity">@door_3</span>, <span class="code-entity">@monty</span>]
-
-## Game
+## The Game
 
 ### Choose
-Pick a door.
+
 * Pick a door -&gt; any Door
-  ? target.state == closed
-  ? target.chosen == false
-  <span class="code-effect">&gt;</span> target.chosen = true
 
 ### Reveal (auto)
-<span class="code-entity">@monty</span> opens a door that hides a goat.
 
-### Switch or Stay
-Monty opened a door with a goat. Switch or stay?
-* Switch to the other closed door -&gt; any Door
-  ? target.state == closed
-  ? target.chosen == false
-  <span class="code-effect">&gt;</span> target.chosen = true
-* Stay with your current choice
+rule monty_reveals:
+  actor: <span class="code-entity">@host</span> action reveal
+  selects door from [<span class="code-entity">@door_1</span>, <span class="code-entity">@door_2</span>, <span class="code-entity">@door_3</span>]
+    where door.prize == goat
+  <span class="code-effect">&gt;</span> reveal door.prize
 
-### Resolve (auto)
-<span class="code-effect">&gt;</span> reveal <span class="code-entity">@door_1</span>.prize
-<span class="code-effect">&gt;</span> reveal <span class="code-entity">@door_2</span>.prize
-<span class="code-effect">&gt;</span> reveal <span class="code-entity">@door_3</span>.prize</code></pre>
+### Switch
+
+== switch
+
+* Switch doors -&gt; any Door
+  ? <span class="code-entity">@door_1</span>.revealed == false
+* Stay with your choice
+
+The host opens the final door.</code></pre>
+            <a class="pres-code-try" href="/playground#code=LS0tCndvcmxkOgogIG5hbWU6IG1vbnR5LWhhbGwKICBzdGFydDogc3RhZ2UKdHlwZXM6CiAgRG9vciBbaW50ZXJhY3RhYmxlXToKICAgIH5wcml6ZTogZW51bShnb2F0LCBjYXIpCiAgICByZXZlYWxlZDogYm9vbCA9IGZhbHNlCmVudGl0aWVzOgogIEBkb29yXzE6IERvb3IgeyBwcml6ZTogImdvYXQiIH0KICBAZG9vcl8yOiBEb29yIHsgcHJpemU6ICJnb2F0IiB9CiAgQGRvb3JfMzogRG9vciB7IHByaXplOiAiY2FyIiB9CiAgQGhvc3Q6IERvb3IKLS0tCgojIFN0YWdlCgpbQGRvb3JfMSwgQGRvb3JfMiwgQGRvb3JfM10KCiMjIFRoZSBHYW1lCgojIyMgQ2hvb3NlCgoqIFBpY2sgYSBkb29yIC0+IGFueSBEb29yCgojIyMgUmV2ZWFsIChhdXRvKQoKcnVsZSBtb250eV9yZXZlYWxzOgogIGFjdG9yOiBAaG9zdCBhY3Rpb24gcmV2ZWFsCiAgc2VsZWN0cyBkb29yIGZyb20gW0Bkb29yXzEsIEBkb29yXzIsIEBkb29yXzNdCiAgICB3aGVyZSBkb29yLnByaXplID09IGdvYXQKICA-IHJldmVhbCBkb29yLnByaXplCgojIyMgU3dpdGNoCgo9PSBzd2l0Y2gKCiogU3dpdGNoIGRvb3JzIC0+IGFueSBEb29yCiAgPyBAZG9vcl8xLnJldmVhbGVkID09IGZhbHNlCiogU3RheSB3aXRoIHlvdXIgY2hvaWNlCgpUaGUgaG9zdCBvcGVucyB0aGUgZmluYWwgZG9vci4K">Try in Playground <span aria-hidden="true">▸</span></a>
           </div>
 
           <p class="pres-reveal">
             The <span class="code-hidden">~</span> before <code>prize</code> means
             it is hidden — the player cannot see it. The <code>(auto)</code> beats
-            run without player input. Monty's rule constrains him: he can only open
-            a door that hides a goat and that the player did not choose.
+            run without player input. The rule constrains the host: it can only
+            reveal a door that hides a goat.
           </p>
 
           <div class="pres-callout pres-reveal">
@@ -1676,6 +1651,27 @@ Monty opened a door with a goat. Switch or stay?
   .pres-code-block code {
     font-family: inherit;
     font-size: inherit;
+  }
+
+  .pres-code-try {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-family: var(--display);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--gold-dim);
+    text-decoration: none;
+    border-top: 1px solid var(--border);
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+
+  .pres-code-try:hover {
+    color: var(--gold);
+    background: color-mix(in srgb, var(--gold) 4%, transparent);
   }
 
   .code-hidden {

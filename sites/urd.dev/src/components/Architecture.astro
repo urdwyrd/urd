@@ -81,7 +81,7 @@ const {
         <a href="/documents/urd-compiler-architecture-brief" class="tool-name tool-name-link">Compiler</a>
         <span class="tool-badge">CLI + WASM</span>
       </div>
-      <div class="tool-desc">Transforms .urd.md source into compiled .urd.json. Five-phase pipeline.</div>
+      <div class="tool-desc">Transforms .urd.md source into compiled .urd.json and a queryable FactSet analysis IR. Five-phase pipeline.</div>
       <div class="pipeline">
         <div class="pipeline-stage"><a href="/documents/urd-compiler-parse-brief" class="pipeline-stage-name">Parse</a></div>
         <span class="pipeline-arrow">&rarr;</span>
@@ -95,9 +95,9 @@ const {
       </div>
       <ul class="tool-features">
         <li><a href="/documents/urd-compiler-import-brief" class="tool-link">Non-transitive imports</a>, cycle detection</li>
-        <li>Depth enforcement — warn at 3, error at 4+</li>
-        <li>Stable ID generation (file_stem/section_name)</li>
-        <li><a href="/documents/urd-compiler-validate-brief" class="tool-link">Structured diagnostics</a> with suggestions</li>
+        <li><a href="/documents/urd-compiler-validate-brief" class="tool-link">8 static analysis checks</a> (S1–S8) across 3 phases</li>
+        <li>FactSet IR — flat, queryable graph of every relationship</li>
+        <li><a href="/documents/urd-compiler-validate-brief" class="tool-link">Structured diagnostics</a> with edit-distance suggestions</li>
         <li>WASM target — runs in the <a href="/playground" class="tool-link">browser playground</a></li>
         <li>Deterministic byte-identical output</li>
       </ul>
@@ -273,6 +273,7 @@ const {
       <a class="doc-tag doc-tag-compiler" href="/documents/urd-compiler-emit-brief">EMIT</a>
       <a class="doc-tag doc-tag-compiler" href="/documents/urd-formal-grammar-brief">Formal Grammar</a>
       <a class="doc-tag" href="/documents/urd-test-case-strategy">Test Strategy</a>
+      <a class="doc-tag" href="/documents/v1-completion-gate">Completion Gate</a>
     </div>
     <div class="docs-row">
       <span class="docs-label">Reference</span>

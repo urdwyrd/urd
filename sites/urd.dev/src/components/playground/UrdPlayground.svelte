@@ -144,11 +144,26 @@ Overgrown paths wind between crumbling statues.
 
   // --- Lifecycle ---
 
+  function getInitialSource(): string {
+    try {
+      const hash = window.location.hash;
+      if (hash.startsWith('#code=')) {
+        const raw = decodeURIComponent(hash.slice(6));
+        // Accept both standard and URL-safe base64
+        const standard = raw.replace(/-/g, '+').replace(/_/g, '/');
+        return atob(standard);
+      }
+    } catch { /* ignore decode failures */ }
+    return STARTER_EXAMPLE;
+  }
+
   onMount(() => {
     let destroyed = false;
     let themeObserver: MutationObserver | undefined;
 
     async function setup() {
+      const initialSource = getInitialSource();
+
       // 1. Mount CodeMirror
       const { EditorView, keymap, placeholder, lineNumbers, highlightActiveLine, drawSelection } = await import('@codemirror/view');
       const { EditorState, Compartment } = await import('@codemirror/state');
@@ -166,7 +181,7 @@ Overgrown paths wind between crumbling statues.
       editorView = new EditorView({
         parent: editorContainer!,
         state: EditorState.create({
-          doc: STARTER_EXAMPLE,
+          doc: initialSource,
           extensions: [
             lineNumbers(),
             highlightActiveLine(),
@@ -232,8 +247,8 @@ Overgrown paths wind between crumbling statues.
           metaEl.appendChild(link);
         }
 
-        // Compile the starter example
-        runCompile(STARTER_EXAMPLE);
+        // Compile the initial source
+        runCompile(initialSource);
       } catch (e) {
         if (destroyed) return;
         loadError = e instanceof Error ? e.message : String(e);
