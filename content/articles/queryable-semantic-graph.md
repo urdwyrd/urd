@@ -25,7 +25,7 @@ This is fine when you have four checks. It is not fine when you want twenty, or 
 
 ## The FactSet
 
-The [analysis IR brief](/briefs/backlog/2026-02-21-urd-compiler-analysis-ir-facts-provenance) introduces an intermediate representation called the FactSet. It sits between LINK's resolved world and any downstream consumer — static analysis, the Wyrd runtime, an LSP, visualization tools.
+The analysis IR brief introduces an intermediate representation called the FactSet. It sits between LINK's resolved world and any downstream consumer — static analysis, the Wyrd runtime, an LSP, visualization tools.
 
 The FactSet is a flat set of typed tuples extracted after resolution. Each tuple represents one atomic relationship the compiler already knows about:
 

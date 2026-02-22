@@ -4,6 +4,34 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.6] — 2026-02-22
+
+### Added
+
+- **FactSet analysis IR:** A normalized, immutable, deterministic intermediate representation extracted after LINK. Projects the resolved world into flat relational tuples queryable without AST traversal. Six fact types: `ExitEdge`, `JumpEdge`, `ChoiceFact`, `RuleFact`, `PropertyRead`, `PropertyWrite`.
+- **PropertyDependencyIndex:** Derived index mapping `PropertyKey` to read/write site indices for property-centric queries.
+- **FactSetBuilder:** Private builder enforcing referential integrity — only `extract_facts()` can construct a FactSet.
+- **WASM serialisation:** `compile_source` now returns serialised facts alongside compiled JSON, enabling playground tooling.
+- **Playground Analysis panel:** Collapsible panel below the editor/output split displaying extracted facts by type.
+- 31 new tests across all five canonical fixtures covering extraction, determinism, cross-reference integrity, and site resolution.
+- Total: 547 tests.
+
+## [0.1.5] — 2026-02-21
+
+### Added
+
+- **S3 URD430: unreachable location.** BFS from `world.start` via resolved exits. Locations not reachable emit a warning with the location name and line.
+- **S4 URD432: orphaned choice.** Detects choices whose enum condition references a variant that no effect in the file ever sets. The choice can never be selected.
+- **S6 URD433: missing fallthrough.** One-shot-only sections (every choice is `one-shot`, no `sticky`) with no terminal jump (`->`) will exhaust and strand the player.
+- **S8 URD434: shadowed exit.** Warns when a section label inside a location has the same name as an exit key in that location. Jump target resolution would match the exit, shadowing the section.
+- **Playground warning display:** OutputPane now renders warnings alongside compiled JSON instead of silently dropping them.
+- 4 negative test fixtures (`negative-unreachable-location`, `negative-orphaned-choice`, `negative-missing-fallthrough`, `negative-shadowed-exit`).
+- 36 new tests (validate + e2e). Total: 516 tests.
+
+### Changed
+
+- All eight static analysis checks (S1–S8) now implemented, completing the Static Analysis section of the v1 completion gate.
+
 ## [0.1.4] — 2026-02-20
 
 ### Fixed
