@@ -821,6 +821,15 @@ Monty opened a door with a goat. Switch or stay?
             <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
             <span class="pres-flow-step pres-flow-run">Wyrd runtime</span>
           </div>
+          <div class="pres-flow pres-flow-secondary pres-reveal">
+            <span class="pres-flow-ghost"></span>
+            <span class="pres-flow-ghost"></span>
+            <span class="pres-flow-step pres-flow-compile">compiler</span>
+            <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
+            <span class="pres-flow-step pres-flow-analysis">FactSet</span>
+            <span class="pres-flow-arrow" aria-hidden="true">&#8594;</span>
+            <span class="pres-flow-step pres-flow-analysis">analysis + tooling</span>
+          </div>
         </section>
 
         <!-- ═══ VIII — WHAT MAKES IT DIFFERENT ═══ -->
@@ -865,10 +874,12 @@ Monty opened a door with a goat. Switch or stay?
           <p class="pres-reveal">
             <span class="hl">Deterministic and testable.</span> Same world, same seed,
             same actions, same result. The runtime produces no output except in response to
-            explicit action calls, and every state change is a typed event. The compiler can
-            check for unreachable locations, contradictory conditions, and dead-end dialogue
-            before the runtime ever loads the file. Run a world ten thousand times and assert
-            on the probability distribution. That is what a typed graph makes possible.
+            explicit action calls, and every state change is a typed event. The compiler
+            extracts a <span class="hl">FactSet</span> — a flat, queryable graph of every
+            relationship in the world — and uses it to check for unreachable locations,
+            contradictory conditions, and dead-end dialogue before the runtime ever loads
+            the file. Run a world ten thousand times and assert on the probability
+            distribution. That is what a typed graph makes possible.
           </p>
         </section>
 
@@ -1753,6 +1764,24 @@ Monty opened a door with a goat. Switch or stay?
     background: color-mix(in srgb, var(--purple) 8%, transparent);
     border: 1px solid color-mix(in srgb, var(--purple) 20%, transparent);
     color: var(--purple);
+  }
+
+  .pres-flow-secondary {
+    margin-top: 6px;
+    opacity: 0.7;
+  }
+
+  .pres-flow-ghost {
+    width: 0;
+    padding: 0;
+    margin: 0;
+    visibility: hidden;
+  }
+
+  .pres-flow-analysis {
+    background: color-mix(in srgb, var(--green) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--green) 25%, transparent);
+    color: var(--green-light);
   }
 
   .pres-flow-arrow {
