@@ -64,7 +64,7 @@ Everything else is explanatory.
 
 **Writing a world?**
 1. Copy the [hello world example](#writing-your-first-world) and compile it.
-2. Read [Structural Symbols](#41-structural-symbols) — eight symbols cover everything.
+2. Read [Structural Symbols](#41-structural-symbols) — seven symbols cover everything.
 3. Try adding a choice with a condition. See [Conditions and Effects](#45-conditions-and-effects).
 
 **Building a runtime?**
@@ -219,8 +219,14 @@ Two outputs:
 | `*` | One-shot choice | Disappears after selection | `* Ask about the ship` |
 | `+` | Sticky choice | Stays available on revisit | `+ Ask about the harbour` |
 | `->` | Jump | Navigates to a section or location | `-> topics`, `-> harbour` |
-| `!` | Blocked message | Shown when an exit or action is blocked | `! The door is locked.` |
-| `//` | Comment | Ignored by the compiler | `// hub prompt` |
+| `==` | Section header | Declares a dialogue section | `== topics` |
+
+Two additional markers appear in source but are secondary:
+
+| Symbol | What It Does | Example |
+|--------|--------------|---------|
+| `!` | Blocked message (shown when an exit or action is gated) | `! The door is locked.` |
+| `//` | Comment (ignored by the compiler) | `// hub prompt` |
 
 Plain text outside any marker is narrative prose.
 
