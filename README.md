@@ -13,7 +13,7 @@ In Norse mythology, Urð is the Norn of fate — the keeper of what is and what 
 
 ---
 
-Urd is an open, structured world definition format — a declarative schema that describes interactive worlds as typed, validated, engine-agnostic data. Writers author in **Schema Markdown**, a prose-friendly syntax as clean as ink for pure dialogue but schema-native by design. The compiler validates and produces a single `.urd.json` contract file. The runtime executes it. No custom glue code. No integration tax.
+Urd is an open, structured world definition format — a declarative schema that describes interactive worlds as typed, validated, engine-agnostic data. Writers author in **Schema Markdown**, a prose-friendly syntax as clean as ink for pure dialogue but schema-native by design. The compiler validates and produces two outputs: a `.urd.json` contract file and a **FactSet** — a flat, queryable graph of every relationship in the world. The runtime executes the contract. Tooling queries the FactSet. No custom glue code. No integration tax.
 
 ## The Problem
 
@@ -26,7 +26,7 @@ There is no standard interface between "narrative data" and "game state." Urd is
 Urd is a pipeline, not a monolith:
 
 ```
-.urd.md files  →  Compiler  →  .urd.json  →  Runtime / Testing / Engine Integrations
+.urd.md files  →  Compiler  →  .urd.json + FactSet IR  →  Runtime / Tooling / Engine Integrations
 ```
 
 **Writers** author scenes in Schema Markdown — prose with seven symbols (`@` `?` `>` `*` `+` `->` `==`). Their frontmatter is one line: `import: ./world.urd.md`. Everything else is narrative.
@@ -90,12 +90,31 @@ The Urd World Schema v0.1 covers:
 |-----------|------|--------|
 | **PEG Grammar** | Formal pest grammar — 75 rules defining Schema Markdown syntax. | Complete |
 | **JSON Schema** | 9 sub-schemas validating `.urd.json` contract output. | Complete |
-| **Compiler** | `.urd.md` → `.urd.json`. Five phases: parse, import, link, validate, emit. Rust, 390 tests, 100% pass rate. Native CLI (`urd`) and WASM dual-target. | v0.1 complete |
+| **Compiler** | `.urd.md` → `.urd.json` + FactSet analysis IR. Five phases: parse, import, link, validate, emit. Rust, 554 tests, 100% pass rate. Native CLI (`urd`) and WASM dual-target. | v0.1.7 |
+| **Playground** | Browser-based compiler with CodeMirror 6 editor, live JSON output, warning display, and FactSet analysis panel. Runs the WASM compiler client-side. | Live |
 | **Wyrd** | Reference runtime. Loads compiled JSON, executes the world, produces events. Browser-native. | Next milestone |
 | **Testing** | Schema validation, reachability analysis, playthrough simulation, coverage reporting. | Planned |
 | **LSP** | Language server wrapping the compiler. Live diagnostics, autocomplete, go-to-definition. | Planned |
 
 Wyrd is the canonical runtime — any behavioural ambiguity in the spec is resolved by what Wyrd does.
+
+## Validation Strategy
+
+The compiler ships with 16 test fixtures — 7 canonical (positive) and 9 negative — forming a progressive verification corpus:
+
+**Canonical fixtures** prove the compiler handles real-world complexity:
+
+1. **Monty Hall Problem** — Hidden state, NPC constraints, emergent probability. Run 10,000 games; the 2/3 switching advantage falls out of the structure.
+2. **Two-Room Key Puzzle** — Spatial navigation, inventory via containment, persistent state, conditional NPC dialogue. Everything Monty Hall doesn't test.
+3. **Interrogation** (multi-file) — Cross-file imports, symbol resolution across compilation units.
+4. **Sunken Citadel** — 1,100-line stress test. Sequences, phased progression, deep nesting, every schema primitive exercised.
+5. **Tavern Scene**, **Locked Garden**, **Type Aliases** — Targeted coverage for specific language features.
+
+**Negative fixtures** prove the compiler rejects what it should, each asserting a specific diagnostic code:
+
+- Unresolved entities (URD301), type mismatches (URD308), missing imports (URD102), unreachable locations (URD430), orphaned choices (URD432), missing fallthrough (URD433), shadowed exits (URD434), `urd:` overrides (URD411), nesting depth (URD410).
+
+All 16 fixtures are gate-tested: canonical fixtures must compile with zero warnings, negative fixtures must produce their expected diagnostic codes, and all compiled JSON validates against the published JSON Schema.
 
 ## Repository Layout
 
@@ -107,8 +126,9 @@ docs/             Design documents (clean markdown, no frontmatter)
 packages/
   compiler/       Rust compiler — 5-phase pipeline (.urd.md → .urd.json)
   grammar/        PEG grammar reference + pest parser + validation corpus
+  schema/         JSON Schema for .urd.json validation (9 sub-schemas)
 scripts/          Build tooling — test report generator, benchmark harness
-sites/urd.dev/    Astro 5 static site — development journal
+sites/urd.dev/    Astro 5 site — development journal, playground, design docs
 ```
 
 ## Development
@@ -119,9 +139,11 @@ pnpm 10 monorepo. Rust for the compiler and grammar packages.
 # Site
 pnpm dev                    # Astro dev server
 pnpm build                  # Production build
+pnpm preview                # Preview production build
 pnpm build:full             # Compiler tests + report + site build
 
 # Compiler
+pnpm compiler:bump          # Version bump (the ONLY way to bump)
 pnpm compiler:test          # Run tests + benchmarks, generate report
 pnpm compiler:test:raw      # Raw cargo test output
 pnpm compiler:build         # Release build of the `urd` CLI binary
@@ -132,14 +154,6 @@ pnpm compiler:wasm:check    # Verify WASM target compiles
 pnpm grammar:test           # PEG validation corpus
 pnpm schema:test            # JSON Schema validation
 ```
-
-## Validation Strategy
-
-Three progressive test cases, each proving capabilities the previous one couldn't:
-
-1. **Monty Hall Problem** — Hidden state, NPC constraints, emergent probability. Run 10,000 games; the 2/3 switching advantage falls out of the structure.
-2. **Two-Room Key Puzzle** — Spatial navigation, inventory via containment, persistent state, conditional NPC dialogue. Everything Monty Hall doesn't test.
-3. **Connected Variant** — Cross-system composability. Can independently designed mechanics compose within a single world?
 
 ## Design Philosophy
 
@@ -165,7 +179,8 @@ Follow the build at **[urd.dev](https://urd.dev)**.
 
 ## Links
 
-- **[urd.dev](https://urd.dev)** — Development journal. Transparent progress, technical artefacts, live test dashboard.
+- **[urd.dev](https://urd.dev)** — Development journal. Transparent progress, live test dashboard, browser playground, design documents.
+- **[urd.dev/playground](https://urd.dev/playground)** — Try the compiler in your browser. Schema Markdown in, compiled JSON + FactSet analysis out.
 - **[urd.world](https://urd.world)** — Product face. Schema docs, live demos, getting started. Coming soon.
 
 ## Licence
