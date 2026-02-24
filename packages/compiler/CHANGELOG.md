@@ -4,6 +4,31 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.9] — 2026-02-24
+
+### Added
+
+- **PropertyDependencyIndex set-difference queries:** `read_but_never_written()` and `written_but_never_read()` return sorted property keys for orphaned properties. D1/D2 diagnostics refactored to call these methods — shared source of truth between compiler and playground.
+- **PropertyDependencyIndex JSON serialisation:** `to_json()` produces a deterministic, property-centric JSON structure with per-property read/write counts, index arrays, orphaned flags, and summary block. Properties sorted lexicographically by (entity_type, property).
+- **WASM pipeline:** `property_index` field added to `CompileResult` JSON output alongside `facts`.
+- **Playground Properties tab:** New `PropertyDependencyView` component with summary header, All/Read-only/Write-only filter buttons, collapsible property rows with R/W count badges, orphaned badges, and expandable site lists with clickable spans. Tab bar [Properties / Facts] in the Analysis panel.
+- `property_index` field on `CompilationResult` — index built once after `extract_facts()`, consumed by both `analyze()` and WASM serialisation.
+- 11 new tests covering index determinism, set-difference correctness, JSON structure, orphaned flags, all-fixture no-panic, and D1/D2 correspondence. Total: 580 tests.
+
+## [0.1.8] — 2026-02-24
+
+### Added
+
+- **ANALYZE phase:** Five new FactSet-derived diagnostics (URD601–URD605) that operate solely on the FactSet and PropertyDependencyIndex — no AST, no symbol table, no source text.
+  - **URD601** — Property read in conditions but never written by any effect.
+  - **URD602** — Property written by effects but never read in any condition.
+  - **URD603** — Effect sets enum property to variant that no condition tests.
+  - **URD604** — Condition tests numeric threshold unreachable by any effect (conservative: skips if Add/Sub writes exist).
+  - **URD605** — Circular property dependency: every write is guarded by a read of the same property, with no unguarded bootstrap path.
+- `analyze()` function accepting `&FactSet` and `&PropertyDependencyIndex`, returning `Vec<Diagnostic>`. Called between LINK and VALIDATE in the compilation pipeline.
+- 3 new test fixtures: `negative-factset-diagnostics.urd.md` (clean), `positive-factset-diagnostics.urd.md` (triggers all five), `positive-factset-circular-deep.urd.md` (multi-write circular).
+- 11 new tests (5 diagnostic-specific, 5 existing-fixture smoke, 1 architectural constraint). Total: 569 tests.
+
 ## [0.1.7] — 2026-02-22
 
 ### Added
