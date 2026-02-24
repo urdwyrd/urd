@@ -34,6 +34,14 @@
     void doLayout(graph, direction);
   });
 
+  // Fit to view once layout nodes are placed and the SVG has dimensions.
+  $effect(() => {
+    if (layoutNodes.length > 0 && svgEl) {
+      // Wait one frame so the browser has painted the container.
+      requestAnimationFrame(() => fitToView());
+    }
+  });
+
   async function doLayout(g: GraphData, dir: string) {
     if (g.nodes.length === 0) {
       layoutNodes = [];
@@ -41,7 +49,8 @@
       return;
     }
 
-    const dagre = await import('@dagrejs/dagre');
+    const dagreModule = await import('@dagrejs/dagre');
+    const dagre = dagreModule.default;
     const dg = new dagre.graphlib.Graph();
     dg.setGraph({ rankdir: dir, nodesep: 40, ranksep: 60, marginx: 20, marginy: 20 });
     dg.setDefaultEdgeLabel(() => ({}));
@@ -81,8 +90,6 @@
         points: de?.points ?? [],
       };
     });
-
-    fitToView();
   }
 
   function fitToView() {
@@ -152,6 +159,8 @@
   function nodeStroke(kind: string, flag: string | null): string {
     if (flag === 'unreachable') return 'var(--rose)';
     if (flag === 'orphaned') return 'var(--amber-light)';
+    if (flag === 'start') return 'var(--gold)';
+    if (flag === 'isolated') return 'var(--faint)';
     if (kind === 'end') return 'var(--faint)';
     return 'var(--gold-dim)';
   }
@@ -159,12 +168,14 @@
   function nodeFill(kind: string, flag: string | null): string {
     if (flag === 'unreachable') return 'color-mix(in srgb, var(--rose) 12%, transparent)';
     if (flag === 'orphaned') return 'color-mix(in srgb, var(--amber-light) 12%, transparent)';
+    if (flag === 'isolated') return 'color-mix(in srgb, var(--faint) 8%, transparent)';
     if (kind === 'end') return 'var(--raise)';
     return 'var(--surface)';
   }
 
   function strokeDash(flag: string | null): string {
     if (flag === 'unreachable') return '4 3';
+    if (flag === 'isolated') return '4 3';
     return 'none';
   }
 </script>
@@ -242,7 +253,7 @@
             rx={node.kind === 'end' ? 12 : 4}
             fill={nodeFill(node.kind, node.flag)}
             stroke={nodeStroke(node.kind, node.flag)}
-            stroke-width="1"
+            stroke-width={node.flag === 'start' ? 2 : 1}
             stroke-dasharray={strokeDash(node.flag)}
           />
           <text
@@ -250,7 +261,7 @@
             y={node.y + 4}
             text-anchor="middle"
             class="node-label"
-          >{node.label}</text>
+          >{node.flag === 'start' ? `\u25B8 ${node.label}` : node.label}</text>
         </g>
       {/each}
     </g>
@@ -265,12 +276,14 @@
   .graph-container {
     position: relative;
     width: 100%;
-    height: 100%;
-    min-height: 200px;
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
   }
 
   .graph-svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     cursor: grab;

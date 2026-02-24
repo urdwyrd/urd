@@ -60,11 +60,16 @@ export function buildLocationGraph(
   // Build nodes.
   for (const locId of [...locationIds].sort()) {
     const isIsolated = !exitReferenced.has(locId);
+    let flag: GraphNode['flag'] = null;
+    if (unreachableLocations.has(locId)) flag = 'unreachable';
+    else if (isIsolated) flag = 'isolated';
+    else if (locId === startLocation) flag = 'start';
+
     nodes.push({
       id: locId,
       label: locId.replace(/-/g, ' '),
       kind: 'location',
-      flag: unreachableLocations.has(locId) ? 'unreachable' : null,
+      flag,
     });
   }
 

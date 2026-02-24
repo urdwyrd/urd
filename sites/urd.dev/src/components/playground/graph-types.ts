@@ -5,7 +5,7 @@ export interface GraphNode {
   id: string;
   label: string;
   kind: 'location' | 'section' | 'end';
-  flag: 'unreachable' | 'orphaned' | null;
+  flag: 'start' | 'unreachable' | 'orphaned' | 'isolated' | null;
 }
 
 /** A directed edge in a graph visualisation. */

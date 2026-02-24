@@ -466,7 +466,7 @@ Overgrown paths wind between crumbling statues.
             onclick={() => analysisTab = 'facts'}
           >Facts</button>
         </div>
-        <div class="facts-body" class:facts-expanded={factsExpanded}>
+        <div class="facts-body" class:facts-expanded={factsExpanded} class:facts-graph={analysisTab === 'location' || analysisTab === 'dialogue'}>
           {#if analysisTab === 'properties' && compileResult.property_index}
             <PropertyDependencyView
               propertyIndex={compileResult.property_index}
@@ -725,10 +725,22 @@ Overgrown paths wind between crumbling statues.
     max-height: 280px;
     overflow: auto;
     border-top: 1px solid var(--border);
-    transition: max-height 0.2s ease;
+    transition: max-height 0.2s ease, min-height 0.2s ease;
   }
 
   .facts-body.facts-expanded {
+    max-height: 70vh;
+  }
+
+  .facts-body.facts-graph {
+    min-height: 360px;
+    max-height: 480px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .facts-body.facts-graph.facts-expanded {
     max-height: 70vh;
   }
 
@@ -767,6 +779,11 @@ Overgrown paths wind between crumbling statues.
 
     .facts-body {
       max-height: 200px;
+    }
+
+    .facts-body.facts-graph {
+      min-height: 280px;
+      max-height: 360px;
     }
   }
 </style>
