@@ -10,16 +10,32 @@ February 2026 | Semantic Gate — Tier 3 (Instrument)
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-24
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+Implemented the `urd-mcp` crate in `packages/mcp/` with all eight read-only MCP tools backed by FactSet, PropertyDependencyIndex, and compiled world JSON. The crate compiles a `.urd.md` file on startup and serves tools over stdio using rmcp 0.8.
+
+Created six source files:
+- `Cargo.toml` — lib + bin targets, rmcp 0.8.5, schemars 1.x, tokio
+- `src/lib.rs` — module declarations
+- `src/main.rs` — CLI arg parsing, compile, start MCP stdio server
+- `src/world_data.rs` — `WorldData` struct built from `CompilationResult` (~75 lines)
+- `src/queries.rs` — eight pure query functions returning JSON with `schema_version: "1"` (~400 lines)
+- `src/service.rs` — rmcp service with `#[tool_router]` and `#[tool_handler]`, eight tool definitions (~170 lines)
+
+Test suite: 19 assertion-based tests in `tests/mcp_tests.rs` (all pass), plus 1 verifier sanity test and 1 `#[ignore]` LLM placeholder in `tests/llm_harness.rs`.
+
+Added `mcp:build` and `mcp:test` scripts to root `package.json`.
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+- **File structure:** The brief proposed `tools.rs` + `handlers.rs` for tool definitions and dispatch. The implementation uses a single `service.rs` with rmcp's `#[tool_router]` macro, which handles both definition and dispatch. This is simpler and more idiomatic for the rmcp SDK.
+- **schemars version:** The brief assumed schemars 0.8; rmcp 0.8.5 depends on schemars 1.x. Used schemars 1.x directly.
+- **Section IDs:** The brief assumed section IDs use `location/section` (e.g., `gatehouse/greet`). The compiler uses `filestem/section` (e.g., `locked-garden/greet`). Tests corrected accordingly.
+- **20 tests not 19:** The LLM harness includes a non-ignored `verifiers_accept_reference_answers` test, bringing the total to 20 non-ignored tests.
+- **SF-6.4 deferred:** The LLM validation run requires API credentials and an MCP-capable client. The harness skeleton is complete (5 questions, verifiers, reference answer validation), but the actual LLM run is deferred to manual execution.
 
 ---
 

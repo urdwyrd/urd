@@ -17,6 +17,8 @@
     "compiler:bench": "cargo build --release --manifest-path packages/compiler/Cargo.toml --bin bench && node scripts/compiler-bench.mjs",
     "lsp:build": "cargo build --release --manifest-path packages/lsp/Cargo.toml",
     "lsp:test": "cargo test --manifest-path packages/lsp/Cargo.toml",
+    "mcp:build": "cargo build --release --manifest-path packages/mcp/Cargo.toml",
+    "mcp:test": "cargo test --manifest-path packages/mcp/Cargo.toml",
     "grammar:test": "cargo test --manifest-path packages/grammar/Cargo.toml",
     "schema:test": "node scripts/validate-json-schema.mjs",
     "prepare": "husky"

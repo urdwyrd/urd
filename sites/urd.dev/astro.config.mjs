@@ -1,5 +1,7 @@
 import { defineConfig } from "astro/config";
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { resolve, dirname } from "node:path";
 import svelte from "@astrojs/svelte";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
@@ -17,6 +19,11 @@ export default defineConfig({
   },
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      alias: {
+        '@examples': resolve(dirname(fileURLToPath(import.meta.url)), '../../packages/compiler/tests/fixtures'),
+      },
+    },
     define: {
       __WASM_CACHE_BUST__: JSON.stringify(compilerVersion),
     },
