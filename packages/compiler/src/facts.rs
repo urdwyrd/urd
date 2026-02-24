@@ -202,6 +202,7 @@ pub struct ChoiceFact {
     pub sticky: bool,
     pub condition_reads: Vec<usize>,
     pub effect_writes: Vec<usize>,
+    pub jump_indices: Vec<usize>,
     pub span: Span,
 }
 
@@ -411,8 +412,10 @@ impl FactSetBuilder {
         self.exits.push(edge);
     }
 
-    fn push_jump(&mut self, edge: JumpEdge) {
+    fn push_jump(&mut self, edge: JumpEdge) -> usize {
+        let idx = self.jumps.len();
         self.jumps.push(edge);
+        idx
     }
 
     fn push_choice(&mut self, choice: ChoiceFact) {
@@ -628,6 +631,7 @@ fn extract_choice(
     let site = FactSite::Choice(choice_id.clone());
     let mut condition_reads: Vec<usize> = Vec::new();
     let mut effect_writes: Vec<usize> = Vec::new();
+    let mut jump_indices: Vec<usize> = Vec::new();
 
     // Walk choice children.
     for child in &choice.content {
@@ -675,7 +679,9 @@ fn extract_choice(
             }
 
             ContentNode::Jump(jump) => {
-                extract_jump(jump, builder, current_section_id);
+                if let Some(idx) = extract_jump(jump, builder, current_section_id) {
+                    jump_indices.push(idx);
+                }
             }
 
             _ => {}
@@ -689,24 +695,26 @@ fn extract_choice(
         sticky: choice.sticky,
         condition_reads,
         effect_writes,
+        jump_indices,
         span: choice.span.clone(),
     });
 }
 
 /// Extract a JumpEdge from a Jump node.
+/// Returns the index of the pushed JumpEdge, or `None` if the jump was unresolvable.
 fn extract_jump(
     jump: &crate::ast::Jump,
     builder: &mut FactSetBuilder,
     current_section_id: &mut Option<String>,
-) {
+) -> Option<usize> {
     let ann = match &jump.annotation {
         Some(a) => a,
-        None => return,
+        None => return None,
     };
 
     let section_id = match current_section_id {
         Some(ref id) => id.clone(),
-        None => return,
+        None => return None,
     };
 
     // Determine JumpTarget from annotation.
@@ -718,19 +726,19 @@ fn extract_jump(
         if builder.exits.iter().any(|e| e.exit_id() == exit_id) {
             JumpTarget::Exit(exit_id)
         } else {
-            return; // Exit destination unresolved, no JumpEdge
+            return None; // Exit destination unresolved, no JumpEdge
         }
     } else if jump.target == "end" {
         JumpTarget::End
     } else {
-        return; // Unresolvable
+        return None; // Unresolvable
     };
 
-    builder.push_jump(JumpEdge {
+    Some(builder.push_jump(JumpEdge {
         from_section: section_id,
         target,
         span: jump.span.clone(),
-    });
+    }))
 }
 
 /// Extract guard condition reads from an ExitDeclaration's children.
@@ -1120,6 +1128,7 @@ impl FactSet {
                 "sticky": c.sticky,
                 "condition_reads": c.condition_reads,
                 "effect_writes": c.effect_writes,
+                "jump_indices": c.jump_indices,
                 "span": span_to_json(&c.span),
             })).collect::<Vec<_>>(),
             "rules": self.rules.iter().map(|r| serde_json::json!({

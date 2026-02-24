@@ -4,6 +4,14 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.10] — 2026-02-24
+
+### Added
+
+- **ChoiceFact.jump_indices:** Choices now track which JumpEdge indices they own, enabling dialogue graph edge-to-choice correlation. Follows the same index-reference pattern as `condition_reads` and `effect_writes`.
+- **Playground graph visualisation:** Two new Analysis panel tabs — Location (topology from ExitEdge tuples, LR layout) and Dialogue (flow from JumpEdge + ChoiceFact tuples, TB layout). Shared SVG renderer with dagre layout, pan/zoom, diagnostic-driven node flags (URD430 unreachable, URD432 impossible choices).
+- 4 new tests for `jump_indices` correctness and referential integrity. Total: 584 tests.
+
 ## [0.1.9] — 2026-02-24
 
 ### Added

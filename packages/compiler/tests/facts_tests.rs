@@ -389,6 +389,14 @@ fn facts_roundtrip_consistency() {
                 idx
             );
         }
+        for &idx in &choice.jump_indices {
+            assert!(
+                idx < facts.jumps().len(),
+                "jump_indices index {} out of bounds (jumps.len() = {})",
+                idx,
+                facts.jumps().len()
+            );
+        }
     }
 
     // Every index in ExitEdge.guard_reads points to a valid read.
@@ -469,6 +477,7 @@ fn facts_determinism() {
         assert_eq!(c1.section, c2.section, "choice {} section", i);
         assert_eq!(c1.label, c2.label, "choice {} label", i);
         assert_eq!(c1.sticky, c2.sticky, "choice {} sticky", i);
+        assert_eq!(c1.jump_indices, c2.jump_indices, "choice {} jump_indices", i);
     }
 }
 
@@ -540,6 +549,85 @@ fn facts_jump_section_targets() {
         .filter(|j| matches!(&j.target, JumpTarget::Section(_)))
         .collect();
     assert_eq!(section_jumps.len(), 1);
+}
+
+// ── ChoiceFact.jump_indices — SF-3 ──
+
+#[test]
+fn facts_locked_garden_choice_jump_indices() {
+    let facts = extract_fixture_facts("locked-garden.urd.md");
+    // "State your purpose" has -> greet, so it should have one jump_index.
+    let choice = facts
+        .choices()
+        .iter()
+        .find(|c| c.label == "State your purpose")
+        .expect("Should find 'State your purpose' choice");
+    assert_eq!(
+        choice.jump_indices.len(),
+        1,
+        "Expected 1 jump_index for 'State your purpose', got {:?}",
+        choice.jump_indices,
+    );
+    let jump = &facts.jumps()[choice.jump_indices[0]];
+    assert!(
+        matches!(&jump.target, JumpTarget::Section(s) if s.ends_with("/greet")),
+        "Expected section target ending in /greet, got {:?}",
+        jump.target,
+    );
+}
+
+#[test]
+fn facts_locked_garden_choice_no_jump() {
+    let facts = extract_fixture_facts("locked-garden.urd.md");
+    // "Ask about the garden" has no jump, so jump_indices should be empty.
+    let choice = facts
+        .choices()
+        .iter()
+        .find(|c| c.label == "Ask about the garden")
+        .expect("Should find 'Ask about the garden' choice");
+    assert!(
+        choice.jump_indices.is_empty(),
+        "Expected empty jump_indices for 'Ask about the garden', got {:?}",
+        choice.jump_indices,
+    );
+}
+
+#[test]
+fn facts_nested_choice_jump_indices() {
+    let facts = extract_fixture_facts("locked-garden.urd.md");
+    // "Press for the truth" (nested choice) has -> revelation.
+    let choice = facts
+        .choices()
+        .iter()
+        .find(|c| c.label == "Press for the truth")
+        .expect("Should find 'Press for the truth' choice");
+    assert_eq!(
+        choice.jump_indices.len(),
+        1,
+        "Expected 1 jump_index for nested choice 'Press for the truth', got {:?}",
+        choice.jump_indices,
+    );
+}
+
+#[test]
+fn facts_jump_indices_referential_integrity() {
+    let facts = extract_fixture_facts("sunken-citadel.urd.md");
+    for choice in facts.choices() {
+        for &idx in &choice.jump_indices {
+            assert!(
+                idx < facts.jumps().len(),
+                "jump_indices index {} out of bounds (jumps.len() = {})",
+                idx,
+                facts.jumps().len(),
+            );
+            let jump = &facts.jumps()[idx];
+            assert_eq!(
+                jump.from_section, choice.section,
+                "Jump at index {} should originate from section '{}', got '{}'",
+                idx, choice.section, jump.from_section,
+            );
+        }
+    }
 }
 
 // ── PropertyDependencyIndex — SF-2 ──

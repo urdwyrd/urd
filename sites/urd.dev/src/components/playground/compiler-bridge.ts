@@ -63,6 +63,7 @@ export interface ChoiceFact {
   sticky: boolean;
   condition_reads: number[];
   effect_writes: number[];
+  jump_indices: number[];
   span: FactSpan;
 }
 

@@ -3,6 +3,8 @@
   import OutputPane from './OutputPane.svelte';
   import FactSetView from './FactSetView.svelte';
   import PropertyDependencyView from './PropertyDependencyView.svelte';
+  import LocationGraph from './LocationGraph.svelte';
+  import DialogueGraph from './DialogueGraph.svelte';
   import {
     initCompiler,
     compileSource,
@@ -127,7 +129,7 @@ Overgrown paths wind between crumbling statues.
   let mobileTab: 'editor' | 'output' = $state('editor');
   let factsOpen = $state(true);
   let factsExpanded = $state(false);
-  let analysisTab: 'properties' | 'facts' = $state('properties');
+  let analysisTab: 'properties' | 'location' | 'dialogue' | 'facts' = $state('properties');
 
   // DOM refs
   let editorContainer: HTMLDivElement | undefined = $state();
@@ -444,10 +446,24 @@ Overgrown paths wind between crumbling statues.
           >Properties</button>
           <button
             class="analysis-tab"
+            class:analysis-tab-active={analysisTab === 'location'}
+            role="tab"
+            aria-selected={analysisTab === 'location'}
+            onclick={() => analysisTab = 'location'}
+          >Location</button>
+          <button
+            class="analysis-tab"
+            class:analysis-tab-active={analysisTab === 'dialogue'}
+            role="tab"
+            aria-selected={analysisTab === 'dialogue'}
+            onclick={() => analysisTab = 'dialogue'}
+          >Dialogue</button>
+          <button
+            class="analysis-tab"
             class:analysis-tab-active={analysisTab === 'facts'}
             role="tab"
             aria-selected={analysisTab === 'facts'}
-          onclick={() => analysisTab = 'facts'}
+            onclick={() => analysisTab = 'facts'}
           >Facts</button>
         </div>
         <div class="facts-body" class:facts-expanded={factsExpanded}>
@@ -455,6 +471,18 @@ Overgrown paths wind between crumbling statues.
             <PropertyDependencyView
               propertyIndex={compileResult.property_index}
               facts={compileResult.facts}
+              onDiagnosticClick={handleDiagnosticClick}
+            />
+          {:else if analysisTab === 'location' && compileResult.facts}
+            <LocationGraph
+              facts={compileResult.facts}
+              worldJson={compileResult.world}
+              diagnostics={compileResult.diagnostics}
+            />
+          {:else if analysisTab === 'dialogue' && compileResult.facts}
+            <DialogueGraph
+              facts={compileResult.facts}
+              diagnostics={compileResult.diagnostics}
               onDiagnosticClick={handleDiagnosticClick}
             />
           {:else}

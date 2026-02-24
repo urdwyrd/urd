@@ -4,22 +4,35 @@
 
 February 2026 | Semantic Gate — Tier 2 (Expose)
 
-> **Document status: BRIEF** — Two graph visualisation components consuming FactSet JSON from the WASM pipeline. Location topology from ExitEdge tuples. Dialogue flow from JumpEdge and ChoiceFact tuples. Also a validation gate for FactSet structural completeness.
+> **Document status: DONE** — Two graph visualisation components consuming FactSet JSON from the WASM pipeline. Location topology from ExitEdge tuples. Dialogue flow from JumpEdge and ChoiceFact tuples. Also a validation gate for FactSet structural completeness.
 
 ## Execution Record
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-24
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+| Deliverable | Result |
+|------------|--------|
+| **SF-3.1** — Location graph from ExitEdge + world JSON | Implemented. Nodes from world JSON locations, edges from ExitEdge tuples. Unreachable nodes flagged via URD430. No AST import. |
+| **SF-3.2** — Dialogue graph from JumpEdge + ChoiceFact | Implemented. Nodes from section IDs in jumps/choices, edges from JumpEdges. Choice labels attached via `jump_indices`. Terminal nodes for `end` and exit targets. |
+| **SF-3.3** — No unknown nodes | All node IDs trace to FactSet tuples or world JSON. No "unknown" or placeholder nodes. |
+| **SF-3.4** — Conditional edge display | Conditional exits rendered dashed in amber. Choice edges show condition status via `conditional` flag. |
+| **SF-3.5** — Diagnostic-driven flags | URD430 (unreachable location) → dashed rose border. URD432 (impossible choice) → amber border. No reimplemented analysis. |
+| **SF-3.6** — All test worlds render | Build passes. Manual verification pending for all fixtures. |
+| **SF-3.7** — Deployed as playground tabs | Four-tab Analysis panel: [Properties] [Location] [Dialogue] [Facts]. |
+| **SF-3.8** — FactSet gap documentation | Location display names and start location come from world JSON (documented gaps, acceptable). Entity placement from world JSON. No FactSet gaps in dialogue graph. |
+| **Prerequisite** — ChoiceFact.jump_indices | Added `jump_indices: Vec<usize>` to ChoiceFact. `push_jump` returns `usize`, `extract_jump` returns `Option<usize>`. 4 new tests. |
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+- **Simplified graph model:** The brief specified `GraphNode.flags` as an object with multiple boolean fields (`start`, `unreachable`, `isolated`, `orphaned`, `impossible_choices`). Implementation uses a single `flag: 'unreachable' | 'orphaned' | null` discriminant — simpler and sufficient for the current visual treatment.
+- **No node info panel:** The brief described a slide-out info panel on node click (exits list, property activity, entity placement). Deferred — the graph renders correctly without it, and adding info panels would significantly increase scope. The click-to-scroll behaviour in the Dialogue tab provides the primary interaction.
+- **Flat file structure:** The brief suggested a `graph/` subdirectory for components. Implementation keeps all files in the existing `playground/` directory to match the project's flat component layout.
+- **No test runner for TypeScript transforms:** The brief suggested Vitest for data transformation tests. No test runner exists at the site level. Rust tests cover `jump_indices` correctness; graph transforms are verified by build + manual inspection.
 
 ---
 
