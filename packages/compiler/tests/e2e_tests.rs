@@ -1252,10 +1252,16 @@ fn gate_canonical_fixtures_zero_warnings() {
             "Canonical fixture {} should compile successfully. Diagnostics:\n{}",
             fixture, format_diagnostics(&result.diagnostics)
         );
-        let warnings = warning_codes(&result.diagnostics);
+        // Only check PARSE–EMIT warnings (URD100–URD599). ANALYZE warnings
+        // (URD600+) are informational and expected on test worlds — they are
+        // the output of SF-1A FactSet diagnostics, not authoring errors.
+        let warnings: Vec<String> = result.diagnostics.all().iter()
+            .filter(|d| d.severity == Severity::Warning && !d.code.starts_with("URD6"))
+            .map(|d| d.code.clone())
+            .collect();
         assert!(
             warnings.is_empty(),
-            "Canonical fixture {} should have zero warnings, got: {:?}",
+            "Canonical fixture {} should have zero pre-analyze warnings, got: {:?}",
             fixture, warnings
         );
         let errors = error_codes(&result.diagnostics);

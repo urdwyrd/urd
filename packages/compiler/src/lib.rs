@@ -12,6 +12,7 @@ pub mod diagnostics;
 pub mod graph;
 pub mod span;
 pub mod facts;
+pub mod analyze;
 pub mod slugify;
 pub mod symbol_table;
 
@@ -114,6 +115,13 @@ pub fn compile_source_with_reader(
 
     // Phase 3a: Extract facts (always succeeds when LINK completes)
     let fact_set = Some(facts::extract_facts(&linked.graph, &linked.symbol_table));
+
+    // Phase 3b: ANALYZE (FactSet-derived diagnostics, URD600–URD699)
+    if let Some(ref fs) = fact_set {
+        for diag in analyze::analyze(fs) {
+            diagnostics.emit(diag);
+        }
+    }
 
     // Phase 4: VALIDATE
     validate::validate(&linked.graph, &linked.symbol_table, &mut diagnostics);
