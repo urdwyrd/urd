@@ -6,7 +6,7 @@
 use urd_compiler::analyze;
 use urd_compiler::compile;
 use urd_compiler::diagnostics::Diagnostic;
-use urd_compiler::facts::FactSet;
+use urd_compiler::facts::{FactSet, PropertyDependencyIndex};
 
 fn fixture_path(name: &str) -> String {
     let base = env!("CARGO_MANIFEST_DIR");
@@ -26,7 +26,8 @@ fn extract_fixture_facts(name: &str) -> FactSet {
 
 fn analyze_fixture(name: &str) -> Vec<Diagnostic> {
     let facts = extract_fixture_facts(name);
-    analyze::analyze(&facts)
+    let index = PropertyDependencyIndex::build(&facts);
+    analyze::analyze(&facts, &index)
 }
 
 fn diagnostics_with_code<'a>(diagnostics: &'a [Diagnostic], code: &str) -> Vec<&'a Diagnostic> {
@@ -203,7 +204,9 @@ fn analyze_existing_interrogation() {
     let path = fixture_path("interrogation/main.urd.md");
     let result = compile(&path);
     assert!(result.fact_set.is_some(), "Expected FactSet for interrogation");
-    let diags = analyze::analyze(result.fact_set.as_ref().unwrap());
+    let fs = result.fact_set.as_ref().unwrap();
+    let idx = PropertyDependencyIndex::build(fs);
+    let diags = analyze::analyze(fs, &idx);
     eprintln!(
         "interrogation: {} analyze diagnostics: {:?}",
         diags.len(),
@@ -230,7 +233,9 @@ world:
 "#;
     let result = urd_compiler::compile_source("empty.urd.md", source);
     assert!(result.fact_set.is_some(), "Expected FactSet for empty world");
-    let diags = analyze::analyze(result.fact_set.as_ref().unwrap());
+    let fs = result.fact_set.as_ref().unwrap();
+    let idx = PropertyDependencyIndex::build(fs);
+    let diags = analyze::analyze(fs, &idx);
     assert!(
         diags.is_empty(),
         "Expected zero analyze diagnostics on empty world, got: {:#?}",

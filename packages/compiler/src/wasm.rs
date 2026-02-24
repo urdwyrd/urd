@@ -52,13 +52,15 @@ pub fn compiler_version() -> String {
 fn serialise_result(result: crate::CompilationResult) -> String {
     let diags = serialise_diagnostics(&result.diagnostics);
 
-    let facts = result.fact_set.as_ref().map(|fs| fs.to_json());
+    let facts_json = result.fact_set.as_ref().map(|fs| fs.to_json());
+    let index_json = result.property_index.as_ref().map(|idx| idx.to_json());
 
     serde_json::json!({
         "success": result.success,
         "world": result.world,
         "diagnostics": diags,
-        "facts": facts,
+        "facts": facts_json,
+        "property_index": index_json,
     })
     .to_string()
 }

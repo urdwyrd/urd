@@ -43,6 +43,9 @@ pub struct CompilationResult {
     /// Normalized analysis IR. `Some` whenever LINK succeeds, even if
     /// VALIDATE emits errors. `None` only on PARSE or IMPORT failure.
     pub fact_set: Option<facts::FactSet>,
+    /// Property dependency index built from the FactSet. `Some` whenever
+    /// `fact_set` is `Some`. Used by ANALYZE diagnostics and WASM serialisation.
+    pub property_index: Option<facts::PropertyDependencyIndex>,
 }
 
 /// Compile a single `.urd.md` source string (no import resolution).
@@ -92,6 +95,7 @@ pub fn compile_source_with_reader(
                 world: None,
                 diagnostics,
                 fact_set: None,
+                property_index: None,
             };
         }
     };
@@ -107,6 +111,7 @@ pub fn compile_source_with_reader(
             world: None,
             diagnostics,
             fact_set: None,
+            property_index: None,
         };
     }
 
@@ -116,9 +121,14 @@ pub fn compile_source_with_reader(
     // Phase 3a: Extract facts (always succeeds when LINK completes)
     let fact_set = Some(facts::extract_facts(&linked.graph, &linked.symbol_table));
 
-    // Phase 3b: ANALYZE (FactSet-derived diagnostics, URD600–URD699)
-    if let Some(ref fs) = fact_set {
-        for diag in analyze::analyze(fs) {
+    // Phase 3b: Build property dependency index
+    let property_index = fact_set
+        .as_ref()
+        .map(facts::PropertyDependencyIndex::build);
+
+    // Phase 3c: ANALYZE (FactSet-derived diagnostics, URD600–URD699)
+    if let (Some(ref fs), Some(ref idx)) = (&fact_set, &property_index) {
+        for diag in analyze::analyze(fs, idx) {
             diagnostics.emit(diag);
         }
     }
@@ -133,6 +143,7 @@ pub fn compile_source_with_reader(
             world: None,
             diagnostics,
             fact_set,
+            property_index,
         };
     }
 
@@ -143,6 +154,7 @@ pub fn compile_source_with_reader(
         world: Some(json),
         diagnostics,
         fact_set,
+        property_index,
     }
 }
 
@@ -175,6 +187,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
                 world: None,
                 diagnostics,
                 fact_set: None,
+                property_index: None,
             };
         }
     };

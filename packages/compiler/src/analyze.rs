@@ -17,8 +17,8 @@ use crate::facts::{
 /// Run all FactSet-derived diagnostics.
 ///
 /// Called after `extract_facts()`, before or alongside VALIDATE.
-pub fn analyze(fact_set: &FactSet) -> Vec<Diagnostic> {
-    let index = PropertyDependencyIndex::build(fact_set);
+/// The caller builds the `PropertyDependencyIndex` once and passes it in.
+pub fn analyze(fact_set: &FactSet, index: &PropertyDependencyIndex) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
     diagnostics.extend(check_read_never_written(fact_set, &index));
@@ -39,11 +39,7 @@ fn check_read_never_written(
 ) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    for key in index.read_properties() {
-        if !index.writes_of(key).is_empty() {
-            continue;
-        }
-
+    for key in index.read_but_never_written() {
         let read_indices = index.reads_of(key);
         if read_indices.is_empty() {
             continue;
@@ -90,11 +86,7 @@ fn check_written_never_read(
 ) -> Vec<Diagnostic> {
     let mut diagnostics = Vec::new();
 
-    for key in index.written_properties() {
-        if !index.reads_of(key).is_empty() {
-            continue;
-        }
-
+    for key in index.written_but_never_read() {
         let write_indices = index.writes_of(key);
         if write_indices.is_empty() {
             continue;

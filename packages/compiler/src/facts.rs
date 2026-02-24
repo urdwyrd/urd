@@ -934,6 +934,92 @@ impl PropertyDependencyIndex {
     pub fn written_properties(&self) -> impl Iterator<Item = &PropertyKey> {
         self.writers.keys()
     }
+
+    /// Property keys that appear in conditions but never in effects.
+    /// Returns keys sorted lexicographically by (entity_type, property).
+    pub fn read_but_never_written(&self) -> Vec<&PropertyKey> {
+        let mut keys: Vec<_> = self
+            .readers
+            .keys()
+            .filter(|k| !self.writers.contains_key(*k))
+            .collect();
+        keys.sort_by(|a, b| (&a.entity_type, &a.property).cmp(&(&b.entity_type, &b.property)));
+        keys
+    }
+
+    /// Property keys that appear in effects but never in conditions.
+    /// Returns keys sorted lexicographically by (entity_type, property).
+    pub fn written_but_never_read(&self) -> Vec<&PropertyKey> {
+        let mut keys: Vec<_> = self
+            .writers
+            .keys()
+            .filter(|k| !self.readers.contains_key(*k))
+            .collect();
+        keys.sort_by(|a, b| (&a.entity_type, &a.property).cmp(&(&b.entity_type, &b.property)));
+        keys
+    }
+
+    /// Serialise the index to a property-centric JSON value.
+    ///
+    /// Properties are sorted lexicographically by (entity_type, property).
+    /// The `orphaned` field is `null`, `"read_never_written"`, or `"written_never_read"`.
+    pub fn to_json(&self) -> serde_json::Value {
+        // Collect all unique property keys from both maps.
+        let mut all_keys: Vec<&PropertyKey> = self
+            .readers
+            .keys()
+            .chain(self.writers.keys())
+            .collect::<std::collections::HashSet<_>>()
+            .into_iter()
+            .collect();
+        all_keys
+            .sort_by(|a, b| (&a.entity_type, &a.property).cmp(&(&b.entity_type, &b.property)));
+
+        let read_never_written = self.read_but_never_written();
+        let written_never_read = self.written_but_never_read();
+
+        let mut total_reads: usize = 0;
+        let mut total_writes: usize = 0;
+
+        let properties: Vec<serde_json::Value> = all_keys
+            .iter()
+            .map(|key| {
+                let read_indices = self.reads_of(key);
+                let write_indices = self.writes_of(key);
+                total_reads += read_indices.len();
+                total_writes += write_indices.len();
+
+                let orphaned = if read_never_written.contains(key) {
+                    serde_json::Value::String("read_never_written".to_string())
+                } else if written_never_read.contains(key) {
+                    serde_json::Value::String("written_never_read".to_string())
+                } else {
+                    serde_json::Value::Null
+                };
+
+                serde_json::json!({
+                    "entity_type": key.entity_type,
+                    "property": key.property,
+                    "read_count": read_indices.len(),
+                    "write_count": write_indices.len(),
+                    "read_indices": read_indices,
+                    "write_indices": write_indices,
+                    "orphaned": orphaned,
+                })
+            })
+            .collect();
+
+        serde_json::json!({
+            "properties": properties,
+            "summary": {
+                "total_properties": all_keys.len(),
+                "total_reads": total_reads,
+                "total_writes": total_writes,
+                "read_never_written": read_never_written.len(),
+                "written_never_read": written_never_read.len(),
+            }
+        })
+    }
 }
 
 // ── JSON serialisation ──

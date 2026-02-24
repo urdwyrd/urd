@@ -541,3 +541,262 @@ fn facts_jump_section_targets() {
         .collect();
     assert_eq!(section_jumps.len(), 1);
 }
+
+// ── PropertyDependencyIndex — SF-2 ──
+
+#[test]
+fn index_build_deterministic() {
+    let facts = extract_fixture_facts("locked-garden.urd.md");
+    let index1 = PropertyDependencyIndex::build(&facts);
+    let index2 = PropertyDependencyIndex::build(&facts);
+    let json1 = index1.to_json().to_string();
+    let json2 = index2.to_json().to_string();
+    assert_eq!(json1, json2, "Two builds from same FactSet must produce identical JSON");
+}
+
+#[test]
+fn index_read_but_never_written_empty_on_clean() {
+    let facts = extract_fixture_facts("negative-factset-diagnostics.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    assert!(
+        index.read_but_never_written().is_empty(),
+        "Clean fixture should have no read-but-never-written properties, got: {:?}",
+        index.read_but_never_written()
+    );
+}
+
+#[test]
+fn index_written_but_never_read_empty_on_clean() {
+    let facts = extract_fixture_facts("negative-factset-diagnostics.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    assert!(
+        index.written_but_never_read().is_empty(),
+        "Clean fixture should have no written-but-never-read properties, got: {:?}",
+        index.written_but_never_read()
+    );
+}
+
+#[test]
+fn index_read_but_never_written_positive() {
+    let facts = extract_fixture_facts("positive-factset-diagnostics.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    let keys = index.read_but_never_written();
+    let names: Vec<_> = keys
+        .iter()
+        .map(|k| format!("{}.{}", k.entity_type, k.property))
+        .collect();
+    assert!(
+        names.contains(&"NPC.suspicion".to_string()),
+        "Expected NPC.suspicion in read_but_never_written, got: {:?}",
+        names
+    );
+}
+
+#[test]
+fn index_written_but_never_read_positive() {
+    let facts = extract_fixture_facts("positive-factset-diagnostics.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    let keys = index.written_but_never_read();
+    let names: Vec<_> = keys
+        .iter()
+        .map(|k| format!("{}.{}", k.entity_type, k.property))
+        .collect();
+    assert!(
+        names.contains(&"NPC.loyalty".to_string()),
+        "Expected NPC.loyalty in written_but_never_read, got: {:?}",
+        names
+    );
+}
+
+#[test]
+fn index_to_json_structure() {
+    let facts = extract_fixture_facts("locked-garden.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    let json = index.to_json();
+
+    let properties = json["properties"]
+        .as_array()
+        .expect("JSON must have 'properties' array");
+    assert!(!properties.is_empty(), "Properties should not be empty");
+
+    let summary = &json["summary"];
+    assert!(summary["total_properties"].as_u64().unwrap() > 0);
+    assert!(summary["total_reads"].as_u64().unwrap() > 0);
+    assert!(summary["total_writes"].as_u64().unwrap() > 0);
+
+    for prop in properties {
+        assert!(prop["entity_type"].is_string());
+        assert!(prop["property"].is_string());
+        assert!(prop["read_count"].is_number());
+        assert!(prop["write_count"].is_number());
+        assert!(prop["read_indices"].is_array());
+        assert!(prop["write_indices"].is_array());
+        assert!(prop["orphaned"].is_null() || prop["orphaned"].is_string());
+    }
+}
+
+#[test]
+fn index_to_json_orphaned_flags() {
+    let facts = extract_fixture_facts("positive-factset-diagnostics.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    let json = index.to_json();
+    let properties = json["properties"].as_array().unwrap();
+
+    let suspicion = properties
+        .iter()
+        .find(|p| p["entity_type"] == "NPC" && p["property"] == "suspicion")
+        .expect("Should find NPC.suspicion");
+    assert_eq!(suspicion["orphaned"], "read_never_written");
+
+    let loyalty = properties
+        .iter()
+        .find(|p| p["entity_type"] == "NPC" && p["property"] == "loyalty")
+        .expect("Should find NPC.loyalty");
+    assert_eq!(loyalty["orphaned"], "written_never_read");
+
+    let has_both = properties.iter().find(|p| {
+        p["orphaned"].is_null()
+            && p["read_count"].as_u64().unwrap() > 0
+            && p["write_count"].as_u64().unwrap() > 0
+    });
+    assert!(
+        has_both.is_some(),
+        "Should have at least one non-orphaned property"
+    );
+}
+
+#[test]
+fn index_all_fixtures_no_panic() {
+    let fixtures = [
+        "two-room-key-puzzle.urd.md",
+        "tavern-scene.urd.md",
+        "monty-hall.urd.md",
+        "sunken-citadel.urd.md",
+        "locked-garden.urd.md",
+        "negative-factset-diagnostics.urd.md",
+        "positive-factset-diagnostics.urd.md",
+        "positive-factset-circular-deep.urd.md",
+    ];
+    for name in &fixtures {
+        let facts = extract_fixture_facts(name);
+        let index = PropertyDependencyIndex::build(&facts);
+        let _json = index.to_json();
+        let _rnw = index.read_but_never_written();
+        let _wnr = index.written_but_never_read();
+    }
+}
+
+#[test]
+fn index_matches_d1_d2() {
+    let facts = extract_fixture_facts("positive-factset-diagnostics.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+
+    let diags = urd_compiler::analyze::analyze(&facts, &index);
+
+    // D1 property keys from diagnostics
+    let d1_keys_from_diags: std::collections::HashSet<String> = diags
+        .iter()
+        .filter(|d| d.code == "URD601")
+        .filter_map(|d| {
+            let start = d.message.find('\'')? + 1;
+            let end = d.message[start..].find('\'')?;
+            Some(d.message[start..start + end].to_string())
+        })
+        .collect();
+
+    let d1_keys_from_index: std::collections::HashSet<String> = index
+        .read_but_never_written()
+        .iter()
+        .map(|k| format!("{}.{}", k.entity_type, k.property))
+        .collect();
+
+    assert_eq!(
+        d1_keys_from_diags, d1_keys_from_index,
+        "D1 diagnostic keys must match read_but_never_written() keys"
+    );
+
+    // D2 property keys from diagnostics
+    let d2_keys_from_diags: std::collections::HashSet<String> = diags
+        .iter()
+        .filter(|d| d.code == "URD602")
+        .filter_map(|d| {
+            let start = d.message.find('\'')? + 1;
+            let end = d.message[start..].find('\'')?;
+            Some(d.message[start..start + end].to_string())
+        })
+        .collect();
+
+    let d2_keys_from_index: std::collections::HashSet<String> = index
+        .written_but_never_read()
+        .iter()
+        .map(|k| format!("{}.{}", k.entity_type, k.property))
+        .collect();
+
+    assert_eq!(
+        d2_keys_from_diags, d2_keys_from_index,
+        "D2 diagnostic keys must match written_but_never_read() keys"
+    );
+}
+
+#[test]
+fn index_locked_garden_properties() {
+    let facts = extract_fixture_facts("locked-garden.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    let json = index.to_json();
+    let properties = json["properties"].as_array().unwrap();
+
+    let prop_names: Vec<String> = properties
+        .iter()
+        .map(|p| {
+            format!(
+                "{}.{}",
+                p["entity_type"].as_str().unwrap(),
+                p["property"].as_str().unwrap()
+            )
+        })
+        .collect();
+
+    // Must be sorted lexicographically
+    let mut sorted = prop_names.clone();
+    sorted.sort();
+    assert_eq!(
+        prop_names, sorted,
+        "Properties must be sorted lexicographically"
+    );
+
+    assert!(
+        !prop_names.is_empty(),
+        "Locked Garden should have properties"
+    );
+    eprintln!("Locked Garden properties: {:?}", prop_names);
+}
+
+#[test]
+fn index_sunken_citadel_summary() {
+    let facts = extract_fixture_facts("sunken-citadel.urd.md");
+    let index = PropertyDependencyIndex::build(&facts);
+    let json = index.to_json();
+    let summary = &json["summary"];
+
+    assert!(
+        summary["total_properties"].as_u64().unwrap() > 0,
+        "Should have properties"
+    );
+    assert!(
+        summary["total_reads"].as_u64().unwrap() > 0,
+        "Should have reads"
+    );
+    assert!(
+        summary["total_writes"].as_u64().unwrap() > 0,
+        "Should have writes"
+    );
+
+    eprintln!(
+        "Sunken Citadel: {} properties, {} reads, {} writes, {} read-never-written, {} written-never-read",
+        summary["total_properties"],
+        summary["total_reads"],
+        summary["total_writes"],
+        summary["read_never_written"],
+        summary["written_never_read"],
+    );
+}

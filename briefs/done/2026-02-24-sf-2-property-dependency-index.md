@@ -4,22 +4,33 @@
 
 February 2026 | Semantic Gate — Tier 2 (Expose)
 
-> **Document status: BRIEF** — Extends the existing `PropertyDependencyIndex` with set-difference methods, JSON serialisation, a property-centric playground panel, and shared source of truth with SF-1A diagnostics D1/D2.
+> **Document status: DONE** — Extends the existing `PropertyDependencyIndex` with set-difference methods, JSON serialisation, a property-centric playground panel, and shared source of truth with SF-1A diagnostics D1/D2.
 
 ## Execution Record
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-24
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+| Deliverable | Result |
+|------------|--------|
+| **SF-2.1** — Six methods on PropertyDependencyIndex | All six implemented: `reads_of`, `writes_of`, `read_properties`, `written_properties`, `read_but_never_written`, `written_but_never_read` |
+| **SF-2.2** — Index built from FactSet in single pass | `build()` unchanged. Index now built once in `lib.rs` pipeline, passed to both `analyze()` and WASM serialisation |
+| **SF-2.3** — Deterministic `to_json()` | Properties sorted lexicographically by (entity_type, property). Verified by `index_build_deterministic` test |
+| **SF-2.4** — JSON serialisation in WASM pipeline | `property_index` field added to `CompilationResult` and WASM JSON output. TypeScript types added to `compiler-bridge.ts` |
+| **SF-2.5** — Property-centric playground panel | `PropertyDependencyView.svelte` created. Tab bar [Properties / Facts] added to Analysis panel. Default tab: Properties |
+| **SF-2.6** — Shared source of truth | D1/D2 in `analyze.rs` refactored to call `index.read_but_never_written()` / `written_but_never_read()`. Verified by `index_matches_d1_d2` test |
+| **SF-2.7** — Test coverage | 11 new tests added to `facts_tests.rs`. All 580 tests pass (569 existing + 11 new) |
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+- **`analyze()` signature change**: The brief specified changing `analyze(fact_set: &FactSet)` to `analyze(fact_set: &FactSet, index: &PropertyDependencyIndex)`. This was implemented as specified. All callers (lib.rs pipeline, analyze_tests.rs) updated.
+- **`CompilationResult` extended**: Added `property_index: Option<facts::PropertyDependencyIndex>` field to avoid building the index twice. Built once after `extract_facts()`, stored on the result, consumed by both analyze and wasm serialisation.
+- **Error fallback in compiler-bridge.ts**: Added explicit `facts: null` and `property_index: null` to the catch block — the brief didn't mention this but it was necessary for type correctness.
+- **No other deviations.** All JSON structure, method signatures, test matrix, and component design match the brief.
 
 ---
 

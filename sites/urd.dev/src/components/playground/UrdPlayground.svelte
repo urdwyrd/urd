@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import OutputPane from './OutputPane.svelte';
   import FactSetView from './FactSetView.svelte';
+  import PropertyDependencyView from './PropertyDependencyView.svelte';
   import {
     initCompiler,
     compileSource,
@@ -126,6 +127,7 @@ Overgrown paths wind between crumbling statues.
   let mobileTab: 'editor' | 'output' = $state('editor');
   let factsOpen = $state(true);
   let factsExpanded = $state(false);
+  let analysisTab: 'properties' | 'facts' = $state('properties');
 
   // DOM refs
   let editorContainer: HTMLDivElement | undefined = $state();
@@ -432,8 +434,32 @@ Overgrown paths wind between crumbling statues.
         {/if}
       </button>
       {#if factsOpen}
+        <div class="analysis-tabs" role="tablist">
+          <button
+            class="analysis-tab"
+            class:analysis-tab-active={analysisTab === 'properties'}
+            role="tab"
+            aria-selected={analysisTab === 'properties'}
+            onclick={() => analysisTab = 'properties'}
+          >Properties</button>
+          <button
+            class="analysis-tab"
+            class:analysis-tab-active={analysisTab === 'facts'}
+            role="tab"
+            aria-selected={analysisTab === 'facts'}
+          onclick={() => analysisTab = 'facts'}
+          >Facts</button>
+        </div>
         <div class="facts-body" class:facts-expanded={factsExpanded}>
-          <FactSetView facts={compileResult.facts} onDiagnosticClick={handleDiagnosticClick} />
+          {#if analysisTab === 'properties' && compileResult.property_index}
+            <PropertyDependencyView
+              propertyIndex={compileResult.property_index}
+              facts={compileResult.facts}
+              onDiagnosticClick={handleDiagnosticClick}
+            />
+          {:else}
+            <FactSetView facts={compileResult.facts} onDiagnosticClick={handleDiagnosticClick} />
+          {/if}
         </div>
       {/if}
     </div>
@@ -629,6 +655,42 @@ Overgrown paths wind between crumbling statues.
   .facts-size-btn:hover {
     border-color: var(--gold-dim);
     color: var(--text);
+  }
+
+  .analysis-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    background: var(--raise);
+  }
+
+  .analysis-tab {
+    font-family: var(--display);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--faint);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  .analysis-tab:hover {
+    color: var(--dim);
+  }
+
+  .analysis-tab-active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .analysis-tab:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: -2px;
   }
 
   .facts-body {

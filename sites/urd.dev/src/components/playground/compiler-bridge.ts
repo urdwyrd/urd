@@ -82,11 +82,35 @@ export interface FactSet {
   rules: RuleFact[];
 }
 
+export interface PropertyEntry {
+  entity_type: string;
+  property: string;
+  read_count: number;
+  write_count: number;
+  read_indices: number[];
+  write_indices: number[];
+  orphaned: 'read_never_written' | 'written_never_read' | null;
+}
+
+export interface PropertyIndexSummary {
+  total_properties: number;
+  total_reads: number;
+  total_writes: number;
+  read_never_written: number;
+  written_never_read: number;
+}
+
+export interface PropertyIndex {
+  properties: PropertyEntry[];
+  summary: PropertyIndexSummary;
+}
+
 export interface CompileResult {
   success: boolean;
   world: string | null;
   diagnostics: Diagnostic[];
   facts: FactSet | null;
+  property_index: PropertyIndex | null;
 }
 
 export interface ParseResult {
@@ -149,6 +173,8 @@ export function compileSource(source: string): CompileResult {
         message: `Compiler error: ${e instanceof Error ? e.message : String(e)}`,
         span: { file: 'playground.urd.md', start_line: 1, start_col: 1, end_line: 1, end_col: 1 },
       }],
+      facts: null,
+      property_index: null,
     };
   }
 }
