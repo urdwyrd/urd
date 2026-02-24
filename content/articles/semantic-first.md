@@ -153,6 +153,6 @@ The FactSet is six tuple types, roughly 600 lines of Rust, extracted in a single
 
 That is what we are building toward. And that is why we are building the queryable world first.
 
-The concrete plan — seven briefs across three tiers, from novel diagnostics through LSP foundations to an MCP query surface — is tracked in the [semantic gate](/documents/semantic-gate).
+The concrete plan — six briefs across three tiers, from novel diagnostics through LSP foundations to an MCP query surface — is tracked in the [semantic gate](/documents/semantic-gate).
 
 *This article is part of the Urd development journal at [urd.dev](https://urd.dev).*

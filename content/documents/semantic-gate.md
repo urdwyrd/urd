@@ -1,7 +1,7 @@
 ---
 title: "Semantic Gate"
 slug: "semantic-gate"
-description: "Seven briefs across three tiers — from novel FactSet diagnostics through property dependency analysis, graph visualisation, semantic diffing, LSP foundations, to an MCP query surface. Every brief builds on the FactSet. Every acceptance criterion validates that the FactSet's design is sufficient for the queries we are promising."
+description: "Six briefs across three tiers — from novel FactSet diagnostics through property dependency analysis, graph visualisation, semantic diffing, LSP foundations, to an MCP query surface. Every brief builds on the FactSet. Every acceptance criterion validates that the FactSet's design is sufficient for the queries we are promising."
 category: "architecture"
 format: "Gate Document"
 date: "2026-02-24"
@@ -14,7 +14,7 @@ tags:
   - acceptance
 details:
   - "SF-1A: Novel FactSet diagnostics (5 new diagnostic codes)"
-  - "SF-1B: Migrate existing S3–S8 static analysis to FactSet queries"
+  - "SF-1B: DEFERRED — existing S3–S8 checks cannot migrate without expanding FactSet scope"
   - "SF-2: PropertyDependencyIndex with read/write lookups"
   - "SF-3: Location topology and dialogue flow graph visualisation"
   - "SF-4: Semantic diff engine over six relation types"
@@ -42,11 +42,11 @@ The runtime (Wyrd) is explicitly out of scope for this gate. It is next.
 
 ## Gate structure
 
-Seven briefs. Three tiers.
+Six briefs. Three tiers.
 
 | Tier | Purpose | Briefs |
 |------|---------|--------|
-| **Prove** | Validate that the FactSet supports real work | SF-1A, SF-1B |
+| **Prove** | Validate that the FactSet supports real work | SF-1A |
 | **Expose** | Make semantics inspectable, visible, and comparable | SF-2, SF-3, SF-4 |
 | **Operationalise** | Deliver semantics into tools and external systems | SF-5, SF-6 |
 
@@ -57,15 +57,13 @@ Dependencies are strict. Each brief lists its prerequisites. No brief should beg
 ## Dependency graph
 
 ```
-SF-1A ──→ SF-1B
+SF-1A ──→ SF-2 ──→ SF-3
+  │                  │
+  │                  ├──→ SF-4
+  │                  │
+  │                  └──→ SF-5
   │
-  ├──→ SF-2 ──→ SF-3
-  │              │
-  │              ├──→ SF-4
-  │              │
-  │              └──→ SF-5
-  │
-  └──────────────────→ SF-6
+  └──────────────────────→ SF-6
 ```
 
 SF-1A gates everything. SF-2 (PropertyDependencyIndex) is the second critical path item. SF-3, SF-4, SF-5 can be parallelised after SF-2 if resources allow. SF-6 depends only on SF-1A and SF-2.
@@ -103,34 +101,26 @@ Implement a minimum of five new diagnostic codes. Each must operate solely on th
 
 ---
 
-## SF-1B: Migrate Existing Static Analysis to FactSet
+## SF-1B: Migrate Existing Static Analysis to FactSet — DEFERRED
 
-**Purpose:** Eliminate duplicate AST traversal in existing S3–S8 checks by rewriting them as FactSet queries. Reduces compiler maintenance surface and validates FactSet completeness for known-good queries.
+**Status:** Deferred. Reassess when FactSet scope expands to include location/section metadata.
 
-**Dependencies:** SF-1A passed. (If SF-1A reveals FactSet schema gaps, those must be resolved first.)
+**Original purpose:** Eliminate duplicate AST traversal in existing S3–S8 checks by rewriting them as FactSet queries.
 
-**Scope:**
+**Why deferred:** Code analysis of the four VALIDATE checks (S3, S4, S6, S8) revealed that none can be migrated to FactSet-only queries. Each check requires data the FactSet was deliberately designed not to carry:
 
-Rewrite static analysis checks S3 through S8 to operate on the FactSet. The existing checks and their FactSet equivalents:
+| Check | What it needs beyond FactSet |
+|-------|-----------------------------|
+| S3 — Unreachable location | Complete location ID enumeration, `world_start` value. The FactSet only contains locations that participate in exits. |
+| S4 — Orphaned choice | Type definition's enum values list ("is `friendly` a valid variant of the `mood` enum?"). This is symbol table data, not a FactSet relation. |
+| S6 — Missing fallthrough | Presence of prose/speech/stage-direction after the last choice — narrative content, which the FactSet deliberately excludes. |
+| S8 — Shadowed exit | Section-to-location containment, which the FactSet does not model (it knows which section a choice belongs to, not which location a section lives in). |
 
-| Check | Current implementation | FactSet equivalent |
-|-------|----------------------|-------------------|
-| S3 — Unreachable location | AST walk over exits | BFS over ExitEdge tuples |
-| S4 — Unreachable dialogue section | AST walk over jumps | BFS over JumpEdge tuples |
-| S5 — Unused entity | AST walk over references | Entity ID not present in any tuple |
-| S6 — Shadowed entity ID | AST walk | (may remain AST-based if shadowing is a parse-time concern) |
-| S7 — Choice without effect | AST walk over choices | ChoiceFact with empty effect_writes index |
-| S8 — Rule with unsatisfiable trigger | AST walk over rules | RuleFact condition_reads cross-referenced against PropertyWrite |
+Migration would require either: (a) expanding the FactSet with location metadata, section-location mapping, and enum value lists — changing what the FactSet is, or (b) allowing migrated checks to use FactSet + symbol table — which doesn't simplify anything and adds a second data source to each check.
 
-**Acceptance criteria:**
+The existing checks work, are tested (~290 lines total, 36 tests), and have no maintenance problems. The FactSet's value is proven by SF-1A's five novel diagnostics that the old checks cannot express. Migrating working code to a different data source for aesthetic purity is not progress.
 
-- [ ] **SF-1B.1** — S3, S4, S5, S7, S8 reimplemented as FactSet queries (S6 exempted if shadowing is parse-time only)
-- [ ] **SF-1B.2** — All existing static analysis tests continue to pass with identical diagnostics
-- [ ] **SF-1B.3** — Old AST-traversal implementations removed (not just bypassed)
-- [ ] **SF-1B.4** — No regression in compiler performance (static analysis phase should be equal or faster)
-- [ ] **SF-1B.5** — If S6 cannot migrate, the reason is documented
-
-**Validation gate:** SF-1B.2 is the critical item. Zero diagnostic regression.
+**Reassessment trigger:** If the FactSet later expands with a `LocationFact` relation (carrying containment, start flag, metadata) or if a concrete consumer needs S3–S8 results as FactSet queries (e.g., the semantic diff engine needs reachability data from FactSet rather than re-running the BFS), SF-1B becomes viable and should be reconsidered.
 
 ---
 
@@ -332,12 +322,12 @@ MCP-compatible endpoints that serve FactSet data as structured JSON responses. R
 
 ## Gate completion
 
-The semantic gate is closed when all seven briefs have passed their acceptance criteria and all validation gates are verified.
+The semantic gate is closed when all six active briefs have passed their acceptance criteria and all validation gates are verified.
 
 **Gate summary checklist:**
 
 - [ ] **SF-1A** — Novel FactSet diagnostics proved (5 diagnostics, real issue found)
-- [ ] **SF-1B** — Existing static analysis migrated to FactSet (zero diagnostic regression)
+- ~~SF-1B~~ — Deferred (existing checks work; FactSet scope insufficient for migration without expanding the IR)
 - [ ] **SF-2** — PropertyDependencyIndex shipped and visible in playground
 - [ ] **SF-3** — Graphs reconstruct from FactSet only (no AST fallback, no unknown nodes)
 - [ ] **SF-4** — Semantic diff detects structural and dependency changes
