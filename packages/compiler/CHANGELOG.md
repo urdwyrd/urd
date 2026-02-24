@@ -4,6 +4,22 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.12] — 2026-02-24
+
+### Added
+
+- **Semantic diff engine (`diff` module):** Compares two compiled Urd worlds at the semantic level, producing typed change entries across six categories: entity, location/exit, dialogue (section/choice), property dependency, rule, and reachability. Core types: `DiffSnapshot`, `DiffReport`, `ChangeEntry`.
+- **DiffSnapshot extraction:** `DiffSnapshot::from_compilation()` builds a normalised, comparable representation from a `CompilationResult` — composite of FactSet, world JSON, PropertyDependencyIndex, and diagnostics. Captures only comparable attributes (no spans, no indices, no source).
+- **Snapshot file format:** `.urd.snapshot.json` with version marker (`urd_snapshot: "1"`), JSON serialisation via `to_json()`/`from_json()` for CI snapshot workflows.
+- **Reachability diffing from diagnostics:** URD430 (unreachable location) and URD432 (impossible choice) parsed from diagnostic messages to detect `became_unreachable`, `became_reachable`, `choice_became_impossible`, and `choice_became_possible` changes.
+- **CLI subcommands:** `urd diff <a> <b> [--format json|summary]` compares two files or snapshots (exit code 0 = no changes, 1 = changes). `urd snapshot <file> [-o output]` produces a `.urd.snapshot.json`. Default `urd <file>` compile behaviour unchanged.
+- 4 new test fixture pairs (8 files) in `tests/fixtures/diff/`: locked-garden, minimal, reachability, impossible-choice.
+- 28 new tests covering identity, entity, location/exit, dialogue, property dependency, reachability, snapshot roundtrip, and integration. Total: 612 tests.
+
+## [0.1.11] — 2026-02-24
+
+_Intermediate build — SF-4 diff engine code committed without artefact rebuild. Superseded by 0.1.12._
+
 ## [0.1.10] — 2026-02-24
 
 ### Added
