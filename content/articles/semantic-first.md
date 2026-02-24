@@ -19,6 +19,8 @@ We are not building the runtime next.
 
 We are building the tooling, diagnostics, and infrastructure that sit on top of the FactSet, the compiler's queryable semantic graph. Derived diagnostics. Property dependency analysis. Location graph visualisation. LSP foundations. The work that deepens the compiler before we move downstream.
 
+![The Semantic Gate: Evolution of the FactSet IR](/images/documents/semantic-gate-overview.png)
+
 The reasoning is strategic. The FactSet already models the same relationships the runtime will need to evaluate. Exits between locations, jumps between dialogue sections, which properties get read by conditions, which properties get written by effects. Every query we build over these tuples is a dry run of logic the runtime will need. If property read/write analysis reveals gaps in the data model (awkward modelling, missing coverage, ambiguous semantics) we find that now, while the cost of changing the schema is low, not after we have committed to a runtime state management design that depends on it.
 
 There is also a quality argument. The more derived diagnostics the compiler ships ("property read but never written", "exit leads to location with no content", "condition tests an enum variant no effect ever produces") the higher quality the worlds arriving at the runtime will be. Wyrd's job gets simpler when the compiler has already rejected or warned about the degenerate cases. Every bug the compiler catches is a bug the runtime never has to handle.

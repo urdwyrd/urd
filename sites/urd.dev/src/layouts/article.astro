@@ -63,6 +63,34 @@ const displayDate = year && month ? `${MONTHS[month] ?? month} ${year}` : "";
     document.getElementById('back-to-top')?.addEventListener('click', () => {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     });
+
+    // ── Lightbox (click-to-expand images) ──
+    document.querySelectorAll<HTMLImageElement>('.prose img').forEach((img) => {
+      img.addEventListener('click', () => {
+        const overlay = document.createElement('div');
+        overlay.className = 'lightbox-overlay';
+        const clone = document.createElement('img');
+        clone.src = img.src;
+        clone.alt = img.alt;
+        const hint = document.createElement('div');
+        hint.className = 'lightbox-hint';
+        hint.textContent = 'Click or press Escape to close';
+        overlay.appendChild(clone);
+        overlay.appendChild(hint);
+        document.body.appendChild(overlay);
+        document.body.style.overflow = 'hidden';
+
+        const close = () => {
+          overlay.remove();
+          document.body.style.overflow = '';
+        };
+        overlay.addEventListener('click', close);
+        const onKey = (e: KeyboardEvent) => {
+          if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); }
+        };
+        document.addEventListener('keydown', onKey);
+      });
+    });
   </script>
 </Base>
 

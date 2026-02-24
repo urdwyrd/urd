@@ -6,6 +6,8 @@
 
 ---
 
+![The Semantic Gate: Evolution of the FactSet IR](images/semantic-gate-overview.png)
+
 ## Context
 
 The compiler gate is closed. 554 tests. The FactSet IR — six relation types extracted in a single deterministic pass after compilation — is the foundation for everything in this phase.
