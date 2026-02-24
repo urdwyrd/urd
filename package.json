@@ -15,6 +15,8 @@
     "compiler:wasm:check": "cargo check --target wasm32-unknown-unknown --manifest-path packages/compiler/Cargo.toml --features wasm",
     "compiler:bump": "node scripts/compiler-version-bump.mjs",
     "compiler:bench": "cargo build --release --manifest-path packages/compiler/Cargo.toml --bin bench && node scripts/compiler-bench.mjs",
+    "lsp:build": "cargo build --release --manifest-path packages/lsp/Cargo.toml",
+    "lsp:test": "cargo test --manifest-path packages/lsp/Cargo.toml",
     "grammar:test": "cargo test --manifest-path packages/grammar/Cargo.toml",
     "schema:test": "node scripts/validate-json-schema.mjs",
     "prepare": "husky"

@@ -54,6 +54,7 @@ fn serialise_result(result: crate::CompilationResult) -> String {
 
     let facts_json = result.fact_set.as_ref().map(|fs| fs.to_json());
     let index_json = result.property_index.as_ref().map(|idx| idx.to_json());
+    let definition_index_json = result.definition_index.as_ref().map(|idx| idx.to_json());
 
     serde_json::json!({
         "success": result.success,
@@ -61,6 +62,7 @@ fn serialise_result(result: crate::CompilationResult) -> String {
         "diagnostics": diags,
         "facts": facts_json,
         "property_index": index_json,
+        "definition_index": definition_index_json,
     })
     .to_string()
 }

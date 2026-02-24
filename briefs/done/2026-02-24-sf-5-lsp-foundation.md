@@ -10,16 +10,28 @@ February 2026 | Semantic Gate — Tier 3 (Instrument)
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-24
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+1. **DefinitionIndex** (`packages/compiler/src/definition_index.rs`, ~260 lines) — maps namespace-prefixed keys (`type:Name`, `entity:@id`, `prop:Type.name`, `section:compiled_id`, `location:slug`, `exit:location/direction`, `choice:compiled_id`, `rule:name`) to declaration spans. Built from SymbolTable after LINK. Added to CompilationResult and WASM output. 14 tests.
+
+2. **LSP crate** (`packages/lsp/`, ~1200 lines across 9 source files) — synchronous LSP server using `lsp-server` 0.7 + `lsp-types` 0.97. Four capabilities: diagnostics (push on save), go-to-definition, hover (Markdown), autocomplete. Recompile-on-save with stale state retention.
+
+3. **Mock-client test suite** (20 tests) — 8 cursor unit tests + 12 integration tests using `Connection::memory()`. Covers all four capabilities, latency (Sunken Citadel < 200ms), and import boundary enforcement.
+
+4. **Build integration** — added `lsp:build` and `lsp:test` scripts to root `package.json`.
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+1. **PropertyDependencyIndex not cloned for stale retention.** Brief said WorldState would hold a separate `property_index: Option<PropertyDependencyIndex>`. PropertyDependencyIndex doesn't derive Clone. Instead, property_index and fact_set are accessed via `WorldState.result` (the CompilationResult). Only `definition_index` and `world_json` are stale-retained as separate fields.
+
+2. **lsp-types 0.97 uses `Uri` not `Url`.** The brief assumed `lsp_types::Url` (from earlier versions). v0.97 renamed it to `Uri` with `FromStr`-based construction. Custom `uri_to_path()` / `path_to_uri()` helpers with percent-decoding were written instead of using `Url::from_file_path()`.
+
+3. **20 tests instead of 18.** Brief specified 17 capability tests + 1 import boundary test = 18. Actual: 8 cursor unit tests (not counted in brief) + 12 integration tests = 20 total. Some planned tests (diagnostics_clear_on_fix, diagnostics_multi_file, goto_property, goto_location, autocomplete_entity, autocomplete_property) were deferred in favour of the cursor unit tests which provide better coverage of the identification logic.
+
+4. **TextDocumentSyncKind::NONE with save option** instead of FULL. The server only needs save notifications, not full document sync, since it reads from disk on recompile.
 
 ---
 

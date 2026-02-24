@@ -12,6 +12,7 @@ pub mod diagnostics;
 pub mod graph;
 pub mod span;
 pub mod facts;
+pub mod definition_index;
 pub mod diff;
 pub mod analyze;
 pub mod slugify;
@@ -47,6 +48,9 @@ pub struct CompilationResult {
     /// Property dependency index built from the FactSet. `Some` whenever
     /// `fact_set` is `Some`. Used by ANALYZE diagnostics and WASM serialisation.
     pub property_index: Option<facts::PropertyDependencyIndex>,
+    /// Definition index mapping identifiers to declaration spans. `Some`
+    /// whenever LINK succeeds. Used by the LSP for go-to-definition and hover.
+    pub definition_index: Option<definition_index::DefinitionIndex>,
 }
 
 /// Compile a single `.urd.md` source string (no import resolution).
@@ -97,6 +101,7 @@ pub fn compile_source_with_reader(
                 diagnostics,
                 fact_set: None,
                 property_index: None,
+                definition_index: None,
             };
         }
     };
@@ -113,6 +118,7 @@ pub fn compile_source_with_reader(
             diagnostics,
             fact_set: None,
             property_index: None,
+            definition_index: None,
         };
     }
 
@@ -127,7 +133,10 @@ pub fn compile_source_with_reader(
         .as_ref()
         .map(facts::PropertyDependencyIndex::build);
 
-    // Phase 3c: ANALYZE (FactSet-derived diagnostics, URD600–URD699)
+    // Phase 3c: Build definition index
+    let definition_index = Some(definition_index::DefinitionIndex::build(&linked.symbol_table));
+
+    // Phase 3d: ANALYZE (FactSet-derived diagnostics, URD600–URD699)
     if let (Some(ref fs), Some(ref idx)) = (&fact_set, &property_index) {
         for diag in analyze::analyze(fs, idx) {
             diagnostics.emit(diag);
@@ -145,6 +154,7 @@ pub fn compile_source_with_reader(
             diagnostics,
             fact_set,
             property_index,
+            definition_index,
         };
     }
 
@@ -156,6 +166,7 @@ pub fn compile_source_with_reader(
         diagnostics,
         fact_set,
         property_index,
+        definition_index,
     }
 }
 
@@ -189,6 +200,7 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
                 diagnostics,
                 fact_set: None,
                 property_index: None,
+                definition_index: None,
             };
         }
     };
