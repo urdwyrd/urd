@@ -43,6 +43,17 @@ const designDocs = defineCollection({
   }),
 });
 
+const eras = defineCollection({
+  loader: glob({ pattern: '**/*.md', base: '../../content/eras' }),
+  schema: z.object({
+    title: z.string(),
+    subtitle: z.string(),
+    order: z.number(),
+    status: z.enum(['complete', 'active', 'next']),
+    slug: z.string(),
+  }),
+});
+
 const timeline = defineCollection({
   loader: glob({ pattern: '**/*.md', base: '../../content/timeline' }),
   schema: z.object({
@@ -50,6 +61,7 @@ const timeline = defineCollection({
     status: z.enum(['complete', 'finalising', 'active', 'next']),
     subtitle: z.string(),
     order: z.number(),
+    era: z.string(),
     link: z.string().optional(),
     linkLabel: z.string().optional(),
   }),
@@ -77,4 +89,4 @@ const documentReviews = defineCollection({
   }),
 });
 
-export const collections = { articles, designDocs, reviews, updates, timeline, documentReviews };
+export const collections = { articles, designDocs, eras, reviews, updates, timeline, documentReviews };
