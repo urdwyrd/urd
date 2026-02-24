@@ -1,9 +1,9 @@
 {
   "version": "1",
-  "timestamp": "2026-02-22T12:40:18.737Z",
+  "timestamp": "2026-02-24T12:05:21.043Z",
   "compiler": {
     "name": "urd-compiler",
-    "version": "0.1.7",
+    "version": "0.1.8",
     "language": "rust"
   },
   "summary": {
@@ -11,7 +11,7 @@
     "passed": 554,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 682,
+    "duration_ms": 9161,
     "pass_rate": 1
   },
   "phases": [
@@ -4208,12 +4208,12 @@
         "name": "interrogation",
         "source_bytes": 708,
         "output_bytes": 3814,
-        "total_ms": 0.337,
+        "total_ms": 0.372,
         "phases": {
-          "parse_ms": 0.054,
-          "import_ms": 0.121,
-          "link_ms": 0.059,
-          "validate_ms": 0.019,
+          "parse_ms": 0.064,
+          "import_ms": 0.142,
+          "link_ms": 0.062,
+          "validate_ms": 0.018,
           "emit_ms": 0.085
         },
         "success": true,
@@ -4223,13 +4223,13 @@
         "name": "locked_garden",
         "source_bytes": 1943,
         "output_bytes": 8041,
-        "total_ms": 0.309,
+        "total_ms": 0.31,
         "phases": {
-          "parse_ms": 0.089,
+          "parse_ms": 0.095,
           "import_ms": 0.016,
-          "link_ms": 0.067,
+          "link_ms": 0.066,
           "validate_ms": 0.019,
-          "emit_ms": 0.118
+          "emit_ms": 0.114
         },
         "success": true,
         "diagnostic_count": 1
@@ -4238,13 +4238,43 @@
         "name": "monty_hall",
         "source_bytes": 654,
         "output_bytes": 2381,
-        "total_ms": 0.211,
+        "total_ms": 0.21,
         "phases": {
-          "parse_ms": 0.065,
-          "import_ms": 0.016,
-          "link_ms": 0.054,
+          "parse_ms": 0.064,
+          "import_ms": 0.015,
+          "link_ms": 0.052,
           "validate_ms": 0.015,
-          "emit_ms": 0.061
+          "emit_ms": 0.064
+        },
+        "success": true,
+        "diagnostic_count": 0
+      },
+      {
+        "name": "positive_factset_circular_deep",
+        "source_bytes": 306,
+        "output_bytes": 1809,
+        "total_ms": 0.181,
+        "phases": {
+          "parse_ms": 0.049,
+          "import_ms": 0.016,
+          "link_ms": 0.048,
+          "validate_ms": 0.014,
+          "emit_ms": 0.053
+        },
+        "success": true,
+        "diagnostic_count": 1
+      },
+      {
+        "name": "positive_factset_diagnostics",
+        "source_bytes": 720,
+        "output_bytes": 4640,
+        "total_ms": 0.22,
+        "phases": {
+          "parse_ms": 0.063,
+          "import_ms": 0.015,
+          "link_ms": 0.053,
+          "validate_ms": 0.015,
+          "emit_ms": 0.073
         },
         "success": true,
         "diagnostic_count": 0
@@ -4253,13 +4283,13 @@
         "name": "sunken_citadel",
         "source_bytes": 37158,
         "output_bytes": 92693,
-        "total_ms": 1.663,
+        "total_ms": 1.688,
         "phases": {
-          "parse_ms": 0.506,
-          "import_ms": 0.016,
-          "link_ms": 0.275,
-          "validate_ms": 0.053,
-          "emit_ms": 0.803
+          "parse_ms": 0.497,
+          "import_ms": 0.017,
+          "link_ms": 0.269,
+          "validate_ms": 0.052,
+          "emit_ms": 0.844
         },
         "success": true,
         "diagnostic_count": 0
@@ -4268,13 +4298,13 @@
         "name": "tavern_scene",
         "source_bytes": 545,
         "output_bytes": 2164,
-        "total_ms": 0.19,
+        "total_ms": 0.184,
         "phases": {
-          "parse_ms": 0.052,
-          "import_ms": 0.015,
-          "link_ms": 0.048,
+          "parse_ms": 0.054,
+          "import_ms": 0.014,
+          "link_ms": 0.046,
           "validate_ms": 0.013,
-          "emit_ms": 0.062
+          "emit_ms": 0.058
         },
         "success": true,
         "diagnostic_count": 0
@@ -4283,11 +4313,11 @@
         "name": "two_room_key_puzzle",
         "source_bytes": 505,
         "output_bytes": 1988,
-        "total_ms": 0.184,
+        "total_ms": 0.186,
         "phases": {
-          "parse_ms": 0.056,
-          "import_ms": 0.015,
-          "link_ms": 0.044,
+          "parse_ms": 0.054,
+          "import_ms": 0.016,
+          "link_ms": 0.046,
           "validate_ms": 0.013,
           "emit_ms": 0.056
         },
@@ -4298,26 +4328,26 @@
         "name": "type_aliases",
         "source_bytes": 314,
         "output_bytes": 1152,
-        "total_ms": 0.139,
+        "total_ms": 0.15,
         "phases": {
-          "parse_ms": 0.038,
-          "import_ms": 0.013,
-          "link_ms": 0.037,
-          "validate_ms": 0.012,
-          "emit_ms": 0.039
+          "parse_ms": 0.042,
+          "import_ms": 0.014,
+          "link_ms": 0.038,
+          "validate_ms": 0.01,
+          "emit_ms": 0.045
         },
         "success": true,
         "diagnostic_count": 0
       }
     ],
     "aggregate": {
-      "total_source_bytes": 41827,
-      "total_output_bytes": 112233,
-      "total_ms": 3.03,
-      "files_compiled": 7,
-      "files_succeeded": 7,
-      "avg_ms_per_file": 0.43,
-      "bytes_per_ms": 13804.29
+      "total_source_bytes": 42853,
+      "total_output_bytes": 118682,
+      "total_ms": 3.5,
+      "files_compiled": 9,
+      "files_succeeded": 9,
+      "avg_ms_per_file": 0.39,
+      "bytes_per_ms": 12243.71
     }
   }
 }
