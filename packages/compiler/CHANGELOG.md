@@ -4,6 +4,16 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.13] — 2026-02-24
+
+### Added
+
+- **DefinitionIndex** (`definition_index` module): Maps namespace-prefixed keys to declaration spans, built from the SymbolTable after LINK. Seven namespaces: `type:`, `entity:`, `prop:`, `section:`, `location:`, `exit:`, `choice:`, `rule:`. Provides go-to-definition and hover data for LSP consumers without exposing SymbolTable internals.
+- `DefinitionIndex::build()` from SymbolTable, `get()`, `iter()`, `to_json()` serialisation.
+- `definition_index` field on `CompilationResult` — `Some` whenever LINK succeeds.
+- DefinitionIndex serialised in WASM output for playground integration.
+- 14 new tests covering presence, kind metadata, span validity, JSON serialisation, and all-fixtures identity. Total: 626 tests.
+
 ## [0.1.12] — 2026-02-24
 
 ### Added
