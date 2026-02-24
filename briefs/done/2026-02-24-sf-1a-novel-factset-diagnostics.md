@@ -4,7 +4,7 @@
 
 February 2026 | Semantic Gate — Tier 1 (Prove)
 
-> **Document status: BRIEF** — First brief of the semantic gate. Implements five diagnostic checks that operate solely on the FactSet's six tuple types. No AST traversal. No source text parsing. The diagnostic function signature is `fn check(fact_set: &FactSet) -> Vec<Diagnostic>`. This brief is the validation gate for the entire FactSet design: if these diagnostics cannot express useful checks that the existing S3–S8 analysis missed, the FactSet has not proved its value.
+> **Document status: DONE** — First brief of the semantic gate. Five diagnostic checks (URD601–URD605) operating solely on the FactSet's six tuple types. No AST traversal. No source text parsing. Sunken Citadel stress test yielded 27 real findings no existing check detects. Validation gate passed.
 
 ## Execution Record
 

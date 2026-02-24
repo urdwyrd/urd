@@ -56,7 +56,7 @@ fn check_read_never_written(
                 let r = &fact_set.reads()[i];
                 RelatedInfo {
                     message: format!(
-                        "Also read at {}:{}",
+                        "Also read at: {}:{}",
                         r.span.file, r.span.start_line
                     ),
                     span: r.span.clone(),
