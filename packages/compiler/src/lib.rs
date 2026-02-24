@@ -12,6 +12,7 @@ pub mod diagnostics;
 pub mod graph;
 pub mod span;
 pub mod facts;
+pub mod diff;
 pub mod analyze;
 pub mod slugify;
 pub mod symbol_table;

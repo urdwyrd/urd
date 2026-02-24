@@ -1,9 +1,9 @@
 {
   "version": "1",
-  "timestamp": "2026-02-24T12:52:28.335Z",
+  "timestamp": "2026-02-24T14:26:56.331Z",
   "compiler": {
     "name": "urd-compiler",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "language": "rust"
   },
   "summary": {
@@ -11,7 +11,7 @@
     "passed": 569,
     "failed": 0,
     "skipped": 0,
-    "duration_ms": 9259,
+    "duration_ms": 8944,
     "pass_rate": 1
   },
   "phases": [
@@ -3568,7 +3568,7 @@
       "passed": 46,
       "failed": 0,
       "skipped": 0,
-      "duration_ms": 30,
+      "duration_ms": 20,
       "categories": [
         {
           "name": "facts",
@@ -4291,13 +4291,13 @@
         "name": "interrogation",
         "source_bytes": 708,
         "output_bytes": 3814,
-        "total_ms": 0.363,
+        "total_ms": 0.359,
         "phases": {
-          "parse_ms": 0.055,
-          "import_ms": 0.14,
-          "link_ms": 0.058,
-          "validate_ms": 0.018,
-          "emit_ms": 0.092
+          "parse_ms": 0.062,
+          "import_ms": 0.138,
+          "link_ms": 0.057,
+          "validate_ms": 0.017,
+          "emit_ms": 0.084
         },
         "success": true,
         "diagnostic_count": 0
@@ -4306,13 +4306,13 @@
         "name": "locked_garden",
         "source_bytes": 1943,
         "output_bytes": 8041,
-        "total_ms": 0.319,
+        "total_ms": 0.351,
         "phases": {
-          "parse_ms": 0.094,
-          "import_ms": 0.014,
-          "link_ms": 0.066,
-          "validate_ms": 0.021,
-          "emit_ms": 0.123
+          "parse_ms": 0.096,
+          "import_ms": 0.017,
+          "link_ms": 0.061,
+          "validate_ms": 0.058,
+          "emit_ms": 0.118
         },
         "success": true,
         "diagnostic_count": 1
@@ -4321,13 +4321,13 @@
         "name": "monty_hall",
         "source_bytes": 654,
         "output_bytes": 2381,
-        "total_ms": 0.208,
+        "total_ms": 0.22,
         "phases": {
-          "parse_ms": 0.063,
-          "import_ms": 0.013,
-          "link_ms": 0.052,
+          "parse_ms": 0.071,
+          "import_ms": 0.018,
+          "link_ms": 0.051,
           "validate_ms": 0.015,
-          "emit_ms": 0.065
+          "emit_ms": 0.064
         },
         "success": true,
         "diagnostic_count": 0
@@ -4336,12 +4336,12 @@
         "name": "positive_factset_circular_deep",
         "source_bytes": 306,
         "output_bytes": 1809,
-        "total_ms": 0.181,
+        "total_ms": 0.183,
         "phases": {
-          "parse_ms": 0.048,
-          "import_ms": 0.013,
-          "link_ms": 0.044,
-          "validate_ms": 0.015,
+          "parse_ms": 0.05,
+          "import_ms": 0.016,
+          "link_ms": 0.043,
+          "validate_ms": 0.016,
           "emit_ms": 0.059
         },
         "success": true,
@@ -4351,13 +4351,13 @@
         "name": "positive_factset_diagnostics",
         "source_bytes": 720,
         "output_bytes": 4640,
-        "total_ms": 0.242,
+        "total_ms": 0.227,
         "phases": {
-          "parse_ms": 0.069,
-          "import_ms": 0.014,
-          "link_ms": 0.055,
-          "validate_ms": 0.016,
-          "emit_ms": 0.086
+          "parse_ms": 0.063,
+          "import_ms": 0.016,
+          "link_ms": 0.049,
+          "validate_ms": 0.019,
+          "emit_ms": 0.079
         },
         "success": true,
         "diagnostic_count": 0
@@ -4366,13 +4366,13 @@
         "name": "sunken_citadel",
         "source_bytes": 37158,
         "output_bytes": 92693,
-        "total_ms": 1.794,
+        "total_ms": 1.694,
         "phases": {
-          "parse_ms": 0.509,
-          "import_ms": 0.014,
-          "link_ms": 0.283,
-          "validate_ms": 0.056,
-          "emit_ms": 0.922
+          "parse_ms": 0.522,
+          "import_ms": 0.015,
+          "link_ms": 0.265,
+          "validate_ms": 0.052,
+          "emit_ms": 0.832
         },
         "success": true,
         "diagnostic_count": 0
@@ -4381,13 +4381,13 @@
         "name": "tavern_scene",
         "source_bytes": 545,
         "output_bytes": 2164,
-        "total_ms": 0.202,
+        "total_ms": 0.181,
         "phases": {
           "parse_ms": 0.055,
-          "import_ms": 0.013,
-          "link_ms": 0.043,
-          "validate_ms": 0.014,
-          "emit_ms": 0.076
+          "import_ms": 0.015,
+          "link_ms": 0.039,
+          "validate_ms": 0.013,
+          "emit_ms": 0.059
         },
         "success": true,
         "diagnostic_count": 0
@@ -4396,13 +4396,13 @@
         "name": "two_room_key_puzzle",
         "source_bytes": 505,
         "output_bytes": 1988,
-        "total_ms": 0.188,
+        "total_ms": 0.185,
         "phases": {
-          "parse_ms": 0.058,
+          "parse_ms": 0.061,
           "import_ms": 0.014,
-          "link_ms": 0.043,
-          "validate_ms": 0.013,
-          "emit_ms": 0.059
+          "link_ms": 0.039,
+          "validate_ms": 0.014,
+          "emit_ms": 0.057
         },
         "success": true,
         "diagnostic_count": 0
@@ -4411,13 +4411,13 @@
         "name": "type_aliases",
         "source_bytes": 314,
         "output_bytes": 1152,
-        "total_ms": 0.146,
+        "total_ms": 0.142,
         "phases": {
-          "parse_ms": 0.043,
-          "import_ms": 0.011,
-          "link_ms": 0.034,
-          "validate_ms": 0.011,
-          "emit_ms": 0.046
+          "parse_ms": 0.041,
+          "import_ms": 0.014,
+          "link_ms": 0.032,
+          "validate_ms": 0.012,
+          "emit_ms": 0.043
         },
         "success": true,
         "diagnostic_count": 0
@@ -4426,11 +4426,11 @@
     "aggregate": {
       "total_source_bytes": 42853,
       "total_output_bytes": 118682,
-      "total_ms": 3.64,
+      "total_ms": 3.54,
       "files_compiled": 9,
       "files_succeeded": 9,
-      "avg_ms_per_file": 0.4,
-      "bytes_per_ms": 11772.8
+      "avg_ms_per_file": 0.39,
+      "bytes_per_ms": 12105.37
     }
   }
 }

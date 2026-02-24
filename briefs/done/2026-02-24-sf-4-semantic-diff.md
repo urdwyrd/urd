@@ -10,16 +10,29 @@ February 2026 | Semantic Gate — Tier 2 (Expose)
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-24
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+Implemented the semantic diff engine as specified. Created `src/diff.rs` (~700 lines) with:
+
+- **DiffSnapshot** struct with 8 sub-snapshot types (Entity, Location, Exit, Section, Choice, Rule, Property, DiagnosticKey) and `from_compilation()` extraction
+- **JSON serialisation** — `to_json()`/`from_json()` for `.urd.snapshot.json` format with version marker `urd_snapshot: "1"`
+- **`diff()` function** — keyed set comparison across all 6 change categories with per-category comparators, deterministic output ordering
+- **DiffReport** with `to_json()` and `summary()` output methods
+- **Diagnostic key extraction** — URD430 (unreachable location) and URD432 (impossible choice) string-based extractors, matching SF-3's TypeScript patterns
+
+Restructured `main.rs` for subcommand dispatch: `urd diff <a> <b>`, `urd snapshot <file>`, default compile.
+
+Created 4 fixture pairs (8 files) in `tests/fixtures/diff/` and 28 tests in `diff_tests.rs` covering: identity, entity, location/exit, dialogue, property dependency, reachability, snapshot roundtrip, and integration.
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+- **`entity_container_changed`** detection relies on world JSON `contains` arrays, which only populate when compilation succeeds. Partial compilations (with errors) produce snapshots without entity/location data — acceptable for the CI use case.
+- **`compiled_at` field** omitted from snapshot format. The brief specified it but the compiler has no chrono dependency and adding one for a metadata-only field was unnecessary. Snapshots are identified by `world_name` only.
+- **28 tests vs 27 specified** — added `diff_report_empty_json` and `diff_report_summary_text` as bonus output format tests; combined some entity tests.
+- **Property reader_added test** changed to `orphan_status_changed` — the locked-garden fixture changes resulted in a writer being added (changing orphan status) rather than a net reader increase, because the "Force the gate" choice removal offset the new exit guard read.
 
 ---
 
