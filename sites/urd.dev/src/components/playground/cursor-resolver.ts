@@ -12,9 +12,23 @@ export type Reference =
   | { kind: 'location-heading'; name: string }
   | { kind: 'keyword'; token: string }
   | { kind: 'frontmatter-key'; key: string }
-  | { kind: 'type-constructor'; name: string }
+  | { kind: 'type-constructor'; name: string; range?: string; defaultValue?: string; enumValues?: string }
   | { kind: 'exit-direction'; direction: string }
-  | { kind: 'exit-destination'; destinationName: string };
+  | { kind: 'exit-destination'; destinationName: string }
+  | { kind: 'trait'; name: string }
+  | { kind: 'visibility-prefix'; visibility: 'hidden' }
+  | { kind: 'effect-command'; command: string }
+  | { kind: 'condition-keyword'; keyword: string }
+  | { kind: 'condition-combinator'; combinator: string }
+  | { kind: 'rule-keyword'; keyword: string }
+  | { kind: 'rule-name'; name: string }
+  | { kind: 'sequence-heading'; name: string }
+  | { kind: 'phase-heading'; name: string; auto: boolean }
+  | { kind: 'world-sub-key'; key: string; value?: string }
+  | { kind: 'exit-jump'; direction: string }
+  | { kind: 'value-literal'; value: string; entityId?: string; property?: string }
+  | { kind: 'comment' }
+  | { kind: 'type-name'; name: string; traits?: string[] };
 
 /**
  * Identify the Urd reference at the given column in a line of text.
@@ -28,9 +42,16 @@ export function identifyReference(
   col: number,
   context?: ReferenceContext,
 ): Reference | null {
-  // 1. Section label: == name
   const trimmed = line.trimStart();
   const trimOffset = line.length - trimmed.length;
+
+  // 1. Comments: // anywhere
+  const commentIdx = line.indexOf('//');
+  if (commentIdx >= 0 && col >= commentIdx && col < commentIdx + 2) {
+    return { kind: 'comment' };
+  }
+
+  // 2. Section label: == name
   if (trimmed.startsWith('== ') || trimmed.startsWith('==')) {
     const prefixLen = trimmed.startsWith('== ') ? 3 : 2;
     const name = trimmed.slice(prefixLen).trim();
@@ -39,7 +60,25 @@ export function identifyReference(
     }
   }
 
-  // 2. Location heading: # (single # only, not ##)
+  // 3. Phase heading: ### (before ## and # checks)
+  if (trimmed.startsWith('### ')) {
+    let name = trimmed.slice(4).trim();
+    const auto = /\(auto\)\s*$/.test(name);
+    if (auto) name = name.replace(/\s*\(auto\)\s*$/, '').trim();
+    if (name.length > 0) {
+      return { kind: 'phase-heading', name, auto };
+    }
+  }
+
+  // 4. Sequence heading: ## (but not ### which was caught above)
+  if (trimmed.startsWith('## ') && !trimmed.startsWith('### ')) {
+    const name = trimmed.slice(3).trim();
+    if (name.length > 0) {
+      return { kind: 'sequence-heading', name };
+    }
+  }
+
+  // 5. Location heading: # (single # only, not ##)
   if (trimmed.startsWith('# ') && !trimmed.startsWith('## ')) {
     const name = trimmed.slice(2).trim();
     if (name.length > 0) {
@@ -47,17 +86,42 @@ export function identifyReference(
     }
   }
 
-  // 3. Frontmatter delimiter: ---
+  // 6. Frontmatter delimiter: ---
   if (/^---\s*$/.test(trimmed) && col >= trimOffset && col <= trimOffset + 3) {
     return { kind: 'keyword', token: '---' };
   }
 
-  // 4. Section jump: -> target (check for -> END / -> RETURN first)
+  // 7. Rule declaration: `rule name:`
+  if (/^rule\s+\w+/.test(trimmed)) {
+    const ruleMatch = trimmed.match(/^(rule)\s+(\w+)/);
+    if (ruleMatch) {
+      const ruleKwStart = trimOffset;
+      const ruleKwEnd = trimOffset + 4;
+      if (col >= ruleKwStart && col < ruleKwEnd) {
+        return { kind: 'rule-keyword', keyword: 'rule' };
+      }
+      const nameStart = trimOffset + ruleMatch[0].indexOf(ruleMatch[2]);
+      const nameEnd = nameStart + ruleMatch[2].length;
+      if (col >= nameStart && col < nameEnd) {
+        return { kind: 'rule-name', name: ruleMatch[2] };
+      }
+    }
+  }
+
+  // 8. Section jump: -> target (check for built-ins and exit: first)
   const arrowIdx = line.indexOf('->');
   if (arrowIdx >= 0 && col >= arrowIdx) {
     const afterArrow = line.slice(arrowIdx + 2).trim();
-    if (afterArrow === 'END' || afterArrow === 'RETURN') {
-      return { kind: 'keyword', token: `-> ${afterArrow}` };
+    // Case-insensitive END/RETURN (F11)
+    if (afterArrow.toUpperCase() === 'END' || afterArrow.toUpperCase() === 'RETURN') {
+      return { kind: 'keyword', token: `-> ${afterArrow.toUpperCase()}` };
+    }
+    // Exit-jump: -> exit:direction (F10)
+    if (afterArrow.startsWith('exit:')) {
+      const direction = afterArrow.slice(5).trim();
+      if (direction.length > 0) {
+        return { kind: 'exit-jump', direction };
+      }
     }
     // Regular section jump
     const arrowResult = findSectionJump(line, col);
@@ -68,30 +132,69 @@ export function identifyReference(
     }
   }
 
-  // 5. Line-start structural markers: + * ? >
+  // 9. Line-start structural markers: + * ? >
   const keywordResult = findLineStartKeyword(trimmed, col, trimOffset);
   if (keywordResult) return keywordResult;
 
-  // 6. Frontmatter-aware references
+  // 10. Effect commands and condition keywords on ? and > lines
+  if (!context?.inFrontmatter) {
+    const effectCmdResult = findEffectCommand(trimmed, col, trimOffset);
+    if (effectCmdResult) return effectCmdResult;
+
+    const condKwResult = findConditionKeyword(line, trimmed, col, trimOffset);
+    if (condKwResult) return condKwResult;
+
+    // Value literals on condition/effect lines
+    const valResult = findValueLiteral(line, trimmed, col);
+    if (valResult) return valResult;
+  }
+
+  // 11. Rule block keywords
+  if (context?.inRuleBlock) {
+    const ruleKwResult = findRuleKeyword(trimmed, col, trimOffset);
+    if (ruleKwResult) return ruleKwResult;
+  }
+
+  // 12. Frontmatter-aware references
   if (context?.inFrontmatter) {
     const fmKeyResult = findFrontmatterKey(trimmed, col, trimOffset);
     if (fmKeyResult) return fmKeyResult;
+
+    // World sub-keys (F9)
+    if (context.inWorldBlock) {
+      const worldResult = findWorldSubKey(trimmed, col, trimOffset);
+      if (worldResult) return worldResult;
+    }
+
+    // Trait markers (F1)
+    const traitResult = findTraitMarker(trimmed, col, trimOffset);
+    if (traitResult) return traitResult;
+
+    // Type name — definition lines and entity declaration lines
+    const typeNameResult = findTypeName(trimmed, col, trimOffset);
+    if (typeNameResult) return typeNameResult;
+
+    // Hidden visibility prefix (F2)
+    if (context.inTypeBlock) {
+      const visResult = findVisibilityPrefix(trimmed, col, trimOffset);
+      if (visResult) return visResult;
+    }
 
     const typeConResult = findTypeConstructor(trimmed, col, trimOffset, context);
     if (typeConResult) return typeConResult;
   }
 
-  // 7. Exit direction/destination: `direction: Destination Name` (body only)
+  // 13. Exit direction/destination: `direction: Destination Name` (body only)
   if (!context?.inFrontmatter) {
     const exitResult = findExitReference(trimmed, col, trimOffset);
     if (exitResult) return exitResult;
   }
 
-  // 8. Entity / entity.property reference
+  // 14. Entity / entity.property reference
   const entityResult = findEntityReference(line, col);
   if (entityResult) return entityResult;
 
-  // 9. Type.property reference (uppercase start before dot)
+  // 15. Type.property reference (uppercase start before dot)
   const typeResult = findTypeProperty(line, col);
   if (typeResult) return typeResult;
 
@@ -210,6 +313,10 @@ export interface ReferenceContext {
   inFrontmatter: boolean;
   /** Whether cursor is inside a `types:` block (indented under a type name). */
   inTypeBlock?: boolean;
+  /** Whether cursor is indented under `world:`. */
+  inWorldBlock?: boolean;
+  /** Whether cursor is inside a `rule name:` block (body content). */
+  inRuleBlock?: boolean;
 }
 
 /**
@@ -222,7 +329,8 @@ export function getFrontmatterContext(
 ): ReferenceContext {
   let delimCount = 0;
   let inTypeBlock = false;
-  let sawTypesKey = false;
+  let inWorldBlock = false;
+  let currentTopKey = '';
 
   for (let i = 1; i <= Math.min(lineNumber, doc.lines); i++) {
     const text = doc.line(i).text.trimEnd();
@@ -232,19 +340,38 @@ export function getFrontmatterContext(
       continue;
     }
     if (delimCount === 1) {
-      // Inside frontmatter — track type block
+      // Track top-level frontmatter key
       if (/^\w/.test(text) && text.includes(':')) {
-        sawTypesKey = /^types\s*:/.test(text);
+        currentTopKey = text.match(/^(\w+)/)?.[1] ?? '';
       }
-      // If line is indented and we're past `types:`, we may be in a type block
-      if (i === lineNumber && sawTypesKey && /^\s{2,}/.test(doc.line(i).text)) {
-        inTypeBlock = true;
+      // If cursor line is indented, check which block we're in
+      if (i === lineNumber && /^\s{2,}/.test(doc.line(i).text)) {
+        if (currentTopKey === 'types') inTypeBlock = true;
+        if (currentTopKey === 'world') inWorldBlock = true;
       }
     }
   }
 
   const inFrontmatter = delimCount === 1 && lineNumber > 1;
-  return { inFrontmatter, inTypeBlock };
+
+  // Rule block detection — scan backwards from current line (body only)
+  let inRuleBlock = false;
+  if (!inFrontmatter) {
+    for (let i = lineNumber; i >= 1; i--) {
+      const text = doc.line(i).text;
+      // Blank line breaks the rule block
+      if (text.trim() === '' && i < lineNumber) break;
+      // Found a rule declaration at indent 0
+      if (/^rule\s+\w+/.test(text)) {
+        if (i < lineNumber) inRuleBlock = true;
+        break;
+      }
+      // Non-indented non-rule line breaks the search
+      if (i < lineNumber && /^\S/.test(text) && !/^rule\s/.test(text)) break;
+    }
+  }
+
+  return { inFrontmatter, inTypeBlock, inWorldBlock, inRuleBlock };
 }
 
 // --- Line-start keyword detection ---
@@ -256,6 +383,7 @@ function findLineStartKeyword(trimmed: string, col: number, trimOffset: number):
     [/^\*\s/, '*'],
     [/^\?\s/, '?'],
     [/^>\s/, '>'],
+    [/^!\s/, '!'],
   ];
   for (const [pattern, token] of markers) {
     if (pattern.test(trimmed) && col >= trimOffset && col < trimOffset + 1) {
@@ -293,8 +421,8 @@ function findTypeConstructor(
   context: ReferenceContext,
 ): Reference | null {
   if (!context.inTypeBlock) return null;
-  // Property line: `  property_name: type_constructor` or `    property_name: type_constructor(...)`
-  const match = trimmed.match(/^(\w+)\s*:\s*(\w+)/);
+  // Property line: `prop: type(args) = default` or `~prop: type(args) = default`
+  const match = trimmed.match(/^~?(\w+)\s*:\s*(\w+)/);
   if (!match) return null;
   const typeCon = match[2];
   if (!TYPE_CONSTRUCTORS.has(typeCon)) return null;
@@ -302,7 +430,259 @@ function findTypeConstructor(
   const typeConStart = trimOffset + match.index! + match[0].indexOf(typeCon);
   const typeConEnd = typeConStart + typeCon.length;
   if (col >= typeConStart && col < typeConEnd) {
-    return { kind: 'type-constructor', name: typeCon };
+    // Extract range arguments: int(0, 100) or enum(a, b, c)
+    const argsMatch = trimmed.match(new RegExp(`${typeCon}\\(([^)]*)\\)`));
+    const range = argsMatch ? argsMatch[1] : undefined;
+    // Extract default value: = value
+    const defMatch = trimmed.match(/=\s*(.+?)$/);
+    const defaultValue = defMatch ? defMatch[1].trim() : undefined;
+    // For enum, extract values as enumValues
+    const enumValues = (typeCon === 'enum' && range) ? range : undefined;
+    return { kind: 'type-constructor', name: typeCon, range, defaultValue, enumValues };
+  }
+  return null;
+}
+
+// --- Exit direction/destination detection ---
+
+// --- Effect command detection (F3) ---
+
+const EFFECT_COMMANDS = new Set(['move', 'destroy', 'reveal']);
+
+function findEffectCommand(trimmed: string, col: number, trimOffset: number): Reference | null {
+  // Effect lines start with `>`
+  if (!trimmed.startsWith('> ')) return null;
+  const afterMarker = trimmed.slice(2).trimStart();
+  const afterMarkerOffset = trimOffset + 2 + (trimmed.slice(2).length - afterMarker.length);
+
+  const wordMatch = afterMarker.match(/^(\w+)/);
+  if (!wordMatch) return null;
+  const command = wordMatch[1].toLowerCase();
+  if (!EFFECT_COMMANDS.has(command)) return null;
+
+  const cmdStart = afterMarkerOffset;
+  const cmdEnd = cmdStart + wordMatch[1].length;
+  if (col >= cmdStart && col < cmdEnd) {
+    return { kind: 'effect-command', command };
+  }
+  return null;
+}
+
+// --- Condition keyword detection (F4, F5) ---
+
+function findConditionKeyword(line: string, trimmed: string, col: number, _trimOffset: number): Reference | null {
+  // Condition lines start with `?`, but `player` and `here` also appear on effect lines (`>`)
+  const isCondition = trimmed.startsWith('? ');
+  const isEffect = trimmed.startsWith('> ');
+  if (!isCondition && !isEffect) return null;
+
+  // `any:` — OR combinator (condition lines only, F5)
+  if (isCondition) {
+    const anyMatch = trimmed.match(/^\?\s+(any\s*:)/);
+    if (anyMatch) {
+      const anyStart = line.indexOf(anyMatch[1]);
+      if (anyStart >= 0 && col >= anyStart && col < anyStart + anyMatch[1].length) {
+        return { kind: 'condition-combinator', combinator: 'any:' };
+      }
+    }
+  }
+
+  // `not in` — must check before `in` to avoid partial match
+  const notInRegex = /\bnot\s+in\b/g;
+  let notInMatch: RegExpExecArray | null;
+  while ((notInMatch = notInRegex.exec(line)) !== null) {
+    const start = notInMatch.index;
+    const end = start + notInMatch[0].length;
+    if (col >= start && col < end) {
+      return { kind: 'condition-keyword', keyword: 'not in' };
+    }
+  }
+
+  // `in` — standalone word
+  const inRegex = /\bin\b/g;
+  let inMatch: RegExpExecArray | null;
+  while ((inMatch = inRegex.exec(line)) !== null) {
+    // Skip if part of `not in`
+    const before = line.slice(Math.max(0, inMatch.index - 4), inMatch.index);
+    if (/not\s$/.test(before)) continue;
+    const start = inMatch.index;
+    const end = start + 2;
+    if (col >= start && col < end) {
+      return { kind: 'condition-keyword', keyword: 'in' };
+    }
+  }
+
+  // `player` keyword
+  const playerRegex = /\bplayer\b/g;
+  let playerMatch: RegExpExecArray | null;
+  while ((playerMatch = playerRegex.exec(line)) !== null) {
+    // Skip if preceded by @ (that's an entity reference)
+    if (playerMatch.index > 0 && line[playerMatch.index - 1] === '@') continue;
+    const start = playerMatch.index;
+    const end = start + 6;
+    if (col >= start && col < end) {
+      return { kind: 'condition-keyword', keyword: 'player' };
+    }
+  }
+
+  // `here` keyword
+  const hereRegex = /\bhere\b/g;
+  let hereMatch: RegExpExecArray | null;
+  while ((hereMatch = hereRegex.exec(line)) !== null) {
+    if (hereMatch.index > 0 && line[hereMatch.index - 1] === '@') continue;
+    const start = hereMatch.index;
+    const end = start + 4;
+    if (col >= start && col < end) {
+      return { kind: 'condition-keyword', keyword: 'here' };
+    }
+  }
+
+  return null;
+}
+
+// --- Value literal detection (F16) ---
+
+function findValueLiteral(line: string, trimmed: string, col: number): Reference | null {
+  const isCondition = trimmed.startsWith('? ');
+  const isEffect = trimmed.startsWith('> ');
+  if (!isCondition && !isEffect) return null;
+
+  // Pattern: @entity.property operator value
+  const valMatch = line.match(/@(\w+)\.(\w+)\s*(?:>=|<=|==|!=|>|<|\+|-|\*|=)\s*(\S+)\s*$/);
+  if (!valMatch) return null;
+
+  const entityId = valMatch[1];
+  const property = valMatch[2];
+  const value = valMatch[3];
+  const valueStart = line.lastIndexOf(value);
+  const valueEnd = valueStart + value.length;
+
+  if (col >= valueStart && col < valueEnd) {
+    return { kind: 'value-literal', value, entityId, property };
+  }
+  return null;
+}
+
+// --- Rule keyword detection (F6) ---
+
+const RULE_KEYWORD_DOCS_KEYS = new Set([
+  'actor', 'action', 'selects', 'from', 'where', 'target',
+]);
+
+function findRuleKeyword(trimmed: string, col: number, trimOffset: number): Reference | null {
+  // Inside a rule block — match keywords at their positions
+  // `actor:` — special because it has a colon
+  const actorMatch = trimmed.match(/^\s*(actor)\s*:/);
+  if (actorMatch) {
+    const kw = actorMatch[1];
+    const kwStart = trimOffset + trimmed.indexOf(kw);
+    const kwEnd = kwStart + kw.length;
+    if (col >= kwStart && col < kwEnd) {
+      return { kind: 'rule-keyword', keyword: 'actor' };
+    }
+  }
+
+  // Other keywords: scan for word tokens
+  for (const kw of RULE_KEYWORD_DOCS_KEYS) {
+    if (kw === 'actor') continue; // handled above
+    const regex = new RegExp(`\\b${kw}\\b`, 'g');
+    let m: RegExpExecArray | null;
+    const fullLine = ' '.repeat(trimOffset) + trimmed;
+    while ((m = regex.exec(fullLine)) !== null) {
+      if (col >= m.index && col < m.index + kw.length) {
+        return { kind: 'rule-keyword', keyword: kw };
+      }
+    }
+  }
+
+  return null;
+}
+
+// --- World sub-key detection (F9) ---
+
+const WORLD_SUB_KEYS = new Set([
+  'name', 'version', 'start', 'entry', 'seed', 'description', 'author',
+]);
+
+function findWorldSubKey(trimmed: string, col: number, trimOffset: number): Reference | null {
+  // Indented line under world: — `  key: value`
+  if (trimOffset < 2) return null; // Must be indented
+  const kvMatch = trimmed.match(/^(\w+)\s*:\s*(.*)$/);
+  if (!kvMatch) return null;
+  const key = kvMatch[1];
+  if (!WORLD_SUB_KEYS.has(key)) return null;
+  const keyStart = trimOffset;
+  const keyEnd = trimOffset + key.length;
+  if (col >= keyStart && col <= keyEnd) {
+    const value = kvMatch[2].replace(/^["']|["']$/g, '').trim() || undefined;
+    return { kind: 'world-sub-key', key, value };
+  }
+  return null;
+}
+
+// --- Trait marker detection (F1) ---
+
+function findTraitMarker(trimmed: string, col: number, trimOffset: number): Reference | null {
+  // Type definition line: `TypeName [trait1, trait2]:` or `  TypeName [trait1, trait2]:`
+  const typeDefMatch = trimmed.match(/^(\w+)\s*\[([^\]]+)\]\s*:/);
+  if (!typeDefMatch) return null;
+  const bracketContent = typeDefMatch[2];
+  const bracketStart = trimOffset + trimmed.indexOf('[') + 1;
+
+  // Parse individual trait names
+  const traits = bracketContent.split(',').map((t) => t.trim());
+  let offset = bracketStart;
+  for (const trait of traits) {
+    // Account for leading whitespace in `[trait1, trait2]`
+    const traitIdx = bracketContent.indexOf(trait, offset - bracketStart);
+    const traitStart = bracketStart + traitIdx;
+    const traitEnd = traitStart + trait.length;
+    if (col >= traitStart && col < traitEnd) {
+      return { kind: 'trait', name: trait };
+    }
+    offset = traitEnd;
+  }
+  return null;
+}
+
+// --- Type name detection ---
+
+function findTypeName(trimmed: string, col: number, trimOffset: number): Reference | null {
+  // 1. Type definition line: `TypeName:` or `TypeName [trait1, trait2]:`
+  const defMatch = trimmed.match(/^([A-Z]\w*)(?:\s*\[([^\]]+)\])?\s*:/);
+  if (defMatch) {
+    const name = defMatch[1];
+    const nameStart = trimOffset;
+    const nameEnd = trimOffset + name.length;
+    if (col >= nameStart && col < nameEnd) {
+      const traits = defMatch[2] ? defMatch[2].split(',').map((t) => t.trim()) : undefined;
+      return { kind: 'type-name', name, traits };
+    }
+  }
+
+  // 2. Entity declaration line: `@entity_id: TypeName` or `@entity_id: TypeName { ... }`
+  const entityDeclMatch = trimmed.match(/^@?\w+\s*:\s*([A-Z]\w*)/);
+  if (entityDeclMatch) {
+    const name = entityDeclMatch[1];
+    const nameIdx = trimmed.indexOf(name, trimmed.indexOf(':'));
+    const nameStart = trimOffset + nameIdx;
+    const nameEnd = nameStart + name.length;
+    if (col >= nameStart && col < nameEnd) {
+      return { kind: 'type-name', name };
+    }
+  }
+
+  return null;
+}
+
+// --- Hidden visibility prefix detection (F2) ---
+
+function findVisibilityPrefix(trimmed: string, col: number, trimOffset: number): Reference | null {
+  // Property line starts with ~: `~prop: type`
+  if (!trimmed.startsWith('~')) return null;
+  const tildeCol = trimOffset;
+  if (col === tildeCol) {
+    return { kind: 'visibility-prefix', visibility: 'hidden' };
   }
   return null;
 }

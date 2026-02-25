@@ -21,6 +21,8 @@ export function urdHoverTooltip() {
     // Presence marker validation: [@entity] shows containment status
     if (ref.kind === 'entity') {
       content = appendPresenceValidation(content, ref.id, line.text, col, view, line.number, state);
+      // Dialogue attribution (F14) and narrative action (F15)
+      content = appendEntityContextAnnotation(content, ref.id, line.text, col);
     }
 
     // Default value hints on condition/effect lines
@@ -64,11 +66,39 @@ function buildTooltipContent(
     case 'frontmatter-key':
       return frontmatterKeyTooltip(ref.key);
     case 'type-constructor':
-      return typeConstructorTooltip(ref.name);
+      return typeConstructorTooltip(ref.name, ref.range, ref.defaultValue, ref.enumValues);
     case 'exit-direction':
       return exitDirectionTooltip(ref.direction, view, lineNumber ?? 0, state);
     case 'exit-destination':
       return exitDestinationTooltip(ref.destinationName, state);
+    case 'trait':
+      return traitTooltip(ref.name);
+    case 'type-name':
+      return typeNameTooltip(ref.name, ref.traits, state);
+    case 'visibility-prefix':
+      return visibilityTooltip();
+    case 'effect-command':
+      return effectCommandTooltip(ref.command);
+    case 'condition-keyword':
+      return conditionKeywordTooltip(ref.keyword);
+    case 'condition-combinator':
+      return conditionCombinatorTooltip(ref.combinator);
+    case 'rule-keyword':
+      return ruleKeywordTooltip(ref.keyword);
+    case 'rule-name':
+      return ruleNameTooltip(ref.name, state);
+    case 'sequence-heading':
+      return sequenceHeadingTooltip(ref.name, state);
+    case 'phase-heading':
+      return phaseHeadingTooltip(ref.name, ref.auto);
+    case 'world-sub-key':
+      return worldSubKeyTooltip(ref.key, ref.value, state);
+    case 'exit-jump':
+      return exitJumpTooltip(ref.direction, view, lineNumber ?? 0, state);
+    case 'value-literal':
+      return valueLiteralTooltip(ref.value, ref.entityId, ref.property, state);
+    case 'comment':
+      return commentTooltip();
     default:
       return null;
   }
@@ -111,6 +141,19 @@ function propertyTooltip(entityId: string, property: string, state: PlaygroundSt
 }
 
 function typePropertyTooltip(typeName: string, property: string, state: PlaygroundState): string | null {
+  // Implicit container property (F13)
+  if (property === 'container') {
+    const key = `prop:${typeName}.container`;
+    const entry = state.definitionIndex?.find((d) => d.key === key);
+    if (!entry) {
+      let html = `<strong>${esc(typeName)}.container</strong> <span class="urd-tt-dim">(implicit)</span>`;
+      html += `<br>The entity or location that currently holds this entity.`;
+      html += `<br><span class="urd-tt-dim">Value is an entity ID, location slug, or "player".</span>`;
+      html += `<br><span class="urd-tt-dim">Read-only — changed via move effects, not direct assignment.</span>`;
+      return html;
+    }
+  }
+
   // Look up in DefinitionIndex for type and default
   const key = `prop:${typeName}.${property}`;
   const entry = state.definitionIndex?.find((d) => d.key === key);
@@ -400,6 +443,7 @@ const KEYWORD_DOCS: Record<string, string> = {
   '*': 'One-shot choice — removed after selection',
   '?': 'Condition — following content executes only if this is true',
   '>': 'Effect — modifies entity property values',
+  '!': 'Blocked message — shown when the player cannot proceed (gate is locked, path is sealed, etc.)',
   '->': 'Jump — transfers control to the named section',
   '-> END': 'Built-in: terminates the current conversation',
   '-> RETURN': 'Built-in: returns to the calling section',
@@ -436,10 +480,31 @@ const TYPE_CONSTRUCTOR_DOCS: Record<string, { syntax: string; desc: string; exam
   immutable: { syntax: 'immutable', desc: 'Modifier — property cannot be changed by effects', examples: 'immutable' },
 };
 
-function typeConstructorTooltip(name: string): string | null {
+function typeConstructorTooltip(name: string, range?: string, defaultValue?: string, enumValues?: string): string | null {
   const doc = TYPE_CONSTRUCTOR_DOCS[name];
   if (!doc) return null;
-  return `<strong>${esc(doc.syntax)}</strong><br>${esc(doc.desc)}<br><span class="urd-tt-dim">Examples: ${esc(doc.examples)}</span>`;
+  let html = `<strong>${esc(doc.syntax)}</strong><br>${esc(doc.desc)}`;
+  // Show actual range values (F12)
+  if (range && name !== 'enum') {
+    const parts = range.split(',').map((s: string) => s.trim());
+    if (parts.length === 2) {
+      html += `<br><span class="urd-tt-dim">Range: ${esc(parts[0])} to ${esc(parts[1])}</span>`;
+    } else if (parts.length === 1) {
+      html += `<br><span class="urd-tt-dim">Min: ${esc(parts[0])}</span>`;
+    }
+  }
+  // Show enum values (F12)
+  if (enumValues) {
+    html += `<br><span class="urd-tt-dim">Values: ${esc(enumValues)}</span>`;
+  }
+  // Show default value (F12)
+  if (defaultValue) {
+    html += `<br><span class="urd-tt-dim">Default: ${esc(defaultValue)}</span>`;
+  }
+  if (!range && !defaultValue) {
+    html += `<br><span class="urd-tt-dim">Examples: ${esc(doc.examples)}</span>`;
+  }
+  return html;
 }
 
 // --- Exit direction/destination tooltips (Tier 3, F9) ---
@@ -507,6 +572,289 @@ function exitDestinationTooltip(destinationName: string, state: PlaygroundState)
   }
 
   return html;
+}
+
+// --- Dialogue attribution and narrative action (F14, F15) ---
+
+function appendEntityContextAnnotation(
+  html: string,
+  entityId: string,
+  lineText: string,
+  col: number,
+): string {
+  // Find the entity span in the line
+  const atIdx = lineText.lastIndexOf('@', col);
+  if (atIdx < 0) return html;
+  let idEnd = atIdx + 1;
+  while (idEnd < lineText.length && /\w/.test(lineText[idEnd])) idEnd++;
+  if (lineText.slice(atIdx + 1, idEnd) !== entityId) return html;
+
+  const afterEntity = lineText[idEnd];
+  if (afterEntity === ':') {
+    // Dialogue attribution: @entity: text
+    html += `<br><span class="urd-tt-dim">Speaking — dialogue attribution</span>`;
+  } else if (afterEntity === ' ') {
+    // Check it's not a property access, presence marker, or structural token
+    const rest = lineText.slice(idEnd).trim();
+    // Not on a condition/effect line marker
+    const trimmed = lineText.trimStart();
+    if (trimmed.startsWith('? ') || trimmed.startsWith('> ')) return html;
+    // Not inside brackets
+    if (atIdx > 0 && lineText[atIdx - 1] === '[') return html;
+    // Has text after — narrative action
+    if (rest.length > 0 && !rest.startsWith('.') && !rest.startsWith(']')) {
+      html += `<br><span class="urd-tt-dim">Narrative action — stage direction or character action</span>`;
+    }
+  }
+  return html;
+}
+
+// --- Type name tooltip ---
+
+function typeNameTooltip(name: string, traits: string[] | undefined, state: PlaygroundState): string | null {
+  let html = `<strong>Type:</strong> ${esc(name)}`;
+
+  if (traits && traits.length > 0) {
+    html += `<br><span class="urd-tt-dim">Traits: ${traits.map(esc).join(', ')}</span>`;
+  }
+
+  // Count properties from parsedWorld.types
+  const typeDef = state.parsedWorld?.types?.[name];
+  if (typeDef?.properties) {
+    const propNames = Object.keys(typeDef.properties);
+    html += `<br><span class="urd-tt-dim">Properties: ${propNames.map(esc).join(', ')}</span>`;
+  }
+
+  // Count entities of this type
+  const entities = state.parsedWorld?.entities;
+  if (entities) {
+    const instances = Object.entries(entities)
+      .filter(([, e]: [string, any]) => e.type === name)
+      .map(([id]) => id);
+    if (instances.length > 0) {
+      html += `<br><span class="urd-tt-dim">Instances: ${instances.map((id) => `@${esc(id)}`).join(', ')}</span>`;
+    }
+  }
+
+  return html;
+}
+
+// --- Trait tooltip (F1) ---
+
+const TRAIT_DOCS: Record<string, string> = {
+  interactable: 'Entities of this type can be the target of dialogue and actions',
+  mobile: 'Entities of this type can move between locations via rules',
+  container: 'Entities of this type can hold other entities (items, etc.)',
+  portable: 'Entities of this type can be picked up, moved, and carried',
+};
+
+function traitTooltip(name: string): string | null {
+  const doc = TRAIT_DOCS[name];
+  if (!doc) return `<strong>Trait:</strong> ${esc(name)}`;
+  return `<strong>Trait:</strong> ${esc(name)}<br><span class="urd-tt-dim">${esc(doc)}</span>`;
+}
+
+// --- Hidden visibility tooltip (F2) ---
+
+function visibilityTooltip(): string {
+  return `<strong>~ Hidden property</strong><br>This property is not visible to the player at runtime.<br><span class="urd-tt-dim">Use reveal @entity.property to make it visible.</span>`;
+}
+
+// --- Effect command tooltip (F3) ---
+
+const EFFECT_COMMAND_DOCS: Record<string, { syntax: string; desc: string }> = {
+  move: { syntax: 'move @entity -> target', desc: 'Transfers an entity to another entity or location. Target can be player, here, @entity, or a location name.' },
+  destroy: { syntax: 'destroy @entity', desc: 'Permanently removes the entity from the world.' },
+  reveal: { syntax: 'reveal @entity.property', desc: 'Makes a hidden (~) property visible to the player.' },
+};
+
+function effectCommandTooltip(command: string): string | null {
+  const doc = EFFECT_COMMAND_DOCS[command];
+  if (!doc) return null;
+  return `<strong>${esc(doc.syntax)}</strong><br><span class="urd-tt-dim">${esc(doc.desc)}</span>`;
+}
+
+// --- Condition keyword tooltip (F4) ---
+
+const CONDITION_KEYWORD_DOCS: Record<string, string> = {
+  'in': 'Containment test — checks if the entity is held by or located in the target',
+  'not in': 'Negated containment test — checks the entity is NOT in the target',
+  'player': 'The player entity — the implicit protagonist carrying items',
+  'here': 'The current location — where the player currently is',
+};
+
+function conditionKeywordTooltip(keyword: string): string | null {
+  const doc = CONDITION_KEYWORD_DOCS[keyword];
+  if (!doc) return null;
+  return `<strong>${esc(keyword)}</strong><br><span class="urd-tt-dim">${esc(doc)}</span>`;
+}
+
+// --- Condition combinator tooltip (F5) ---
+
+function conditionCombinatorTooltip(combinator: string): string | null {
+  if (combinator === 'any:') {
+    return `<strong>any:</strong><br>OR combinator — the following conditions are evaluated as alternatives.<br><span class="urd-tt-dim">At least one must be true for the block to execute.</span>`;
+  }
+  return null;
+}
+
+// --- Rule keyword tooltip (F6) ---
+
+const RULE_KEYWORD_DOCS: Record<string, string> = {
+  rule: 'Rule declaration — defines an NPC behavioural rule triggered by the runtime',
+  actor: 'The entity that initiates this rule\'s action',
+  action: 'The action verb that triggers this rule',
+  selects: 'Select clause — iterates over candidate entities matching the from list',
+  target: 'The loop variable — represents each candidate entity being evaluated',
+  from: 'The entity pool to select from',
+  where: 'Filter condition — candidates must satisfy all where clauses',
+};
+
+function ruleKeywordTooltip(keyword: string): string | null {
+  const doc = RULE_KEYWORD_DOCS[keyword];
+  if (!doc) return null;
+  return `<strong>${esc(keyword)}</strong><br><span class="urd-tt-dim">${esc(doc)}</span>`;
+}
+
+// --- Rule name tooltip (F6) ---
+
+function ruleNameTooltip(name: string, state: PlaygroundState): string | null {
+  let html = `<strong>Rule:</strong> ${esc(name)}`;
+
+  // Look up in DefinitionIndex
+  const entry = state.definitionIndex?.find(
+    (d) => d.definition.kind === 'rule' && d.definition.local_name === name,
+  );
+  if (entry) {
+    html += `<br><span class="urd-tt-dim">Defined in ${esc(entry.definition.file_stem ?? 'unknown')}</span>`;
+  }
+
+  return html;
+}
+
+// --- Sequence heading tooltip (F7) ---
+
+function sequenceHeadingTooltip(name: string, state: PlaygroundState): string | null {
+  const slug = name.toLowerCase().replace(/\s+/g, '-');
+  let html = `<strong>Sequence:</strong> ${esc(slug)}`;
+
+  const entry = state.definitionIndex?.find(
+    (d) => d.definition.kind === 'sequence' && d.definition.local_name === name,
+  );
+  if (entry) {
+    html += `<br><span class="urd-tt-dim">Defined in ${esc(entry.definition.file_stem ?? 'unknown')}</span>`;
+  } else {
+    html += `<br><span class="urd-tt-dim">Defines a multi-phase quest or progression arc.</span>`;
+  }
+
+  return html;
+}
+
+// --- Phase heading tooltip (F8) ---
+
+function phaseHeadingTooltip(name: string, auto: boolean): string | null {
+  const slug = name.toLowerCase().replace(/\s+/g, '-');
+  let html = `<strong>Phase:</strong> ${esc(slug)}`;
+  if (auto) {
+    html += `<br><span class="urd-tt-dim">Advance: auto — progresses automatically when conditions are met</span>`;
+  } else {
+    html += `<br><span class="urd-tt-dim">Advance: manual — requires player to complete an action</span>`;
+  }
+  return html;
+}
+
+// --- World sub-key tooltip (F9) ---
+
+const WORLD_KEY_DOCS: Record<string, string> = {
+  name: 'World identifier — slug used as the root key in compiled JSON output',
+  version: 'Schema version string — included in compiled output for compatibility checking',
+  start: 'Starting location — where the player begins',
+  entry: 'Entry sequence — the initial quest/progression arc',
+  seed: 'Random seed — used by the runtime for deterministic randomisation',
+  description: 'Human-readable description of the world',
+  author: 'Author attribution',
+};
+
+function worldSubKeyTooltip(key: string, value: string | undefined, state: PlaygroundState): string | null {
+  const doc = WORLD_KEY_DOCS[key];
+  if (!doc) return null;
+  let html = `<strong>${esc(key)}:</strong><br><span class="urd-tt-dim">${esc(doc)}</span>`;
+
+  // Resolve start → location, entry → sequence (F9)
+  if (value && state.definitionIndex) {
+    if (key === 'start') {
+      const entry = state.definitionIndex.find(
+        (d) => d.definition.kind === 'location' && d.key === `location:${value}`,
+      );
+      if (entry) {
+        const displayName = entry.definition.display_name ?? value;
+        html += `<br>Resolves to: <strong>${esc(value)}</strong> (${esc(displayName)})`;
+      }
+    } else if (key === 'entry') {
+      const entry = state.definitionIndex.find(
+        (d) => d.definition.kind === 'sequence' && (d.definition.local_name === value || d.key === `sequence:${value}`),
+      );
+      if (entry) {
+        const displayName = entry.definition.local_name ?? value;
+        html += `<br>Resolves to: <strong>${esc(value)}</strong> (${esc(displayName)})`;
+      }
+    }
+  }
+
+  return html;
+}
+
+// --- Exit-jump tooltip (F10) ---
+
+function exitJumpTooltip(direction: string, view: any, lineNumber: number, state: PlaygroundState): string | null {
+  let html = `<strong>Exit jump:</strong> ${esc(direction)}`;
+  html += `<br><span class="urd-tt-dim">Navigates via the exit named "${esc(direction)}" from the current location.</span>`;
+
+  // Resolve destination from enclosing location's exits
+  const enclosing = findEnclosingLocation(view, lineNumber, state);
+  if (enclosing) {
+    const location = state.parsedWorld?.locations?.[enclosing];
+    if (location?.exits) {
+      const exit = location.exits.find((e: any) => e.direction === direction);
+      if (exit?.destination) {
+        html += `<br>Resolves to: <strong>${esc(exit.destination)}</strong>`;
+      }
+    }
+  }
+
+  return html;
+}
+
+// --- Value literal tooltip (F16) ---
+
+function valueLiteralTooltip(value: string, entityId: string | undefined, property: string | undefined, state: PlaygroundState): string | null {
+  if (!entityId || !property) return null;
+
+  const entity = state.parsedWorld?.entities?.[entityId];
+  if (!entity) return null;
+  const typeName = entity.type;
+  const prop = state.parsedWorld?.types?.[typeName]?.properties?.[property];
+  if (!prop) return null;
+
+  // Only show for enum properties
+  if (prop.type !== 'enum' && !prop.values) return null;
+  const validValues: string[] = prop.values ?? [];
+
+  const isValid = validValues.includes(value);
+  let html: string;
+  if (isValid) {
+    html = `<strong>${esc(value)}</strong> — valid value for ${esc(typeName)}.${esc(property)}`;
+  } else {
+    html = `<strong>${esc(value)}</strong> — <span class="urd-tt-warn">not a valid value for ${esc(typeName)}.${esc(property)}</span>`;
+  }
+  html += `<br><span class="urd-tt-dim">Valid values: ${validValues.map(esc).join(', ')}</span>`;
+  return html;
+}
+
+// --- Comment tooltip (F17) ---
+
+function commentTooltip(): string {
+  return `<strong>//</strong> Comment<br><span class="urd-tt-dim">Ignored by the compiler. Use // to annotate your schema for other authors.</span>`;
 }
 
 function resolveEntityType(entityId: string, state: PlaygroundState): string | null {

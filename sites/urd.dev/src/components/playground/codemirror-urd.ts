@@ -105,6 +105,12 @@ const urdParser: StreamParser<UrdState> = {
         return 'operator';
       }
 
+      // Blocked messages
+      if (stream.match(/^!\s/)) {
+        stream.skipToEnd();
+        return 'keyword';
+      }
+
       // Dialogue attribution: @word: at line start (with optional indent)
       if (stream.match(/@[\w.-]+:/)) {
         return 'variableName';
