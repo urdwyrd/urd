@@ -8,18 +8,13 @@
   import {
     initCompiler,
     compileSource,
-    parseOnly,
     isReady,
     compilerVersion,
     byteColToCharCol,
     type CompileResult,
   } from './compiler-bridge';
+  import { subscribe as subscribeState, getState, updateState } from './playground-state';
   import STARTER_EXAMPLE from '@examples/sunken-citadel.urd.md?raw';
-
-  // --- Constants ---
-
-  const PARSE_DEBOUNCE_MS = 50;
-  const COMPILE_DEBOUNCE_MS = 300;
 
   // --- State ---
 
@@ -42,13 +37,6 @@
   // CodeMirror instance (stored outside $state to avoid reactivity overhead)
   let editorView: import('@codemirror/view').EditorView | undefined;
 
-  // Debounce timers
-  let parseTimer: ReturnType<typeof setTimeout> | undefined;
-  let compileTimer: ReturnType<typeof setTimeout> | undefined;
-
-  // Sequence counter to discard stale results
-  let compileSeq = 0;
-
   // --- Lifecycle ---
 
   function getInitialSource(): string {
@@ -67,6 +55,7 @@
   onMount(() => {
     let destroyed = false;
     let themeObserver: MutationObserver | undefined;
+    let unsubscribeState: (() => void) | undefined;
 
     async function setup() {
       const initialSource = getInitialSource();
@@ -77,7 +66,12 @@
       const { defaultKeymap, history, historyKeymap, indentWithTab } = await import('@codemirror/commands');
       const { bracketMatching, indentOnInput } = await import('@codemirror/language');
       const { lintGutter } = await import('@codemirror/lint');
+      const { autocompletion } = await import('@codemirror/autocomplete');
       const { urdLanguage, gloamingTheme, parchmentTheme, urdHighlight } = await import('./codemirror-urd');
+      const { urdLinter } = await import('./lint-source');
+      const { urdCompletionSource } = await import('./completion-source');
+      const { urdHoverTooltip } = await import('./hover-tooltip');
+      const { urdGotoDefinition, urdDefinitionLink } = await import('./goto-definition');
 
       if (destroyed) return;
 
@@ -97,6 +91,11 @@
             bracketMatching(),
             indentOnInput(),
             lintGutter(),
+            urdLinter(),
+            autocompletion({ override: [urdCompletionSource] }),
+            urdHoverTooltip(),
+            urdGotoDefinition(),
+            ...urdDefinitionLink(),
             EditorView.lineWrapping,
             placeholder('Type Schema Markdown here…'),
             keymap.of([
@@ -108,13 +107,18 @@
             urdLanguage,
             themeCompartment.of(isParchment ? parchmentTheme : gloamingTheme),
             urdHighlight,
-            EditorView.updateListener.of((update) => {
-              if (update.docChanged) {
-                onSourceChange(update.state.doc.toString());
-              }
-            }),
           ],
         }),
+      });
+
+      // Subscribe to shared playground state for Svelte reactivity
+      unsubscribeState = subscribeState(() => {
+        const s = getState();
+        if (s.result) {
+          compileResult = s.result;
+          compileTimeMs = s.compileTimeMs;
+          parseValid = s.result.success || s.result.diagnostics.every((d) => d.severity !== 'error');
+        }
       });
 
       // Watch for theme changes on <html data-theme>
@@ -167,40 +171,22 @@
     return () => {
       destroyed = true;
       themeObserver?.disconnect();
+      unsubscribeState?.();
       editorView?.destroy();
-      clearTimeout(parseTimer);
-      clearTimeout(compileTimer);
     };
   });
 
-  // --- Source change handler ---
-
-  function onSourceChange(source: string) {
-    // Fast parse (50ms debounce)
-    clearTimeout(parseTimer);
-    parseTimer = setTimeout(() => {
-      if (!isReady()) return;
-      const result = parseOnly(source);
-      parseValid = result.success;
-    }, PARSE_DEBOUNCE_MS);
-
-    // Full compile (300ms debounce)
-    clearTimeout(compileTimer);
-    compileTimer = setTimeout(() => {
-      runCompile(source);
-    }, COMPILE_DEBOUNCE_MS);
-  }
+  // --- Initial compile (subsequent compiles handled by urdLinter) ---
 
   function runCompile(source: string) {
     if (!isReady()) return;
-    const seq = ++compileSeq;
     const t0 = performance.now();
     const result = compileSource(source);
     const elapsed = performance.now() - t0;
-    // Discard if a newer compile has started
-    if (seq !== compileSeq) return;
-    compileResult = result;
     compileTimeMs = elapsed;
+    compileResult = result;
+    // Push into shared state so extensions have data immediately
+    updateState(result, elapsed);
   }
 
   // --- Diagnostic click → editor scroll ---

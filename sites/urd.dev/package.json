@@ -12,6 +12,7 @@
     "@astrojs/rss": "^4.0.15",
     "@astrojs/sitemap": "^3.7.0",
     "@astrojs/svelte": "^7.0.0",
+    "@codemirror/autocomplete": "^6.20.0",
     "@codemirror/commands": "^6.10.2",
     "@codemirror/lang-json": "^6.0.2",
     "@codemirror/language": "^6.12.1",

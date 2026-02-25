@@ -106,12 +106,42 @@ export interface PropertyIndex {
   summary: PropertyIndexSummary;
 }
 
+export interface DefinitionEntry {
+  key: string;
+  span: {
+    file: string;
+    start_line: number;
+    start_col: number;
+    end_line: number;
+    end_col: number;
+  };
+  definition: {
+    kind: string;
+    type_name?: string;
+    property_type?: string;
+    default?: string | null;
+    local_name?: string;
+    file_stem?: string;
+    display_name?: string;
+    from_location?: string;
+    destination?: string;
+    section_id?: string;
+    label?: string;
+  };
+}
+
+export interface DefinitionIndex {
+  definitions: DefinitionEntry[];
+  count: number;
+}
+
 export interface CompileResult {
   success: boolean;
   world: string | null;
   diagnostics: Diagnostic[];
   facts: FactSet | null;
   property_index: PropertyIndex | null;
+  definition_index: DefinitionIndex | null;
 }
 
 export interface ParseResult {
@@ -176,6 +206,7 @@ export function compileSource(source: string): CompileResult {
       }],
       facts: null,
       property_index: null,
+      definition_index: null,
     };
   }
 }

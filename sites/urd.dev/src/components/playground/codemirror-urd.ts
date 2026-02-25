@@ -234,6 +234,44 @@ export const gloamingTheme = EditorView.theme({
   '.cm-lint-marker-warning': {
     content: '"▸"',
   },
+  // Definition link (Ctrl/Cmd hover underline)
+  '.cm-definition-link': {
+    textDecoration: 'underline',
+    textDecorationColor: 'var(--blue-light)',
+    cursor: 'pointer',
+  },
+  // Autocomplete tooltip
+  '.cm-tooltip-autocomplete': {
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
+  },
+  '.cm-tooltip-autocomplete ul li[aria-selected]': {
+    backgroundColor: 'var(--raise)',
+    color: 'var(--text)',
+  },
+  '.cm-completionLabel': {
+    color: 'var(--text)',
+  },
+  '.cm-completionDetail': {
+    color: 'var(--faint)',
+    fontStyle: 'italic',
+  },
+  // Hover tooltip
+  '.urd-hover-tooltip': {
+    fontFamily: 'var(--mono)',
+    fontSize: '12px',
+    lineHeight: '1.5',
+    padding: '6px 10px',
+    maxWidth: '400px',
+  },
+  '.urd-tt-dim': {
+    color: 'var(--faint)',
+    fontSize: '11px',
+  },
+  '.urd-tt-warn': {
+    color: 'var(--amber)',
+    fontSize: '11px',
+  },
 }, { dark: true });
 
 // --- Parchment Editor Theme ---
@@ -298,6 +336,41 @@ const sharedThemeStyles = {
   },
   '.cm-lint-marker-warning': {
     content: '"▸"',
+  },
+  '.cm-definition-link': {
+    textDecoration: 'underline',
+    textDecorationColor: 'var(--gold-dim)',
+    cursor: 'pointer',
+  },
+  '.cm-tooltip-autocomplete': {
+    backgroundColor: 'var(--surface)',
+    border: '1px solid var(--border)',
+  },
+  '.cm-tooltip-autocomplete ul li[aria-selected]': {
+    backgroundColor: 'var(--raise)',
+    color: 'var(--text)',
+  },
+  '.cm-completionLabel': {
+    color: 'var(--text)',
+  },
+  '.cm-completionDetail': {
+    color: 'var(--faint)',
+    fontStyle: 'italic',
+  },
+  '.urd-hover-tooltip': {
+    fontFamily: 'var(--mono)',
+    fontSize: '12px',
+    lineHeight: '1.5',
+    padding: '6px 10px',
+    maxWidth: '400px',
+  },
+  '.urd-tt-dim': {
+    color: 'var(--faint)',
+    fontSize: '11px',
+  },
+  '.urd-tt-warn': {
+    color: 'var(--amber)',
+    fontSize: '11px',
   },
 };
 
