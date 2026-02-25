@@ -59,6 +59,16 @@ import Presentation from "../components/Presentation.svelte";
             v0.1.7 Reference Manual <span aria-hidden="true">→</span>
           </a>
         </div>
+
+        <div class="hero-actions-secondary">
+          <button
+            class="video-cta"
+            id="video-trigger"
+            aria-label="Watch the video introduction"
+          >
+            Video Introduction <span aria-hidden="true">▸</span>
+          </button>
+        </div>
       </div>
     </main>
   </div>
@@ -259,6 +269,35 @@ import Presentation from "../components/Presentation.svelte";
     outline-offset: 2px;
   }
 
+  .hero-actions-secondary {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .video-cta {
+    font-family: var(--display);
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--faint);
+    background: transparent;
+    padding: 0.4em 1em;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .video-cta:hover {
+    color: var(--gold-dim);
+    border-color: var(--border);
+  }
+
+  .video-cta:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+  }
+
   .content {
     position: relative;
     z-index: 1;
@@ -283,3 +322,50 @@ import Presentation from "../components/Presentation.svelte";
     }
   }
 </style>
+
+<script>
+  const YOUTUBE_ID = '2NvQGkgp64g';
+
+  document.getElementById('video-trigger')?.addEventListener('click', () => {
+    const overlay = document.createElement('div');
+    overlay.className = 'video-lightbox';
+
+    const inner = document.createElement('div');
+    inner.className = 'video-lightbox-inner';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube-nocookie.com/embed/${YOUTUBE_ID}?autoplay=1&rel=0`;
+    iframe.allow = 'autoplay; encrypted-media';
+    iframe.allowFullscreen = true;
+    iframe.title = 'Urd & Wyrd — Video Introduction';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'video-lightbox-close';
+    closeBtn.textContent = 'Close \u00D7';
+    closeBtn.setAttribute('aria-label', 'Close video');
+
+    inner.appendChild(iframe);
+    inner.appendChild(closeBtn);
+    overlay.appendChild(inner);
+    document.body.appendChild(overlay);
+    document.body.style.overflow = 'hidden';
+
+    function close() {
+      overlay.remove();
+      document.body.style.overflow = '';
+    }
+
+    closeBtn.addEventListener('click', close);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+    document.addEventListener('keydown', function handler(e) {
+      if (e.key === 'Escape') {
+        close();
+        document.removeEventListener('keydown', handler);
+      }
+    });
+
+    closeBtn.focus();
+  });
+</script>
