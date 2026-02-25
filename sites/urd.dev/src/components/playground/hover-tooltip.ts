@@ -514,53 +514,73 @@ function exitDirectionTooltip(direction: string, view: any, lineNumber: number, 
   if (!enclosing) return null;
 
   const location = state.parsedWorld?.locations?.[enclosing];
-  if (!location?.exits || location.exits.length === 0) return null;
+  const exits = location?.exits;
+  if (!exits || typeof exits !== 'object' || Object.keys(exits).length === 0) return null;
 
-  let html = `<strong>Exits from ${esc(location.display_name ?? enclosing)}</strong>`;
+  // Get display name from definition index
+  const defEntry = state.definitionIndex?.find(
+    (d) => d.definition.kind === 'location' && d.key === `location:${enclosing}`,
+  );
+  const displayName = defEntry?.definition?.display_name ?? enclosing.replace(/-/g, ' ');
+
+  let html = `<strong>Exits from ${esc(displayName)}</strong>`;
 
   const facts = state.result?.facts;
-  for (const exit of location.exits) {
-    const dir = exit.direction ?? '?';
-    const dest = exit.destination ?? '?';
-    let line = `  ${esc(dir)} → ${esc(dest)}`;
+  for (const [dir, exitData] of Object.entries(exits) as [string, any][]) {
+    const dest = exitData.to ?? '?';
+    let line = `  ${esc(dir)} → ${esc(dest.replace(/-/g, ' '))}`;
     // Check conditional status from FactSet
     if (facts?.exits) {
       const exitFact = facts.exits.find(
-        (e: any) => e.from === enclosing && e.direction === dir,
+        (e: any) => e.from_location === enclosing && e.exit_name === dir,
       );
       if (exitFact?.is_conditional) {
         line += ' (conditional)';
       }
     }
     const isCurrent = dir === direction;
-    html += `<br><span class="${isCurrent ? 'urd-tt-dim' : 'urd-tt-dim'}" style="${isCurrent ? 'font-weight:600' : ''}">${line}</span>`;
+    html += `<br><span class="urd-tt-dim" style="${isCurrent ? 'font-weight:600' : ''}">${line}</span>`;
   }
 
   return html;
 }
 
 function exitDestinationTooltip(destinationName: string, state: PlaygroundState): string | null {
-  // Find the location by display name or slug
   const locations = state.parsedWorld?.locations;
   if (!locations) return null;
 
+  // Look up slug via definition index (display name → slug)
   let slug: string | null = null;
-  let loc: any = null;
-  for (const [id, l] of Object.entries(locations) as [string, any][]) {
-    if (l.display_name === destinationName || id === destinationName) {
-      slug = id;
-      loc = l;
-      break;
+  const defEntry = state.definitionIndex?.find(
+    (d) => d.definition.kind === 'location' && d.definition.display_name === destinationName,
+  );
+  if (defEntry) {
+    slug = defEntry.key.replace(/^location:/, '');
+  } else {
+    // Fallback: try slugified form of the display name
+    const slugified = destinationName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    if (locations[slugified]) {
+      slug = slugified;
     }
   }
-  if (!slug || !loc) return null;
+  if (!slug) return null;
 
-  let html = `<strong>Location</strong>: ${esc(slug)}`;
+  const loc = locations[slug];
+  if (!loc) return null;
 
-  // Exits
-  if (loc.exits?.length > 0) {
-    const exitList = loc.exits
-      .map((e: any) => `${esc(e.direction ?? '?')} → ${esc(e.destination ?? '?')}`)
+  const displayName = defEntry?.definition?.display_name ?? destinationName;
+  let html = `<strong>Location</strong>: ${esc(displayName)}`;
+
+  // Description
+  if (loc.description) {
+    html += `<br><span class="urd-tt-dim">${esc(loc.description)}</span>`;
+  }
+
+  // Exits (map: direction → { to: slug })
+  const exits = loc.exits;
+  if (exits && typeof exits === 'object' && Object.keys(exits).length > 0) {
+    const exitList = Object.entries(exits as Record<string, any>)
+      .map(([dir, data]) => `${esc(dir)} → ${esc((data.to ?? '?').replace(/-/g, ' '))}`)
       .join(', ');
     html += `<br><span class="urd-tt-dim">Exits: ${exitList}</span>`;
   }

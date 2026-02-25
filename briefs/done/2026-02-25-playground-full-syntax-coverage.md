@@ -2,7 +2,7 @@
 
 *Close every tooltip gap in the playground editor — traits, hidden properties, effect commands, condition keywords, rules, sequences, world configuration, and all remaining dark syntax.*
 
-February 2026 | Backlog
+February 2026 | Done
 
 > **Document status: BRIEF** — Seventeen new reference kinds in the cursor resolver and matching tooltip content. Extends the existing `cursor-resolver.ts` and `hover-tooltip.ts`. No new files. No new WASM exports. No new npm dependencies.
 
@@ -10,16 +10,56 @@ February 2026 | Backlog
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-25
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+All 17 features implemented across four tiers, plus a post-implementation fix to exit tooltip builders. Shipped across commits `0afda39`, `1532f83`, and subsequent fixes.
+
+**Tier 1 — Language fundamentals (5 features):**
+1. **Trait markers** — `[interactable, mobile, container, portable]` on type definition lines show trait descriptions from a `TRAIT_DOCS` static map.
+2. **Hidden visibility prefix** — `~` on property definitions shows hidden visibility explanation with `reveal` command syntax.
+3. **Effect commands** — `move`, `destroy`, `reveal` on effect lines (`>`) show command syntax and valid targets from an `EFFECT_COMMAND_DOCS` map.
+4. **Condition keywords** — `in`, `not in`, `player`, `here` on condition/effect lines show containment test and target explanations from a `CONDITION_KEYWORD_DOCS` map.
+5. **OR combinator** — `any:` on condition lines shows OR semantics explanation.
+
+**Tier 2 — Major features (3 features):**
+6. **Rule blocks** — `rule` keyword, rule names (with DefinitionIndex lookup), and `actor:`, `action`, `selects`, `from`, `where`, `target` keywords inside rule blocks. Rule block detection via backward scanning for `rule name:` lines, matching the cursor.rs architecture.
+7. **Sequence headings** — `##` headings show sequence metadata from DefinitionIndex or static fallback text.
+8. **Phase headings** — `###` headings with `(auto)` modifier detection show phase name and advance mode (manual/auto).
+
+**Tier 3 — Configuration and special syntax (5 features):**
+9. **World sub-keys** — `name`, `version`, `start`, `entry`, `seed`, `description`, `author` under `world:` in frontmatter. `start` and `entry` resolve references via DefinitionIndex.
+10. **Exit-jump syntax** — `-> exit:direction` shows exit-jump semantics with resolved destination from enclosing location's exits.
+11. **Case-insensitive END/RETURN** — `-> end`, `-> End`, `-> END` (and RETURN variants) all produce the built-in jump tooltip.
+12. **Type constructor enrichment** — Existing `type-constructor` tooltip extended with actual range values and default value parsed from the line.
+13. **Implicit container property** — `.container` on any entity falls back to implicit property documentation when DefinitionIndex lookup fails.
+
+**Tier 4 — Contextual enrichment (4 features):**
+14. **Dialogue attribution** — `@entity:` annotates "Speaking — dialogue attribution" on the entity tooltip.
+15. **Narrative action** — `@entity does something` annotates "Narrative action — stage direction or character action."
+16. **Effect value validation** — String literals after operators on condition/effect lines validate against enum definitions, showing valid/invalid status with the full values list.
+17. **Comments** — `//` shows comment explanation.
+
+**Additional fixes (post-brief):**
+- **Full-line choice tooltips** — `+`, `*`, `!` markers extended from 1-character hit zone to full line width.
+- **Cascade reorder** — Entity/type-property detection moved before line-start keyword detection so `@entity` on choice lines still gets entity tooltip.
+- **Exit definition detection** — `-> direction: Destination` lines now correctly split into `exit-direction` and `exit-destination` reference kinds instead of being treated as section jumps.
+- **Exit tooltip data model fix** — Both `exitDirectionTooltip` and `exitDestinationTooltip` were built assuming `location.exits` was an array with `direction`/`destination` fields. The compiled JSON uses a map (`{ direction: { to: slug } }`). Fixed to use `Object.entries()` iteration and `exitData.to` field. Also fixed FactSet field names (`from_location`/`exit_name` instead of `from`/`direction`) and location lookup via definition index instead of non-existent `display_name` field.
+- **`!` blocked message marker** — Added syntax highlighting in `codemirror-urd.ts` (was completely absent) and tooltip in cursor resolver.
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+1. **Choice line hit zone was a gap** — The brief did not mention that `+`, `*`, `!` markers only triggered tooltips on the single marker character. This was discovered during testing and fixed by adding a `fullLine` flag to `findLineStartKeyword`.
+
+2. **Cascade priority conflict** — The brief assumed new reference kinds could be added after existing ones. In practice, extending choice/blocked-message tooltips to the full line swallowed entity references on those lines. Required reordering the detection cascade — entity and type-property detection now runs before line-start keyword detection.
+
+3. **Exit definition lines needed a new pattern** — The brief's Feature 10 covered `-> exit:direction` (exit-jump) syntax, but exit definition lines (`-> direction: Destination Name`) in location bodies were not explicitly addressed. These were being mis-parsed as section jumps (stopping at the colon). Added a dedicated exit definition pattern before the section-jump fallback.
+
+4. **Exit tooltip builders had wrong data model** — `exitDirectionTooltip` and `exitDestinationTooltip` assumed `location.exits` was an array with `direction`/`destination` fields and that locations had a `display_name` field. The actual compiled JSON uses exits as a map (`{ direction: { to: slug } }`) with no `display_name` on locations. Both functions were rewritten to use `Object.entries()`, look up display names via the definition index, and use correct FactSet field names (`from_location`/`exit_name`).
+
+5. **`!` syntax highlighting was missing entirely** — The brief noted the `!` tooltip (Feature 5 area, covered by line-start keywords), but `codemirror-urd.ts` had no highlighting rule for `!` at line start. Added as a `keyword` token alongside `+`, `*`, `?`, `>`.
 
 ---
 
