@@ -2,7 +2,7 @@
 
 *Turn the playground's WASM compiler into a language server with inline diagnostics, autocomplete, hover tooltips, and go-to-definition — entirely client-side.*
 
-February 2026 | Backlog
+February 2026 | Done
 
 > **Document status: BRIEF** — Four self-contained CodeMirror extensions that wire the existing WASM compiler output (diagnostics, DefinitionIndex, FactSet, PropertyDependencyIndex) into the playground editor. No new Rust/WASM work. No Lezer grammar. No web worker. Each phase is independently shippable.
 
@@ -10,16 +10,34 @@ February 2026 | Backlog
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Backlog
+**Date completed:** 2026-02-25
+**Status:** Done
 
 ### What was done
 
-*(To be filled on completion.)*
+All four phases implemented and shipped in commit `0afda39`:
+
+1. **Phase 1 — Inline diagnostics:** `lint-source.ts` wraps the `@codemirror/lint` `linter()` extension with 300ms debounce, mapping compiler diagnostics to squiggly underlines via `byteColToCharCol`. Replaces the manual dual-debounce logic (parseTimer/compileTimer/compileSeq) in UrdPlayground.svelte. `playground-state.ts` provides shared compile state with stale retention.
+
+2. **Phase 2 — Autocomplete:** `completion-source.ts` implements three trigger contexts (`@` entities, `@entity.` properties, `->` sections). Reads from shared state — no compilation on each keystroke. Added `@codemirror/autocomplete` dependency.
+
+3. **Phase 3 — Hover tooltips:** `cursor-resolver.ts` ports `cursor.rs` (6 reference types, ~160 lines). `hover-tooltip.ts` renders rich HTML tooltips for entities (type, container, properties), properties (type, default, read/write counts, orphan status), sections (compiled ID, incoming/outgoing jumps, choices), and locations (slug, exits, entities).
+
+4. **Phase 4 — Go-to-definition:** `goto-definition.ts` implements Ctrl/Cmd+click navigation via a `ViewPlugin` click handler and a visual affordance (underline + pointer cursor) via `StateField`/`Decoration.mark` when Ctrl/Cmd is held.
+
+All extensions wired into UrdPlayground.svelte's CodeMirror `EditorState.create()`. Svelte reactivity bridged via `subscribe()` on the shared state store.
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+1. **`compiler-bridge.ts` was modified** — the brief stated it was unchanged, but `DefinitionEntry`, `DefinitionIndex` types and the `definition_index` field on `CompileResult` were missing from the TypeScript types. The WASM boundary already returned the field — only the TS declarations were absent.
+
+2. **`codemirror-urd.ts` received additional styles** — the brief specified only `.cm-definition-link`. Autocomplete popup styles (`.cm-tooltip-autocomplete`, `.cm-completionLabel`, `.cm-completionDetail`) and hover tooltip styles (`.urd-hover-tooltip`, `.urd-tt-dim`, `.urd-tt-warn`) were added to both Gloaming and shared/Parchment themes.
+
+3. **`PlaygroundState` gained `compileTimeMs`** — needed to bridge compile timing from the linter (which now owns compilation) back to the Svelte UI for the OutputPane's compile time display.
+
+4. **50ms `parseOnly()` fast-feedback loop dropped** — the brief left this as an implementer's choice. The linter's 300ms cycle provides sufficient error feedback.
+
+5. **Entity completion label uses `id` instead of `@id`** — functionally identical since the trigger is after `@` and `from` is set accordingly.
 
 ---
 

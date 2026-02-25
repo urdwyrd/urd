@@ -43,10 +43,12 @@ const urdParser: StreamParser<UrdState> = {
       if (stream.match(/"[^"]*"/)) return 'string';
 
       // Numbers in frontmatter
-      if (stream.match(/\b\d+\b/)) return 'number';
+      if ((stream.pos === 0 || !/\w/.test(stream.string[stream.pos - 1])) &&
+          stream.match(/\b\d+\b/)) return 'number';
 
-      // Keywords
-      if (stream.match(/\b(true|false|import)\b/)) return 'keyword';
+      // Keywords (guard: previous char must not be a word char)
+      if ((stream.pos === 0 || !/\w/.test(stream.string[stream.pos - 1])) &&
+          stream.match(/\b(true|false|import)\b/)) return 'keyword';
 
       // Entity references in frontmatter
       if (stream.match(/@[\w.-]+/)) return 'variableName';
@@ -123,10 +125,12 @@ const urdParser: StreamParser<UrdState> = {
     if (stream.match(/@[\w.-]+/)) return 'variableName';
 
     // Numbers
-    if (stream.match(/\b\d+\b/)) return 'number';
+    if ((stream.pos === 0 || !/\w/.test(stream.string[stream.pos - 1])) &&
+        stream.match(/\b\d+\b/)) return 'number';
 
-    // Keywords
-    if (stream.match(/\b(true|false|in|not in|import)\b/)) return 'keyword';
+    // Keywords (guard: previous char must not be a word char)
+    if ((stream.pos === 0 || !/\w/.test(stream.string[stream.pos - 1])) &&
+        stream.match(/\b(true|false|in|not in|import)\b/)) return 'keyword';
 
     // Strings
     if (stream.match(/"[^"]*"/)) return 'string';
