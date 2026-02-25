@@ -108,7 +108,7 @@ export function identifyReference(
     }
   }
 
-  // 8. Section jump: -> target (check for built-ins and exit: first)
+  // 8. Section jump / exit definition: -> target
   const arrowIdx = line.indexOf('->');
   if (arrowIdx >= 0 && col >= arrowIdx) {
     const afterArrow = line.slice(arrowIdx + 2).trim();
@@ -123,6 +123,21 @@ export function identifyReference(
         return { kind: 'exit-jump', direction };
       }
     }
+    // Exit definition: -> direction: Destination Name
+    // Distinguished from section jumps by `word: Text` pattern after ->
+    const exitDefMatch = afterArrow.match(/^([a-z][\w-]*)\s*:\s*(.+)$/);
+    if (exitDefMatch) {
+      const direction = exitDefMatch[1];
+      const destination = exitDefMatch[2].trim();
+      // Cursor on direction portion
+      const dirStart = arrowIdx + 2 + (line.slice(arrowIdx + 2).length - line.slice(arrowIdx + 2).trimStart().length);
+      const dirEnd = dirStart + direction.length;
+      if (col >= dirStart && col < dirEnd) {
+        return { kind: 'exit-direction', direction };
+      }
+      // Cursor on destination portion or anywhere else on the line
+      return { kind: 'exit-destination', destinationName: destination };
+    }
     // Regular section jump
     const arrowResult = findSectionJump(line, col);
     if (arrowResult) return arrowResult;
@@ -132,11 +147,20 @@ export function identifyReference(
     }
   }
 
-  // 9. Line-start structural markers: + * ? >
+  // 9. Entity / entity.property reference (before line-start keywords so
+  //    @entity on a choice line gets the entity tooltip, not the choice tooltip)
+  const entityResult = findEntityReference(line, col);
+  if (entityResult) return entityResult;
+
+  // 10. Type.property reference (uppercase start before dot)
+  const typeResult = findTypeProperty(line, col);
+  if (typeResult) return typeResult;
+
+  // 11. Line-start structural markers: + * ? > !
   const keywordResult = findLineStartKeyword(trimmed, col, trimOffset);
   if (keywordResult) return keywordResult;
 
-  // 10. Effect commands and condition keywords on ? and > lines
+  // 12. Effect commands and condition keywords on ? and > lines
   if (!context?.inFrontmatter) {
     const effectCmdResult = findEffectCommand(trimmed, col, trimOffset);
     if (effectCmdResult) return effectCmdResult;
@@ -149,13 +173,13 @@ export function identifyReference(
     if (valResult) return valResult;
   }
 
-  // 11. Rule block keywords
+  // 13. Rule block keywords
   if (context?.inRuleBlock) {
     const ruleKwResult = findRuleKeyword(trimmed, col, trimOffset);
     if (ruleKwResult) return ruleKwResult;
   }
 
-  // 12. Frontmatter-aware references
+  // 14. Frontmatter-aware references
   if (context?.inFrontmatter) {
     const fmKeyResult = findFrontmatterKey(trimmed, col, trimOffset);
     if (fmKeyResult) return fmKeyResult;
@@ -184,19 +208,11 @@ export function identifyReference(
     if (typeConResult) return typeConResult;
   }
 
-  // 13. Exit direction/destination: `direction: Destination Name` (body only)
+  // 15. Exit direction/destination: `direction: Destination Name` (body only)
   if (!context?.inFrontmatter) {
     const exitResult = findExitReference(trimmed, col, trimOffset);
     if (exitResult) return exitResult;
   }
-
-  // 14. Entity / entity.property reference
-  const entityResult = findEntityReference(line, col);
-  if (entityResult) return entityResult;
-
-  // 15. Type.property reference (uppercase start before dot)
-  const typeResult = findTypeProperty(line, col);
-  if (typeResult) return typeResult;
 
   return null;
 }
@@ -378,16 +394,26 @@ export function getFrontmatterContext(
 
 function findLineStartKeyword(trimmed: string, col: number, trimOffset: number): Reference | null {
   // Only match markers at the start of the (trimmed) line
-  const markers: [RegExp, string][] = [
-    [/^\+\s/, '+'],
-    [/^\*\s/, '*'],
-    [/^\?\s/, '?'],
-    [/^>\s/, '>'],
-    [/^!\s/, '!'],
+  // Choice (+, *, !) markers: tooltip covers the whole line (choice text is meaningful)
+  // Condition (?) and effect (>) markers: tooltip only on the marker character
+  //   (the rest of the line has its own reference kinds)
+  const markers: [RegExp, string, boolean][] = [
+    [/^\+\s/, '+', true],
+    [/^\*\s/, '*', true],
+    [/^!\s/, '!', true],
+    [/^\?\s/, '?', false],
+    [/^>\s/, '>', false],
   ];
-  for (const [pattern, token] of markers) {
-    if (pattern.test(trimmed) && col >= trimOffset && col < trimOffset + 1) {
-      return { kind: 'keyword', token };
+  for (const [pattern, token, fullLine] of markers) {
+    if (!pattern.test(trimmed)) continue;
+    if (fullLine) {
+      if (col >= trimOffset && col < trimOffset + trimmed.length) {
+        return { kind: 'keyword', token };
+      }
+    } else {
+      if (col >= trimOffset && col < trimOffset + 1) {
+        return { kind: 'keyword', token };
+      }
     }
   }
   return null;
