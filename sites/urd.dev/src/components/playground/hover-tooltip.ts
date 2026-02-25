@@ -472,7 +472,7 @@ function frontmatterKeyTooltip(key: string): string | null {
 const TYPE_CONSTRUCTOR_DOCS: Record<string, { syntax: string; desc: string; examples: string }> = {
   int: { syntax: 'int(min, max)', desc: 'Integer with optional range constraints', examples: 'int, int(0, 100), int(0)' },
   number: { syntax: 'number(min, max)', desc: 'Floating-point with optional range constraints', examples: 'number, number(0.0, 1.0)' },
-  string: { syntax: 'string', desc: 'Text value', examples: 'string' },
+  string: { syntax: 'string', desc: 'Unicode text value', examples: '"none", "locked", "unknown"' },
   bool: { syntax: 'bool', desc: 'Boolean — true or false (default: false)', examples: 'bool' },
   enum: { syntax: 'enum(value1, value2, ...)', desc: 'Enumerated string — must be one of the listed values', examples: 'enum(friendly, hostile, neutral)' },
   ref: { syntax: 'ref(TypeName)', desc: 'Reference to an entity of the named type', examples: 'ref(Character), ref(Item)' },

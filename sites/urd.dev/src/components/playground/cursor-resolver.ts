@@ -206,6 +206,23 @@ export function identifyReference(
 
     const typeConResult = findTypeConstructor(trimmed, col, trimOffset, context);
     if (typeConResult) return typeConResult;
+
+    // Type member (property name on a definition line): `prop: type(...)` or `~prop: type(...)`
+    if (context.inTypeBlock && context.enclosingTypeName) {
+      const memberMatch = trimmed.match(/^(~?)(\w+)\s*:/);
+      if (memberMatch) {
+        const propName = memberMatch[2];
+        const propStart = trimOffset + (memberMatch[1]?.length ?? 0);
+        const propEnd = propStart + propName.length;
+        if (col >= propStart && col < propEnd) {
+          return { kind: 'type-property', typeName: context.enclosingTypeName, property: propName };
+        }
+      }
+    }
+
+    // Entity inline properties: `@entity: TypeName { prop: val, prop: val }`
+    const entityInitResult = findEntityInlineProperty(line, col);
+    if (entityInitResult) return entityInitResult;
   }
 
   // 15. Exit direction/destination: `direction: Destination Name` (body only)
@@ -323,12 +340,48 @@ function isWordChar(ch: string): boolean {
     ch === '_';
 }
 
+// --- Entity inline property detection ---
+// Handles: `@entity_id: TypeName { prop: val, prop: val }`
+
+function findEntityInlineProperty(line: string, col: number): Reference | null {
+  // Match entity declaration with inline braces
+  const declMatch = line.match(/^(\s*)@?\w+\s*:\s*([A-Z]\w*)\s*\{/);
+  if (!declMatch) return null;
+
+  const typeName = declMatch[2];
+  const braceStart = line.indexOf('{', declMatch[1].length);
+  if (braceStart < 0 || col <= braceStart) return null;
+
+  // Cursor is inside { ... } — find which property key we're on
+  const insideBraces = line.slice(braceStart + 1);
+  // Split by commas, tracking positions
+  let pos = braceStart + 1;
+  const segments = insideBraces.split(',');
+  for (const segment of segments) {
+    // Each segment is like ` prop: value` or ` prop: value }`
+    const kvMatch = segment.match(/^(\s*)(\w+)\s*:/);
+    if (kvMatch) {
+      const propName = kvMatch[2];
+      const propStart = pos + kvMatch[1].length;
+      const propEnd = propStart + propName.length;
+      if (col >= propStart && col < propEnd) {
+        return { kind: 'type-property', typeName, property: propName };
+      }
+    }
+    pos += segment.length + 1; // +1 for the comma
+  }
+
+  return null;
+}
+
 // --- Context for frontmatter-aware detection ---
 
 export interface ReferenceContext {
   inFrontmatter: boolean;
   /** Whether cursor is inside a `types:` block (indented under a type name). */
   inTypeBlock?: boolean;
+  /** The enclosing type name when inside a type property definition. */
+  enclosingTypeName?: string;
   /** Whether cursor is indented under `world:`. */
   inWorldBlock?: boolean;
   /** Whether cursor is inside a `rule name:` block (body content). */
@@ -347,6 +400,7 @@ export function getFrontmatterContext(
   let inTypeBlock = false;
   let inWorldBlock = false;
   let currentTopKey = '';
+  let enclosingTypeName: string | undefined;
 
   for (let i = 1; i <= Math.min(lineNumber, doc.lines); i++) {
     const text = doc.line(i).text.trimEnd();
@@ -359,6 +413,13 @@ export function getFrontmatterContext(
       // Track top-level frontmatter key
       if (/^\w/.test(text) && text.includes(':')) {
         currentTopKey = text.match(/^(\w+)/)?.[1] ?? '';
+      }
+      // Track type definition lines (indent 2): `  TypeName [...]:` or `  TypeName:`
+      if (currentTopKey === 'types') {
+        const typeDefMatch = text.match(/^  ([A-Z]\w*)(?:\s*\[.*\])?\s*:/);
+        if (typeDefMatch) {
+          enclosingTypeName = typeDefMatch[1];
+        }
       }
       // If cursor line is indented, check which block we're in
       if (i === lineNumber && /^\s{2,}/.test(doc.line(i).text)) {
@@ -387,7 +448,7 @@ export function getFrontmatterContext(
     }
   }
 
-  return { inFrontmatter, inTypeBlock, inWorldBlock, inRuleBlock };
+  return { inFrontmatter, inTypeBlock, enclosingTypeName, inWorldBlock, inRuleBlock };
 }
 
 // --- Line-start keyword detection ---
