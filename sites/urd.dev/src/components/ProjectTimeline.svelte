@@ -38,12 +38,8 @@
   let isFirstEra = $derived(currentEraIndex === 0);
   let isLastEra = $derived(currentEraIndex === eras.length - 1);
 
-  function defaultEraIndex(list: Era[]): number {
-    const activeIdx = list.findLastIndex((e) => e.status === 'active');
-    if (activeIdx >= 0) return activeIdx;
-    const completeIdx = list.findLastIndex((e) => e.status === 'complete');
-    if (completeIdx >= 0) return completeIdx;
-    return Math.max(0, list.length - 1);
+  function defaultEraIndex(_list: Era[]): number {
+    return 0;
   }
 
   function prevEra() {
