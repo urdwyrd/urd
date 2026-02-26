@@ -258,7 +258,25 @@ export async function bootstrap(): Promise<() => void> {
   // 7. Install keyboard sovereignty
   const removeKeybindings = installKeybindingManager();
 
-  // 8. Global error handling
+  // 8. Selection containment — prevent text selection crossing zone boundaries
+  const onSelectionChange = () => {
+    const sel = document.getSelection();
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+
+    const anchorEl = sel.anchorNode instanceof HTMLElement ? sel.anchorNode : sel.anchorNode?.parentElement;
+    const focusEl = sel.focusNode instanceof HTMLElement ? sel.focusNode : sel.focusNode?.parentElement;
+    if (!anchorEl || !focusEl) return;
+
+    const anchorZone = anchorEl.closest('.forge-zone-viewport');
+    const focusZone = focusEl.closest('.forge-zone-viewport');
+
+    if (anchorZone && focusZone && anchorZone !== focusZone) {
+      sel.collapseToStart();
+    }
+  };
+  document.addEventListener('selectionchange', onSelectionChange);
+
+  // 9. Global error handling
   window.onerror = (message, source, line, col, error) => {
     console.error('Global error:', { message, source, line, col, error });
     if (bus.hasChannel('system.error')) {
@@ -283,5 +301,6 @@ export async function bootstrap(): Promise<() => void> {
   // Return cleanup function
   return () => {
     removeKeybindings();
+    document.removeEventListener('selectionchange', onSelectionChange);
   };
 }
