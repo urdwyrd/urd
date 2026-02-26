@@ -271,20 +271,23 @@ export async function bootstrap(): Promise<() => void> {
     const activeZone = target.closest('.forge-zone-viewport');
     if (!activeZone) return;
 
-    const allViewports = document.querySelectorAll<HTMLElement>('.forge-zone-viewport');
-    for (const vp of allViewports) {
-      if (vp !== activeZone) {
-        vp.style.userSelect = 'none';
-        vp.style.webkitUserSelect = 'none';
-        lockedViewports.push(vp);
+    // Disable selection on .forge-selectable elements in OTHER zone viewports.
+    // Must target the selectable elements directly — a parent's user-select: none
+    // doesn't override a child's explicit user-select: text.
+    const allSelectables = document.querySelectorAll<HTMLElement>('.forge-zone-viewport .forge-selectable');
+    for (const el of allSelectables) {
+      if (!activeZone.contains(el)) {
+        el.style.userSelect = 'none';
+        el.style.webkitUserSelect = 'none';
+        lockedViewports.push(el);
       }
     }
   };
 
   const onPointerUp = () => {
-    for (const vp of lockedViewports) {
-      vp.style.userSelect = '';
-      vp.style.webkitUserSelect = '';
+    for (const el of lockedViewports) {
+      el.style.userSelect = '';
+      el.style.webkitUserSelect = '';
     }
     lockedViewports = [];
   };
