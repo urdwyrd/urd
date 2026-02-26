@@ -23,6 +23,9 @@ export class ProjectManager {
     appSettings.set('recentProjects', recents.slice(0, 10));
     appSettings.set('lastProjectPath', path);
 
+    // Set window title (Tauri only)
+    await this.setWindowTitle(`${name} — Urd Forge`);
+
     if (bus.hasChannel('project.opened')) {
       bus.publish('project.opened', { path, name });
     }
@@ -33,8 +36,22 @@ export class ProjectManager {
     this.currentPath = null;
     this.currentName = null;
 
+    // Reset window title
+    this.setWindowTitle('Urd Forge');
+
     if (bus.hasChannel('project.closed')) {
       bus.publish('project.closed', { path });
+    }
+  }
+
+  private async setWindowTitle(title: string): Promise<void> {
+    if (typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window) {
+      try {
+        const { getCurrentWindow } = await import('@tauri-apps/api/window');
+        await getCurrentWindow().setTitle(title);
+      } catch {
+        // Silent fallback in browser dev mode
+      }
     }
   }
 

@@ -16,6 +16,10 @@ import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svel
 import { focusService } from '$lib/framework/focus/FocusService';
 import { selectionContext } from '$lib/framework/selection/SelectionContext';
 import { navigationBroker } from '$lib/framework/navigation/NavigationBroker';
+import { bufferMap } from '$lib/app/compiler/BufferMap';
+import { TauriFileSystem } from '$lib/app/filesystem/TauriFileSystem';
+import { MemoryFileSystem } from '$lib/app/filesystem/MemoryFileSystem';
+import type { ForgeFileSystem } from '$lib/framework/filesystem/FileSystem';
 
 export async function bootstrap(): Promise<() => void> {
   // 1. Register framework bus channels
@@ -264,7 +268,50 @@ export async function bootstrap(): Promise<() => void> {
   // 7. Install keyboard sovereignty
   const removeKeybindings = installKeybindingManager();
 
-  // 8. Focus tracking — click on a zone viewport to focus it
+  // 8. File system + buffer map
+  const isTauri = typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+  const fileSystem: ForgeFileSystem = isTauri ? new TauriFileSystem() : new MemoryFileSystem();
+
+  // When in browser dev mode, seed the memory FS with mock .urd.md files
+  if (!isTauri && fileSystem instanceof MemoryFileSystem) {
+    fileSystem.seed({
+      '/mock/urd-project/main.urd.md': '# World: Demo\n\n## Entity: Player\n- name: "Hero"\n',
+      '/mock/urd-project/locations.urd.md': '## Location: Tavern\n- description: "A cosy tavern"\n',
+    });
+  }
+
+  // On project open: scan for .urd.md files and populate buffer map
+  const unsubProjectOpen = bus.subscribe('project.opened', async (payload) => {
+    const { path } = payload as { path: string };
+    bufferMap.clear();
+
+    try {
+      // Ensure .forge/ directory exists
+      const forgePath = `${path}/.forge`;
+      const forgeExists = await fileSystem.exists(forgePath);
+      if (!forgeExists) {
+        await fileSystem.mkdir(forgePath);
+      }
+
+      // Scan for .urd.md files
+      const entries = await fileSystem.listDirectory(path);
+      for (const entry of entries) {
+        if (entry.isFile && entry.name.endsWith('.urd.md')) {
+          const content = await fileSystem.readFile(entry.path);
+          bufferMap.load(entry.path, content);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to populate buffers on project open:', err);
+    }
+  });
+
+  // On project close: clear buffer map
+  const unsubProjectClose = bus.subscribe('project.closed', () => {
+    bufferMap.clear();
+  });
+
+  // 9. Focus tracking — click on a zone viewport to focus it
   const onZoneFocus = (e: PointerEvent) => {
     const target = e.target as HTMLElement;
     const viewport = target.closest('.forge-zone-viewport') as HTMLElement | null;
@@ -346,6 +393,8 @@ export async function bootstrap(): Promise<() => void> {
   // Return cleanup function
   return () => {
     removeKeybindings();
+    unsubProjectOpen();
+    unsubProjectClose();
     document.removeEventListener('pointerdown', onZoneFocus);
     document.removeEventListener('pointerdown', onPointerDown);
     document.removeEventListener('pointerup', onPointerUp);
