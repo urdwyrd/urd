@@ -42,7 +42,7 @@ Scaffolded the Tauri 2 + Svelte 5 + Vite application at `packages/forge/` and bu
 
 | Criterion | Status | Evidence |
 |-----------|--------|---------|
-| **Phase 1** — Framework shell acceptance test passes (split/join/swap/resize/theme/workspace tabs/fullscreen) | Tested | All 15 steps implemented. `vite build` and `cargo check` pass. Manually tested in both browser dev mode and Tauri native — split, join, swap, resize, theme toggle, workspace tabs, fullscreen, quit all working. |
+| **Phase 1** — Framework shell acceptance test passes (split/join/swap/resize/theme/workspace tabs/fullscreen) | Verified by human | All 15 steps implemented. `vite build` and `cargo check` pass. Human-tested in both browser dev mode and Tauri native — split, join, swap, resize, theme toggle, workspace tabs, fullscreen, quit, splash screen, cross-zone selection containment, Blender-style split positioning all verified working. |
 | **Phase 2** — Compiler output flows through chunks → projections → bus signals → placeholder views react | Not started | |
 | **Phase 3** — Full editing experience with compiler feedback in Code Editor singleton | Not started | |
 | **Phase 4** — Writer and Engineer workspaces fully functional with Tier 1 views | Not started | |
