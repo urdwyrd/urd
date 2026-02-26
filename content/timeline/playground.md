@@ -1,6 +1,6 @@
 ---
 title: Code Editor
-status: active
+status: complete
 subtitle: "Inline diagnostics, autocomplete, hover, go-to-def."
 order: 1
 era: the-authors-workshop

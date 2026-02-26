@@ -1,6 +1,6 @@
 ---
 title: IDE
-status: next
+status: active
 subtitle: "A dedicated editor for world authoring."
 order: 2
 era: the-authors-workshop
