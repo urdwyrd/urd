@@ -79,6 +79,7 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
   class="forge-divider"
   class:forge-divider--horizontal={splitNode.direction === 'horizontal'}

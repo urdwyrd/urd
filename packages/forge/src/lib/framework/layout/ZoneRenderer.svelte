@@ -9,6 +9,7 @@
   import SplitContainer from './SplitContainer.svelte';
   import Divider from './Divider.svelte';
   import ZoneShell from './ZoneShell.svelte';
+  import ZoneRenderer from './ZoneRenderer.svelte';
   import type { ZoneStateStore } from './ZoneStateStore';
 
   interface Props {
@@ -37,7 +38,7 @@
 {:else}
   <SplitContainer splitNode={node}>
     {#snippet first()}
-      <svelte:self
+      <ZoneRenderer
         node={node.children[0]}
         {zoneStates}
         {projectOpen}
@@ -47,7 +48,7 @@
       />
     {/snippet}
     {#snippet second()}
-      <svelte:self
+      <ZoneRenderer
         node={node.children[1]}
         {zoneStates}
         {projectOpen}

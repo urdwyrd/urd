@@ -83,6 +83,7 @@
     onContextMenu={handleHeaderContextMenu}
   />
 
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="forge-zone-viewport" oncontextmenu={(e) => { e.preventDefault(); onContextMenu(e); }}>
     <ZoneErrorBoundary
       {zoneId}
@@ -97,8 +98,8 @@
           <p>Failed to load view: {loadError}</p>
         </div>
       {:else if loadedComponent}
-        <svelte:component
-          this={loadedComponent}
+        {@const ViewComponent = loadedComponent}
+        <ViewComponent
           {zoneId}
           {zoneTypeId}
           state={zoneState}
