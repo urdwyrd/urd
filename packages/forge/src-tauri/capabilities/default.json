@@ -11,13 +11,7 @@
     "shell:allow-open",
     "dialog:default",
     "fs:default",
-    {
-      "identifier": "fs:allow-app-read-recursive",
-      "allow": [{ "path": "$APPCONFIG/**" }]
-    },
-    {
-      "identifier": "fs:allow-app-write-recursive",
-      "allow": [{ "path": "$APPCONFIG/**" }]
-    }
+    "fs:allow-app-read-recursive",
+    "fs:allow-app-write-recursive"
   ]
 }

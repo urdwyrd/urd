@@ -73,11 +73,17 @@ export class TauriSettingsIO implements SettingsIO {
     return this.configDir;
   }
 
+  private async resolve(filename: string): Promise<string> {
+    const { join } = await import('@tauri-apps/api/path');
+    const dir = await this.getConfigDir();
+    return await join(dir, filename);
+  }
+
   async read(): Promise<string | null> {
     try {
       const { readTextFile } = await import('@tauri-apps/plugin-fs');
-      const dir = await this.getConfigDir();
-      return await readTextFile(`${dir}settings.json`);
+      const path = await this.resolve('settings.json');
+      return await readTextFile(path);
     } catch {
       return null;
     }
@@ -87,14 +93,16 @@ export class TauriSettingsIO implements SettingsIO {
     const { writeTextFile, mkdir } = await import('@tauri-apps/plugin-fs');
     const dir = await this.getConfigDir();
     await mkdir(dir, { recursive: true });
-    await writeTextFile(`${dir}settings.json`, content);
+    const path = await this.resolve('settings.json');
+    await writeTextFile(path, content);
   }
 
   async backup(content: string): Promise<void> {
     const { writeTextFile, mkdir } = await import('@tauri-apps/plugin-fs');
     const dir = await this.getConfigDir();
     await mkdir(dir, { recursive: true });
-    await writeTextFile(`${dir}settings.backup.json`, content);
+    const path = await this.resolve('settings.backup.json');
+    await writeTextFile(path, content);
   }
 }
 
