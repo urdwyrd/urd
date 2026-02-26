@@ -259,22 +259,30 @@ export async function bootstrap(): Promise<() => void> {
   const removeKeybindings = installKeybindingManager();
 
   // 8. Selection containment — prevent text selection crossing zone boundaries
-  const onSelectionChange = () => {
-    const sel = document.getSelection();
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
+  //    On pointerdown inside a zone viewport, mark it as the active selection zone.
+  //    CSS disables user-select in all other zones for the duration of the drag.
+  let activeSelectZone: Element | null = null;
 
-    const anchorEl = sel.anchorNode instanceof HTMLElement ? sel.anchorNode : sel.anchorNode?.parentElement;
-    const focusEl = sel.focusNode instanceof HTMLElement ? sel.focusNode : sel.focusNode?.parentElement;
-    if (!anchorEl || !focusEl) return;
+  const onPointerDown = (e: PointerEvent) => {
+    const target = e.target as HTMLElement;
+    const zone = target.closest('.forge-zone-viewport');
+    if (!zone) return;
 
-    const anchorZone = anchorEl.closest('.forge-zone-viewport');
-    const focusZone = focusEl.closest('.forge-zone-viewport');
+    activeSelectZone = zone;
+    zone.classList.add('forge-zone-viewport--selecting');
+    document.documentElement.classList.add('forge-selecting');
+  };
 
-    if (anchorZone && focusZone && anchorZone !== focusZone) {
-      sel.collapseToStart();
+  const onPointerUp = () => {
+    if (activeSelectZone) {
+      activeSelectZone.classList.remove('forge-zone-viewport--selecting');
+      document.documentElement.classList.remove('forge-selecting');
+      activeSelectZone = null;
     }
   };
-  document.addEventListener('selectionchange', onSelectionChange);
+
+  document.addEventListener('pointerdown', onPointerDown);
+  document.addEventListener('pointerup', onPointerUp);
 
   // 9. Global error handling
   window.onerror = (message, source, line, col, error) => {
@@ -301,6 +309,7 @@ export async function bootstrap(): Promise<() => void> {
   // Return cleanup function
   return () => {
     removeKeybindings();
-    document.removeEventListener('selectionchange', onSelectionChange);
+    document.removeEventListener('pointerdown', onPointerDown);
+    document.removeEventListener('pointerup', onPointerUp);
   };
 }

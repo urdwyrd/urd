@@ -37,6 +37,17 @@ input, textarea, [contenteditable="true"] {
   user-select: text;
 }
 
+/* During a drag-selection, disable selectability in all zones except the active one */
+.forge-selecting .forge-selectable {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+.forge-selecting .forge-zone-viewport--selecting .forge-selectable {
+  -webkit-user-select: text !important;
+  user-select: text !important;
+}
+
 * {
   -webkit-user-drag: none;
 }
