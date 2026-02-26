@@ -20,8 +20,8 @@
         await projectManager.openPath(selected as string);
       }
     } catch {
-      // Fallback for non-Tauri environment (dev mode in browser)
-      console.warn('Directory picker not available outside Tauri');
+      // Browser dev mode fallback — open a mock project
+      await projectManager.openPath('/mock/urd-project');
     }
   }
 

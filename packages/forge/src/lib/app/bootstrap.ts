@@ -122,7 +122,8 @@ export async function bootstrap(): Promise<() => void> {
           await projectManager.openPath(selected as string);
         }
       } catch {
-        console.warn('Directory picker not available');
+        // Browser dev mode fallback — open a mock project
+        await projectManager.openPath('/mock/urd-project');
       }
       return null;
     },
