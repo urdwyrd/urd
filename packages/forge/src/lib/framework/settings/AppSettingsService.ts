@@ -204,5 +204,15 @@ export class AppSettingsService {
   }
 }
 
-/** Singleton settings service. */
-export const appSettings = new AppSettingsService();
+/**
+ * Detect whether we're running inside Tauri.
+ * The Tauri IPC bridge injects __TAURI_INTERNALS__ on the window object.
+ */
+function isTauri(): boolean {
+  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+}
+
+/** Singleton settings service. Uses in-memory IO when Tauri is unavailable. */
+export const appSettings = new AppSettingsService(
+  isTauri() ? new TauriSettingsIO() : new MemorySettingsIO(),
+);
