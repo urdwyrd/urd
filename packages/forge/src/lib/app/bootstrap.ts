@@ -259,26 +259,34 @@ export async function bootstrap(): Promise<() => void> {
   const removeKeybindings = installKeybindingManager();
 
   // 8. Selection containment — prevent text selection crossing zone boundaries
-  //    On pointerdown inside a zone viewport, mark it as the active selection zone.
-  //    CSS disables user-select in all other zones for the duration of the drag.
-  let activeSelectZone: Element | null = null;
+  //    On pointerdown inside a zone viewport, set user-select: none on all OTHER
+  //    viewports via inline style. On pointerup, remove the inline styles.
+  //    This is targeted (no global class toggles) and prevents the browser from
+  //    extending a drag-selection into sibling zones.
+  let lockedViewports: HTMLElement[] = [];
 
   const onPointerDown = (e: PointerEvent) => {
+    if (e.button !== 0) return; // left click only
     const target = e.target as HTMLElement;
-    const zone = target.closest('.forge-zone-viewport');
-    if (!zone) return;
+    const activeZone = target.closest('.forge-zone-viewport');
+    if (!activeZone) return;
 
-    activeSelectZone = zone;
-    zone.classList.add('forge-zone-viewport--selecting');
-    document.documentElement.classList.add('forge-selecting');
+    const allViewports = document.querySelectorAll<HTMLElement>('.forge-zone-viewport');
+    for (const vp of allViewports) {
+      if (vp !== activeZone) {
+        vp.style.userSelect = 'none';
+        vp.style.webkitUserSelect = 'none';
+        lockedViewports.push(vp);
+      }
+    }
   };
 
   const onPointerUp = () => {
-    if (activeSelectZone) {
-      activeSelectZone.classList.remove('forge-zone-viewport--selecting');
-      document.documentElement.classList.remove('forge-selecting');
-      activeSelectZone = null;
+    for (const vp of lockedViewports) {
+      vp.style.userSelect = '';
+      vp.style.webkitUserSelect = '';
     }
+    lockedViewports = [];
   };
 
   document.addEventListener('pointerdown', onPointerDown);
