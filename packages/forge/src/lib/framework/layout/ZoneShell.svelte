@@ -125,6 +125,8 @@
     overflow: auto;
     background: var(--forge-bg-zone-viewport);
     position: relative;
+    -webkit-user-select: contain;
+    user-select: contain;
   }
 
   .forge-zone-viewport__error {

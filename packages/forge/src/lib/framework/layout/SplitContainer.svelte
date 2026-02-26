@@ -59,6 +59,7 @@
     flex-shrink: 1;
     flex-grow: 0;
     position: relative;
+    contain: paint;
   }
 
   .forge-split__divider-slot {
