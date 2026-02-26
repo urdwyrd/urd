@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicholasio/tauri-configs/main/v2-schema.json",
+  "productName": "Urd Forge",
+  "version": "0.0.1",
+  "identifier": "dev.urd.forge",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "pnpm vite dev",
+    "beforeBuildCommand": "pnpm vite build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Urd Forge",
+        "width": 1400,
+        "height": 900,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "dragDropEnabled": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

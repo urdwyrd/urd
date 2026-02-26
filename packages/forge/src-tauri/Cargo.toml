@@ -1,0 +1,18 @@
+[package]
+name = "urd-forge"
+version = "0.0.1"
+edition = "2021"
+description = "Urd Forge — desktop IDE for Urd Schema Markdown"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
