@@ -79,10 +79,10 @@
   </div>
 
   <div class="forge-zone-header__actions">
-    <button class="forge-zone-header__action-btn" onclick={() => onSplit('horizontal')} title="Split Horizontal">
+    <button class="forge-zone-header__action-btn" onclick={() => onSplit('horizontal')} title="Split Left / Right">
       ⬌
     </button>
-    <button class="forge-zone-header__action-btn" onclick={() => onSplit('vertical')} title="Split Vertical">
+    <button class="forge-zone-header__action-btn" onclick={() => onSplit('vertical')} title="Split Top / Bottom">
       ⬍
     </button>
   </div>

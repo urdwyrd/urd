@@ -171,7 +171,7 @@ export async function bootstrap(): Promise<() => void> {
   // 5b. Zone operation commands (used by context menus)
   commandRegistry.register({
     id: 'forge.zone.splitHorizontal',
-    title: 'Split Horizontal',
+    title: 'Split Left / Right',
     category: 'Layout',
     execute: (...args: unknown[]) => {
       const opts = args[0] as { zoneId: string } | undefined;
@@ -184,7 +184,7 @@ export async function bootstrap(): Promise<() => void> {
 
   commandRegistry.register({
     id: 'forge.zone.splitVertical',
-    title: 'Split Vertical',
+    title: 'Split Top / Bottom',
     category: 'Layout',
     execute: (...args: unknown[]) => {
       const opts = args[0] as { zoneId: string } | undefined;
@@ -197,7 +197,7 @@ export async function bootstrap(): Promise<() => void> {
 
   commandRegistry.register({
     id: 'forge.zone.joinFirst',
-    title: 'Join (Keep First)',
+    title: 'Join (Keep Left / Top)',
     category: 'Layout',
     execute: (...args: unknown[]) => {
       const opts = args[0] as { dividerId: string } | undefined;
@@ -210,7 +210,7 @@ export async function bootstrap(): Promise<() => void> {
 
   commandRegistry.register({
     id: 'forge.zone.joinSecond',
-    title: 'Join (Keep Second)',
+    title: 'Join (Keep Right / Bottom)',
     category: 'Layout',
     execute: (...args: unknown[]) => {
       const opts = args[0] as { dividerId: string } | undefined;

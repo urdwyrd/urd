@@ -18,7 +18,7 @@
     projectOpen: boolean;
     dispatch: (action: ZoneTreeAction) => void;
     onZoneContextMenu: (e: MouseEvent, zoneId: string, zoneTypeId: string) => void;
-    onDividerContextMenu: (e: MouseEvent, dividerId: string) => void;
+    onDividerContextMenu: (e: MouseEvent, dividerId: string, direction: 'horizontal' | 'vertical') => void;
   }
 
   let { node, zoneStates, projectOpen, dispatch, onZoneContextMenu, onDividerContextMenu }: Props = $props();
@@ -64,7 +64,7 @@
         onJoin={(keep) => dispatch({ type: 'join', dividerId: node.id, keep })}
         onSwap={() => dispatch({ type: 'swap', dividerId: node.id })}
         onReset={() => dispatch({ type: 'resetDivider', dividerId: node.id })}
-        onContextMenu={(e) => onDividerContextMenu(e, node.id)}
+        onContextMenu={(e) => onDividerContextMenu(e, node.id, node.direction)}
       />
     {/snippet}
   </SplitContainer>

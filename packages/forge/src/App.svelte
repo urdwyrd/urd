@@ -49,16 +49,17 @@
 
   function handleZoneContextMenu(e: MouseEvent, zoneId: string, zoneTypeId: string) {
     const items: ContextMenuItem[] = [
-      { label: 'Split Horizontal', commandId: 'forge.zone.splitHorizontal', commandArgs: { zoneId } },
-      { label: 'Split Vertical', commandId: 'forge.zone.splitVertical', commandArgs: { zoneId } },
+      { label: 'Split Left / Right', commandId: 'forge.zone.splitHorizontal', commandArgs: { zoneId } },
+      { label: 'Split Top / Bottom', commandId: 'forge.zone.splitVertical', commandArgs: { zoneId } },
     ];
     contextMenu = { items, x: e.clientX, y: e.clientY };
   }
 
-  function handleDividerContextMenu(e: MouseEvent, dividerId: string) {
+  function handleDividerContextMenu(e: MouseEvent, dividerId: string, direction: 'horizontal' | 'vertical') {
+    const isHorizontal = direction === 'horizontal';
     const items: ContextMenuItem[] = [
-      { label: 'Join → Keep First', commandId: 'forge.zone.joinFirst', commandArgs: { dividerId } },
-      { label: 'Join → Keep Second', commandId: 'forge.zone.joinSecond', commandArgs: { dividerId } },
+      { label: isHorizontal ? 'Join → Keep Left' : 'Join → Keep Top', commandId: 'forge.zone.joinFirst', commandArgs: { dividerId } },
+      { label: isHorizontal ? 'Join → Keep Right' : 'Join → Keep Bottom', commandId: 'forge.zone.joinSecond', commandArgs: { dividerId } },
       { label: '', commandId: '', separator: true },
       { label: 'Swap', commandId: 'forge.zone.swap', commandArgs: { dividerId } },
       { label: 'Reset Divider', commandId: 'forge.zone.resetDivider', commandArgs: { dividerId } },
