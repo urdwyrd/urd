@@ -42,8 +42,9 @@ export interface PersistedZoneState {
 
 export interface ContextMenuItem {
   label: string;
-  commandId: string;
+  commandId?: string;
   commandArgs?: Record<string, unknown>;
+  action?: () => void;
   icon?: string;
   keybinding?: string;
   disabled?: boolean;

@@ -44,7 +44,11 @@
 
   function handleClick(item: ContextMenuItem) {
     if (item.disabled || item.separator) return;
-    commandRegistry.execute(item.commandId, item.commandArgs);
+    if (item.action) {
+      item.action();
+    } else if (item.commandId) {
+      commandRegistry.execute(item.commandId, item.commandArgs);
+    }
     onClose();
   }
 

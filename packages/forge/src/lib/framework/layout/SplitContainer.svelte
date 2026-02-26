@@ -23,6 +23,7 @@
   class="forge-split"
   class:forge-split--horizontal={splitNode.direction === 'horizontal'}
   class:forge-split--vertical={splitNode.direction === 'vertical'}
+  data-split-id={splitNode.id}
 >
   <div class="forge-split__pane forge-split__pane--first" style:flex-basis={firstSize}>
     {@render first()}
