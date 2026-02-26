@@ -49,16 +49,42 @@
     const d = new Date(ts);
     return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}.${d.getMilliseconds().toString().padStart(3, '0')}`;
   }
+
+  function isCompilerEvent(channelId: string): boolean {
+    return channelId.startsWith('compiler.');
+  }
+
+  function formatCompilerPayload(channelId: string, payload: string): string {
+    try {
+      const data = JSON.parse(payload);
+      if (channelId === 'compiler.completed' && data.durationMs !== undefined) {
+        const entities = data.worldCounts?.entities ?? '?';
+        const locations = data.worldCounts?.locations ?? '?';
+        return `${data.durationMs}ms — ${entities} entities, ${locations} locations`;
+      }
+      if (channelId === 'compiler.started' && data.inputFileCount !== undefined) {
+        return `${data.inputFileCount} file(s)`;
+      }
+      if (channelId === 'compiler.error') {
+        return data.error ?? payload;
+      }
+    } catch {
+      // Fall through to raw payload
+    }
+    return payload;
+  }
 </script>
 
 <div class="forge-bus-monitor">
   <div class="forge-bus-monitor__header">Bus Monitor — {events.length} events</div>
   <div class="forge-bus-monitor__list">
     {#each events as event}
-      <div class="forge-bus-monitor__event">
+      <div class="forge-bus-monitor__event" class:forge-bus-monitor__event--compiler={isCompilerEvent(event.channelId)}>
         <span class="forge-bus-monitor__time">{formatTime(event.timestamp)}</span>
         <span class="forge-bus-monitor__channel forge-selectable">{event.channelId}</span>
-        <span class="forge-bus-monitor__payload forge-selectable">{event.payload}</span>
+        <span class="forge-bus-monitor__payload forge-selectable">
+          {isCompilerEvent(event.channelId) ? formatCompilerPayload(event.channelId, event.payload) : event.payload}
+        </span>
       </div>
     {/each}
     {#if events.length === 0}
@@ -117,6 +143,14 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .forge-bus-monitor__event--compiler {
+    background: rgba(100, 200, 100, 0.05);
+  }
+
+  .forge-bus-monitor__event--compiler .forge-bus-monitor__channel {
+    color: var(--forge-status-success, #6b8);
   }
 
   .forge-bus-monitor__empty {

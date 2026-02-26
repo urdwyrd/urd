@@ -20,6 +20,15 @@ import { bufferMap } from '$lib/app/compiler/BufferMap';
 import { TauriFileSystem } from '$lib/app/filesystem/TauriFileSystem';
 import { MemoryFileSystem } from '$lib/app/filesystem/MemoryFileSystem';
 import type { ForgeFileSystem } from '$lib/framework/filesystem/FileSystem';
+import { CompilerOutputCache } from '$lib/app/compiler/CompilerOutputCache';
+import { MockCompilerService } from '$lib/app/compiler/MockCompilerService';
+import { TauriCompiler } from '$lib/app/compiler/TauriCompiler';
+import { RecompilePipeline } from '$lib/app/compiler/RecompilePipeline';
+import { projectionRegistry } from '$lib/app/projections/ProjectionRegistry';
+import { entityTableProjection } from '$lib/app/projections/entity-table';
+import { locationGraphProjection } from '$lib/app/projections/location-graph';
+import { diagnosticsByFileProjection } from '$lib/app/projections/diagnostics-by-file';
+import type { CompilerService } from '$lib/app/compiler/types';
 
 export async function bootstrap(): Promise<() => void> {
   // 1. Register framework bus channels
@@ -306,9 +315,39 @@ export async function bootstrap(): Promise<() => void> {
     }
   });
 
-  // On project close: clear buffer map
+  // On project close: clear buffer map and projections, stop pipeline
   const unsubProjectClose = bus.subscribe('project.closed', () => {
+    recompilePipeline.stop();
     bufferMap.clear();
+    projectionRegistry.clear();
+  });
+
+  // 8b. Register projections
+  projectionRegistry.register(entityTableProjection);
+  projectionRegistry.register(locationGraphProjection);
+  projectionRegistry.register(diagnosticsByFileProjection);
+
+  // 8c. Recompile pipeline
+  const compilerService: CompilerService = isTauri
+    ? new TauriCompiler()
+    : new MockCompilerService();
+  const compilerCache = new CompilerOutputCache();
+  const recompilePipeline = new RecompilePipeline(
+    bufferMap,
+    compilerService,
+    compilerCache,
+    projectionRegistry,
+    appSettings.get('recompileDebounceMs'),
+  );
+
+  // Start pipeline and trigger initial compile when project opens
+  const unsubProjectOpenCompile = bus.subscribe('project.opened', () => {
+    // Start watching for buffer changes
+    recompilePipeline.start();
+    // Trigger initial compile (after buffers are populated — use a microtask)
+    queueMicrotask(() => {
+      recompilePipeline.compileNow();
+    });
   });
 
   // 9. Focus tracking — click on a zone viewport to focus it
@@ -393,8 +432,10 @@ export async function bootstrap(): Promise<() => void> {
   // Return cleanup function
   return () => {
     removeKeybindings();
+    recompilePipeline.stop();
     unsubProjectOpen();
     unsubProjectClose();
+    unsubProjectOpenCompile();
     document.removeEventListener('pointerdown', onZoneFocus);
     document.removeEventListener('pointerdown', onPointerDown);
     document.removeEventListener('pointerup', onPointerUp);
