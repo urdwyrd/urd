@@ -77,13 +77,12 @@ export async function bootstrap(): Promise<() => void> {
     keybinding: 'f11',
     globalWhenEditorFocused: true,
     execute: async () => {
-      try {
+      if ('__TAURI_INTERNALS__' in window) {
         const { getCurrentWindow } = await import('@tauri-apps/api/window');
         const win = getCurrentWindow();
         const isFullscreen = await win.isFullscreen();
         await win.setFullscreen(!isFullscreen);
-      } catch {
-        // Fallback for browser dev mode
+      } else {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         } else {
@@ -145,12 +144,11 @@ export async function bootstrap(): Promise<() => void> {
     category: 'File',
     keybinding: 'ctrl+q',
     execute: async () => {
-      try {
+      if ('__TAURI_INTERNALS__' in window) {
         const { getCurrentWindow } = await import('@tauri-apps/api/window');
         await getCurrentWindow().close();
-      } catch {
-        window.close();
       }
+      // Browser dev mode: window.close() only works for script-opened windows, so no-op
       return null;
     },
   });
