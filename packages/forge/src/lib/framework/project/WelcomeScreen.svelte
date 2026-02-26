@@ -4,7 +4,7 @@
    * Replaces the workspace layout entirely.
    */
 
-  import { projectManager } from './ProjectManager';
+  import { projectManager } from './ProjectManager.svelte';
 
   let recentProjects = $derived(projectManager.getRecentProjects());
 

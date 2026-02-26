@@ -18,8 +18,8 @@
   import GlobalStatusBar from '$lib/framework/layout/GlobalStatusBar.svelte';
   import WelcomeScreen from '$lib/framework/project/WelcomeScreen.svelte';
   import ContextMenu from '$lib/framework/context-menu/ContextMenu.svelte';
-  import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager';
-  import { projectManager } from '$lib/framework/project/ProjectManager';
+  import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svelte';
+  import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
   import { bootstrap } from '$lib/app/bootstrap';
   import type { ContextMenuItem, ContextMenuTarget } from '$lib/framework/types';
   import type { ZoneTreeAction } from '$lib/framework/types';

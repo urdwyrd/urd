@@ -3,7 +3,7 @@
    * Workspace tab bar — Blender-style workspace switching.
    */
 
-  import { workspaceManager } from './WorkspaceManager';
+  import { workspaceManager } from './WorkspaceManager.svelte';
 
   let editingIndex = $state<number | null>(null);
   let editingName = $state('');

@@ -11,8 +11,8 @@ import { bus } from '$lib/framework/bus/MessageBus';
 import { appSettings } from '$lib/framework/settings/AppSettingsService';
 import { initTheme, toggleTheme, getCurrentTheme } from '$lib/framework/theme/ThemeEngine';
 import { installKeybindingManager } from '$lib/framework/commands/KeybindingManager';
-import { projectManager } from '$lib/framework/project/ProjectManager';
-import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager';
+import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
+import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svelte';
 
 export async function bootstrap(): Promise<() => void> {
   // 1. Register framework bus channels
