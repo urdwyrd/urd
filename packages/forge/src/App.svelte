@@ -20,6 +20,8 @@
   import ContextMenu from '$lib/framework/context-menu/ContextMenu.svelte';
   import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svelte';
   import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
+  import { focusService } from '$lib/framework/focus/FocusService';
+  import CommandPalette from '$lib/framework/commands/CommandPalette.svelte';
   import { bootstrap } from '$lib/app/bootstrap';
   import type { ContextMenuItem, SplitNode, ZoneTree as ZoneTreeType, ZoneTreeAction } from '$lib/framework/types';
 
@@ -210,6 +212,10 @@
       y={contextMenu.y}
       onClose={closeContextMenu}
     />
+  {/if}
+
+  {#if focusService.mode === 'commandPalette'}
+    <CommandPalette />
   {/if}
 {/if}
 

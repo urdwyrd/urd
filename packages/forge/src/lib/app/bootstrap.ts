@@ -163,8 +163,11 @@ export async function bootstrap(): Promise<() => void> {
     keybinding: 'ctrl+shift+p',
     globalWhenEditorFocused: true,
     execute: () => {
-      // Stub — will be implemented in a later phase
-      console.log('Command Palette opened (stub)');
+      if (focusService.mode === 'commandPalette') {
+        focusService.popMode();
+      } else {
+        focusService.pushMode('commandPalette');
+      }
       return null;
     },
   });
