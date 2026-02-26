@@ -65,11 +65,11 @@
     flex-shrink: 0;
   }
 
-  .forge-split--horizontal .forge-split__divider-slot {
+  .forge-split--horizontal > .forge-split__divider-slot {
     width: 4px;
   }
 
-  .forge-split--vertical .forge-split__divider-slot {
+  .forge-split--vertical > .forge-split__divider-slot {
     height: 4px;
   }
 </style>
