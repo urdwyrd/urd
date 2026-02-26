@@ -4,16 +4,18 @@
  * The focus service is the authority on which zone is active and what
  * modal mode the application is in (normal, commandPalette, dialog, etc.).
  * Modal modes are a stack so nested modals work correctly.
+ *
+ * Uses Svelte 5 $state() runes so that getters are reactive in templates.
  */
 
 import { bus } from '../bus/MessageBus';
 import type { FocusMode } from '../types';
 
 export class FocusService {
-  private _activeZoneId: string | null = null;
-  private _activeZoneType: string | null = null;
-  private _activeDividerId: string | null = null;
-  private _modeStack: FocusMode[] = ['normal'];
+  private _activeZoneId: string | null = $state(null);
+  private _activeZoneType: string | null = $state(null);
+  private _activeDividerId: string | null = $state(null);
+  private _modeStack: FocusMode[] = $state(['normal']);
 
   get activeZoneId(): string | null {
     return this._activeZoneId;
@@ -65,7 +67,7 @@ export class FocusService {
       console.warn('FocusService: cannot push "normal" mode — it is the base mode');
       return;
     }
-    this._modeStack.push(mode);
+    this._modeStack = [...this._modeStack, mode];
   }
 
   /** Pop the current modal focus mode. Returns to the previous mode. */
@@ -73,7 +75,9 @@ export class FocusService {
     if (this._modeStack.length <= 1) {
       return 'normal';
     }
-    return this._modeStack.pop()!;
+    const popped = this._modeStack[this._modeStack.length - 1];
+    this._modeStack = this._modeStack.slice(0, -1);
+    return popped;
   }
 
   /** Clear all focus state and reset mode to normal. */

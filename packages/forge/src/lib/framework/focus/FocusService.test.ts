@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { FocusService } from './FocusService';
+import { FocusService } from './FocusService.svelte';
 
 describe('FocusService', () => {
   let service: FocusService;

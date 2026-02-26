@@ -13,9 +13,10 @@ import { initTheme, toggleTheme, getCurrentTheme } from '$lib/framework/theme/Th
 import { installKeybindingManager } from '$lib/framework/commands/KeybindingManager';
 import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
 import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svelte';
-import { focusService } from '$lib/framework/focus/FocusService';
+import { focusService } from '$lib/framework/focus/FocusService.svelte';
 import { selectionContext } from '$lib/framework/selection/SelectionContext';
 import { navigationBroker } from '$lib/framework/navigation/NavigationBroker';
+import { activeDialog } from '$lib/framework/layout/ActiveDialog.svelte';
 import { bufferMap } from '$lib/app/compiler/BufferMap';
 import { TauriFileSystem } from '$lib/app/filesystem/TauriFileSystem';
 import { MemoryFileSystem } from '$lib/app/filesystem/MemoryFileSystem';
@@ -85,30 +86,7 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: null,
   });
 
-  // 4b. Register settings views
-  viewRegistry.register({
-    id: 'forge.view.settings',
-    name: 'Settings',
-    icon: '⚙',
-    category: 'System',
-    component: () => import('$lib/framework/settings/SettingsView.svelte'),
-    navigationStrategy: 'singleton-autocreate',
-    requiresProject: false,
-    stateVersion: 1,
-    defaultState: null,
-  });
-
-  viewRegistry.register({
-    id: 'forge.view.keybindings',
-    name: 'Keybindings',
-    icon: '⌨',
-    category: 'System',
-    component: () => import('$lib/framework/settings/KeybindingEditor.svelte'),
-    navigationStrategy: 'singleton-autocreate',
-    requiresProject: false,
-    stateVersion: 1,
-    defaultState: null,
-  });
+  // 4b. Settings/keybindings open as floating dialogs (not zone views)
 
   // 5. Register framework commands
   commandRegistry.register({
@@ -217,7 +195,7 @@ export async function bootstrap(): Promise<() => void> {
     keybinding: 'ctrl+,',
     globalWhenEditorFocused: true,
     execute: () => {
-      navigationBroker.navigate({ targetViewId: 'forge.view.settings' });
+      activeDialog.open('settings');
       return null;
     },
   });
@@ -229,7 +207,7 @@ export async function bootstrap(): Promise<() => void> {
     keybinding: 'ctrl+k',
     globalWhenEditorFocused: true,
     execute: () => {
-      navigationBroker.navigate({ targetViewId: 'forge.view.keybindings' });
+      activeDialog.open('keybindings');
       return null;
     },
   });

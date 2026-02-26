@@ -9,7 +9,7 @@
 import type { NavigationIntent } from '../types';
 import { viewRegistry } from '../views/ViewRegistry';
 import { workspaceManager } from '../workspace/WorkspaceManager.svelte';
-import { focusService } from '../focus/FocusService';
+import { focusService } from '../focus/FocusService.svelte';
 import { collectLeaves } from '../layout/ZoneTree';
 
 export type NavigationResult =

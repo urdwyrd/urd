@@ -20,8 +20,12 @@
   import ContextMenu from '$lib/framework/context-menu/ContextMenu.svelte';
   import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svelte';
   import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
-  import { focusService } from '$lib/framework/focus/FocusService';
+  import { focusService } from '$lib/framework/focus/FocusService.svelte';
   import CommandPalette from '$lib/framework/commands/CommandPalette.svelte';
+  import FloatingDialog from '$lib/framework/layout/FloatingDialog.svelte';
+  import { activeDialog } from '$lib/framework/layout/ActiveDialog.svelte';
+  import SettingsView from '$lib/framework/settings/SettingsView.svelte';
+  import KeybindingEditor from '$lib/framework/settings/KeybindingEditor.svelte';
   import { bootstrap } from '$lib/app/bootstrap';
   import type { ContextMenuItem, SplitNode, ZoneTree as ZoneTreeType, ZoneTreeAction } from '$lib/framework/types';
 
@@ -216,6 +220,18 @@
 
   {#if focusService.mode === 'commandPalette'}
     <CommandPalette />
+  {/if}
+
+  {#if activeDialog.current === 'settings'}
+    <FloatingDialog title="Settings" width="700px" height="500px" onClose={() => activeDialog.close()}>
+      <SettingsView zoneId="" zoneTypeId="" state={null} onStateChange={() => {}} />
+    </FloatingDialog>
+  {/if}
+
+  {#if activeDialog.current === 'keybindings'}
+    <FloatingDialog title="Keybindings" width="750px" height="500px" onClose={() => activeDialog.close()}>
+      <KeybindingEditor zoneId="" zoneTypeId="" state={null} onStateChange={() => {}} />
+    </FloatingDialog>
   {/if}
 {/if}
 

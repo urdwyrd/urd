@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NavigationBroker } from './NavigationBroker';
 import { viewRegistry } from '../views/ViewRegistry';
-import { focusService } from '../focus/FocusService';
+import { focusService } from '../focus/FocusService.svelte';
 
 describe('NavigationBroker', () => {
   let broker: NavigationBroker;

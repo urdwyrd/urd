@@ -8,7 +8,7 @@
 
   import { commandRegistry, type CommandDefinition } from './CommandRegistry';
   import { viewRegistry, type ViewRegistration } from '../views/ViewRegistry';
-  import { focusService } from '../focus/FocusService';
+  import { focusService } from '../focus/FocusService.svelte';
   import { onMount } from 'svelte';
 
   interface PaletteItem {
@@ -127,7 +127,7 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="forge-palette__backdrop" onmousedown={close}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="forge-palette" onmousedown|stopPropagation={() => {}}>
+  <div class="forge-palette" onmousedown={(e) => e.stopPropagation()}>
     <input
       bind:this={inputEl}
       bind:value={query}
