@@ -23,24 +23,35 @@
   let { splitNode, onResize, onJoin, onSwap, onReset, onContextMenu }: Props = $props();
 
   let dragging = $state(false);
-  let containerRect: DOMRect | null = null;
+  let splitRect: DOMRect | null = null;
+
+  function findSplitContainer(el: HTMLElement): HTMLElement | null {
+    // Walk up to the .forge-split element that owns this divider
+    let node: HTMLElement | null = el;
+    while (node) {
+      if (node.classList.contains('forge-split')) return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
 
   function onPointerDown(e: PointerEvent) {
     if (e.button !== 0) return; // left click only
     dragging = true;
     const target = e.currentTarget as HTMLElement;
     target.setPointerCapture(e.pointerId);
-    containerRect = target.parentElement?.getBoundingClientRect() ?? null;
+    const container = findSplitContainer(target);
+    splitRect = container?.getBoundingClientRect() ?? null;
   }
 
   function onPointerMove(e: PointerEvent) {
-    if (!dragging || !containerRect) return;
+    if (!dragging || !splitRect) return;
 
     let ratio: number;
     if (splitNode.direction === 'horizontal') {
-      ratio = (e.clientX - containerRect.left) / containerRect.width;
+      ratio = (e.clientX - splitRect.left) / splitRect.width;
     } else {
-      ratio = (e.clientY - containerRect.top) / containerRect.height;
+      ratio = (e.clientY - splitRect.top) / splitRect.height;
     }
 
     onResize(Math.max(0.1, Math.min(0.9, ratio)));
@@ -48,7 +59,7 @@
 
   function onPointerUp() {
     dragging = false;
-    containerRect = null;
+    splitRect = null;
   }
 
   function onDblClick() {
@@ -99,11 +110,12 @@
 
 <style>
   .forge-divider {
-    position: absolute;
     z-index: var(--forge-z-divider, 10);
     background: var(--forge-border-divider);
     transition: background 0.15s ease;
     flex-shrink: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .forge-divider:hover,
@@ -113,14 +125,10 @@
   }
 
   .forge-divider--horizontal {
-    width: 4px;
-    height: 100%;
     cursor: col-resize;
   }
 
   .forge-divider--vertical {
-    width: 100%;
-    height: 4px;
     cursor: row-resize;
   }
 
