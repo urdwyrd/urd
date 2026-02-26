@@ -85,6 +85,31 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: null,
   });
 
+  // 4b. Register settings views
+  viewRegistry.register({
+    id: 'forge.view.settings',
+    name: 'Settings',
+    icon: '⚙',
+    category: 'System',
+    component: () => import('$lib/framework/settings/SettingsView.svelte'),
+    navigationStrategy: 'singleton-autocreate',
+    requiresProject: false,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'forge.view.keybindings',
+    name: 'Keybindings',
+    icon: '⌨',
+    category: 'System',
+    component: () => import('$lib/framework/settings/KeybindingEditor.svelte'),
+    navigationStrategy: 'singleton-autocreate',
+    requiresProject: false,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
   // 5. Register framework commands
   commandRegistry.register({
     id: 'forge.window.toggleFullscreen',
@@ -185,6 +210,40 @@ export async function bootstrap(): Promise<() => void> {
     },
   });
 
+  commandRegistry.register({
+    id: 'forge.settings.open',
+    title: 'Open Settings',
+    category: 'Edit',
+    keybinding: 'ctrl+,',
+    globalWhenEditorFocused: true,
+    execute: () => {
+      navigationBroker.navigate({ targetViewId: 'forge.view.settings' });
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.settings.openKeybindings',
+    title: 'Open Keybindings',
+    category: 'Edit',
+    keybinding: 'ctrl+k',
+    globalWhenEditorFocused: true,
+    execute: () => {
+      navigationBroker.navigate({ targetViewId: 'forge.view.keybindings' });
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.settings.resetAll',
+    title: 'Reset All Settings',
+    category: 'Edit',
+    execute: () => {
+      appSettings.resetAll();
+      return null;
+    },
+  });
+
   // 5b. Zone operation commands (used by context menus)
   commandRegistry.register({
     id: 'forge.zone.splitHorizontal',
@@ -270,6 +329,8 @@ export async function bootstrap(): Promise<() => void> {
   registerMenuContribution({ menu: 'file', group: 'quit', order: 99, commandId: 'forge.app.quit', label: 'Quit' });
 
   registerMenuContribution({ menu: 'edit', group: 'palette', order: 1, commandId: 'forge.edit.commandPalette', label: 'Command Palette' });
+  registerMenuContribution({ menu: 'edit', group: 'settings', order: 10, commandId: 'forge.settings.open', label: 'Settings' });
+  registerMenuContribution({ menu: 'edit', group: 'settings', order: 11, commandId: 'forge.settings.openKeybindings', label: 'Keybindings' });
 
   registerMenuContribution({ menu: 'view', group: 'fullscreen', order: 1, commandId: 'forge.window.toggleFullscreen', label: 'Toggle Fullscreen' });
   registerMenuContribution({ menu: 'view', group: 'theme', order: 2, commandId: 'forge.theme.toggle', label: 'Toggle Theme' });
