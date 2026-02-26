@@ -15,33 +15,34 @@
 
 ### What was done
 
-**Phase 1: Framework Shell** — completed 2026-02-26 across 7 commits.
+**Phase 1: Framework Shell** — completed 2026-02-26 across 7 commits, followed by 10 bug-fix and enhancement commits.
 
 Scaffolded the Tauri 2 + Svelte 5 + Vite application at `packages/forge/` and built the full framework layer:
 
 - **Message bus** (`MessageBus.ts`) — channel-registered pub/sub with retainLast replay, 4KB dev-mode payload assertion. `ChannelManifest.ts` registers 14 framework channels. `TestBus` test helper records publishes.
 - **Command registry** (`CommandRegistry.ts`) — keybinding resolution with normalisation, execution logging to bus, undo action return type. `KeybindingManager.ts` installs keyboard sovereignty suppressing browser shortcuts (Ctrl+P, F5, etc.). `TestCommandRegistry` test helper.
 - **Theme engine** — `tokens.css` defines Gloaming (dark) and Parchment (light) theme tokens across surface, text, border, accent, semantic, graph, spreadsheet, and focus categories. Semantic typography and spacing tokens. `ThemeEngine.ts` manages `data-theme` attribute switching. `base.css` handles reset, user-select suppression, overscroll prevention, focus-visible styles.
-- **App settings service** (`AppSettingsService.ts`) — corruption-safe persistence with debounced 500ms writes. Loads from OS config dir via Tauri path API. Backs up corrupt files as `settings.backup.json` and falls back to defaults. Publishes `settings.changed` on bus. `MemorySettingsIO` for tests.
+- **App settings service** (`AppSettingsService.ts`) — corruption-safe persistence with debounced 500ms writes. Loads from OS config dir via Tauri path API with proper `path.join()` for path construction. Backs up corrupt files as `settings.backup.json` and falls back to defaults. Publishes `settings.changed` on bus. `MemorySettingsIO` for tests and browser dev mode (auto-detected via `__TAURI_INTERNALS__`).
 - **View registry** (`ViewRegistry.ts`) — register/list/lazy-load with category grouping, singleton tracking, project-aware filtering, state versioning, and migration support. `ViewHostContract.ts` for toolbar and status contributions.
 - **BSP layout engine** — `ZoneTree.ts` implements immutable tree reducer with 7 invariant assertions enforced after every mutation. Actions: split, join, swap, resize, changeType, resetDivider. `ZoneStateStore.ts` persists versioned zone state keyed by `zone:${id}::type:${typeId}` with migration on version mismatch.
-- **Layout components** — `ZoneRenderer.svelte` (recursive BSP renderer), `SplitContainer.svelte`, `Divider.svelte` (drag resize, right-click context menu, double-click reset, keyboard arrows + Enter), `ZoneShell.svelte` (header + viewport + error boundary), `ZoneHeader.svelte` (type selector dropdown + split buttons), `ZoneErrorBoundary.svelte`, `ZoneLoadingState.svelte`.
-- **Context menu system** — `ContextMenu.svelte` positioned at cursor, `ContextMenuProvider.ts` registry, `contextMenuSuppressor.ts` for global right-click interception. Framework-level menus for zones and dividers.
+- **Layout components** — `ZoneRenderer.svelte` (recursive BSP renderer), `SplitContainer.svelte` (with `data-split-id` for DOM lookup), `Divider.svelte` (drag resize against parent `.forge-split` container, right-click context menu, double-click reset, keyboard arrows + Enter), `ZoneShell.svelte` (header + viewport + error boundary), `ZoneHeader.svelte` (type selector dropdown + split buttons), `ZoneErrorBoundary.svelte`, `ZoneLoadingState.svelte`.
+- **Context menu system** — `ContextMenu.svelte` positioned at cursor with support for both command dispatch and direct action callbacks. `ContextMenuProvider.ts` registry, `contextMenuSuppressor.ts` for global right-click interception. Framework-level menus for zones and dividers.
 - **Global menu bar** — `GlobalMenuBar.svelte` with File/Edit/View/Window/Help. `MenuRegistry.ts` contribution-based population with group separators. `MenuDropdown.svelte` with hover-to-switch-when-open behaviour.
-- **Workspace manager** (`WorkspaceManager.ts`) — multiple workspaces with tabs, dispatch-through-reducer tree mutations, serialisation/deserialisation with corruption-safe loading. `WorkspaceTabs.svelte` with rename-on-double-click, close, and add.
-- **Project manager** (`ProjectManager.ts`) — open/close/recent with Tauri directory picker. `WelcomeScreen.svelte` replaces workspace when no project is open. Recent projects list with remove.
+- **Workspace manager** (`WorkspaceManager.svelte.ts`) — multiple workspaces with tabs, dispatch-through-reducer tree mutations, serialisation/deserialisation with corruption-safe loading. `WorkspaceTabs.svelte` with rename-on-double-click, close, and add.
+- **Project manager** (`ProjectManager.svelte.ts`) — open/close/recent with Tauri directory picker. `WelcomeScreen.svelte` replaces workspace when no project is open. Recent projects list with remove. Falls back to mock project in browser dev mode.
 - **Placeholder views** — `PlaceholderColour` (deterministic hue from zone ID hash), `PlaceholderInfo` (zone metadata with live ResizeObserver dimensions), `PlaceholderBusMonitor` (live bus event log), `PlaceholderCommandLog` (live command execution log). All registered under "Debug" category.
 - **Global status bar** (`GlobalStatusBar.svelte`) — compiler status, theme toggle, version display.
-- **Bootstrap** (`bootstrap.ts`) — wires all systems: registers channels, loads settings, initialises theme, registers 4 placeholder views, registers 6 framework commands (fullscreen F11, theme toggle, open/close project, quit, command palette stub), registers menu contributions, installs keybinding manager, installs global error handlers.
-- **App.svelte** — implements the architecture doc §5.5 hierarchy: `GlobalMenuBar` → `WorkspaceTabs` → `ZoneRenderer`/`WelcomeScreen` → `GlobalStatusBar`.
+- **Bootstrap** (`bootstrap.ts`) — wires all systems: registers channels, loads settings, initialises theme, registers 4 placeholder views, registers 12 commands (fullscreen, theme toggle, open/close project, quit, command palette stub, zone split/join/swap/reset), registers menu contributions, installs keybinding manager, installs global error handlers. Tauri API calls guarded with `__TAURI_INTERNALS__` check.
+- **App.svelte** — implements the architecture doc §5.5 hierarchy: `GlobalMenuBar` → `WorkspaceTabs` → `ZoneRenderer`/`WelcomeScreen` → `GlobalStatusBar`. Includes Blender-style split positioning mode (crosshair cursor, divider follows mouse until click confirms, Escape cancels).
+- **Tauri backend** — `tauri-plugin-dialog` and `tauri-plugin-fs` registered alongside `tauri-plugin-shell`. Capabilities grant window close/fullscreen, dialog, and scoped app-config filesystem permissions.
 
-**46 files, ~4400 lines of code.** Both `vite build` (frontend) and `cargo check` (Rust backend) pass clean.
+**46 files, ~4600 lines of code.** Both `vite build` (frontend) and `cargo check` (Rust backend) pass clean. Tested in both browser dev mode and Tauri native mode.
 
 ### Acceptance criteria verification
 
 | Criterion | Status | Evidence |
 |-----------|--------|---------|
-| **Phase 1** — Framework shell acceptance test passes (split/join/swap/resize/theme/workspace tabs/fullscreen) | Code complete | All 15 steps implemented. `vite build` and `cargo check` pass. Visual acceptance test (step 16) requires manual `pnpm --filter forge dev` launch — not yet run. |
+| **Phase 1** — Framework shell acceptance test passes (split/join/swap/resize/theme/workspace tabs/fullscreen) | Tested | All 15 steps implemented. `vite build` and `cargo check` pass. Manually tested in both browser dev mode and Tauri native — split, join, swap, resize, theme toggle, workspace tabs, fullscreen, quit all working. |
 | **Phase 2** — Compiler output flows through chunks → projections → bus signals → placeholder views react | Not started | |
 | **Phase 3** — Full editing experience with compiler feedback in Code Editor singleton | Not started | |
 | **Phase 4** — Writer and Engineer workspaces fully functional with Tier 1 views | Not started | |
@@ -55,8 +56,12 @@ Scaffolded the Tauri 2 + Svelte 5 + Vite application at `packages/forge/` and bu
 - **`<svelte:self>` → self-import**: Svelte 5 deprecates `<svelte:self>` in favour of importing the component by name. `ZoneRenderer.svelte` uses `import ZoneRenderer from './ZoneRenderer.svelte'` for recursion.
 - **`<svelte:component>` → direct dynamic component**: Svelte 5 runes mode deprecates `<svelte:component this={...}>`. `ZoneShell.svelte` uses `{@const ViewComponent = loadedComponent}` + `<ViewComponent>` instead.
 - **Splash screen deferred**: Step 3 (Tauri splashscreen plugin) was deferred — the main window shows a loading state directly. The splashscreen window config can be added once the visual acceptance test confirms the base shell works.
-- **`@tauri-apps/plugin-dialog` and `@tauri-apps/plugin-fs` added as dependencies**: Required for the directory picker (WelcomeScreen, Open Project command) and settings persistence. The architecture doc assumed these would be available but didn't list them explicitly.
-- **WorkspaceManager uses Svelte 5 `$state` runes**: The architecture doc described the manager as a plain class. The implementation uses `$state` for reactive properties so workspace/tab changes trigger UI updates without an intermediate store layer.
+- **`@tauri-apps/plugin-dialog` and `@tauri-apps/plugin-fs` added as dependencies**: Required for the directory picker (WelcomeScreen, Open Project command) and settings persistence. Both npm packages and Rust crates registered with Tauri capabilities.
+- **WorkspaceManager/ProjectManager use `.svelte.ts` extension**: Files using `$state`/`$derived` runes outside `.svelte` components must use the `.svelte.ts` extension per Svelte 5 rules. The architecture doc used plain `.ts`.
+- **Tauri API calls guarded with `__TAURI_INTERNALS__`**: Tauri npm packages import successfully in browser dev mode but IPC calls fail silently or break the page. All Tauri-specific calls (window close, fullscreen, settings persistence) check for the Tauri runtime before proceeding, with browser fallbacks where applicable.
+- **Directional split/join labels**: "Split Horizontal/Vertical" replaced with "Split Left / Right" and "Split Top / Bottom" for clarity. Join labels use "Keep Left/Right" or "Keep Top/Bottom" based on the actual split direction.
+- **Blender-style split positioning**: After splitting a zone, the divider immediately follows the mouse cursor. Click confirms the position, Escape cancels (undoes the split). Not in the original architecture doc — added for UX quality.
+- **SplitContainer uses direct child selectors**: Svelte scoped CSS uses the same hash for all instances of the same component. Descendant selectors leaked across nested splits; changed to `>` child selectors to prevent inner dividers inheriting outer dimension constraints.
 
 ---
 
