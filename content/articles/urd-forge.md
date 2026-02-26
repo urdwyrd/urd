@@ -101,6 +101,6 @@ The playground proved that the compiler's semantic model — the FactSet, the Pr
 
 Urd Forge is the interface that matches the compiler's ambition. Eighty-five views projected over a single compiled world, each one a different question answered by the same data. The layout engine lets the writer arrange those questions to fit their thinking. The projection layer ensures they always agree. The command system ensures every action is undoable, searchable, and scriptable.
 
-The specification is complete. The architecture document covers every component, every interface, every data flow, every edge case from singleton zone lifecycle across workspaces to what happens when the Rust backend panics mid-compile. Implementation begins with Phase 1: the framework shell.
+The specification is complete. The [architecture document](/documents/urd-forge-application-architecture) covers every component, every interface, every data flow, every edge case from singleton zone lifecycle across workspaces to what happens when the Rust backend panics mid-compile. Implementation begins with Phase 1: the framework shell.
 
 *This article is part of the Urd development journal at [urd.dev](https://urd.dev).*
