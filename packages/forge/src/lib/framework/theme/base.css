@@ -1,0 +1,68 @@
+/* Forge base styles — reset, native app hardening, user-select suppression, overscroll */
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+/* ===== Native app hardening: user-select suppression (§21.2) ===== */
+* {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.forge-selectable {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+input, textarea, [contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+* {
+  -webkit-user-drag: none;
+}
+
+/* ===== Selection styling ===== */
+::selection {
+  background: var(--forge-accent-selection);
+  color: var(--forge-text-primary);
+}
+
+/* ===== Focus styles ===== */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 1px solid var(--forge-accent-primary);
+  outline-offset: -1px;
+}
+
+/* ===== Base typography ===== */
+body {
+  font-family: var(--forge-font-family-ui);
+  font-size: var(--forge-font-size-md);
+  line-height: 1.5;
+  font-weight: var(--forge-font-weight-normal);
+  background-color: var(--forge-bg-primary);
+  color: var(--forge-text-primary);
+}

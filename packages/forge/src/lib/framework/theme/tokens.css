@@ -1,0 +1,131 @@
+/* Forge theme tokens — Gloaming (dark) and Parchment (light) */
+
+/* ===== Gloaming (dark, default) ===== */
+:root[data-theme="gloaming"] {
+  /* Surface */
+  --forge-bg-primary: #1a1a2e;
+  --forge-bg-secondary: #16213e;
+  --forge-bg-tertiary: #0f3460;
+  --forge-bg-zone-header: #1a1a2e;
+  --forge-bg-zone-viewport: #0d1117;
+
+  /* Text */
+  --forge-text-primary: #e0e0e0;
+  --forge-text-secondary: #a0a0b0;
+  --forge-text-muted: #606070;
+
+  /* Borders */
+  --forge-border-zone: #2a2a4a;
+  --forge-border-divider: #3a3a5a;
+
+  /* Accents */
+  --forge-accent-primary: #e94560;
+  --forge-accent-secondary: #533483;
+  --forge-accent-selection: rgba(233, 69, 96, 0.2);
+
+  /* Semantic */
+  --forge-status-error: #ff6b6b;
+  --forge-status-warning: #ffa62b;
+  --forge-status-info: #4ecdc4;
+  --forge-status-success: #2ecc71;
+  --forge-status-orphan-read: #ff6b6b;
+  --forge-status-orphan-write: #ffa62b;
+  --forge-status-healthy: #2ecc71;
+
+  /* Graphs */
+  --forge-graph-node-default: #2a2a4a;
+  --forge-graph-edge-default: #4a4a6a;
+  --forge-graph-node-selected: #e94560;
+
+  /* Spreadsheets */
+  --forge-table-row-alt: rgba(255, 255, 255, 0.02);
+  --forge-table-row-hover: rgba(255, 255, 255, 0.05);
+  --forge-table-header-bg: #1a1a3e;
+
+  /* Focus */
+  --forge-focus-zone-ring: 1px solid #e94560;
+  --forge-focus-zone-glow: 0 0 0 1px rgba(233, 69, 96, 0.3);
+  --forge-focus-divider-color: #e94560;
+}
+
+/* ===== Parchment (light) ===== */
+:root[data-theme="parchment"] {
+  /* Surface */
+  --forge-bg-primary: #faf8f5;
+  --forge-bg-secondary: #f0ece4;
+  --forge-bg-tertiary: #e4ddd3;
+  --forge-bg-zone-header: #f5f2ed;
+  --forge-bg-zone-viewport: #ffffff;
+
+  /* Text */
+  --forge-text-primary: #2c2c2c;
+  --forge-text-secondary: #5a5a5a;
+  --forge-text-muted: #9a9a9a;
+
+  /* Borders */
+  --forge-border-zone: #d4cfc6;
+  --forge-border-divider: #c0b8a8;
+
+  /* Accents */
+  --forge-accent-primary: #c0392b;
+  --forge-accent-secondary: #6c3483;
+  --forge-accent-selection: rgba(192, 57, 43, 0.15);
+
+  /* Semantic */
+  --forge-status-error: #c0392b;
+  --forge-status-warning: #d68910;
+  --forge-status-info: #1a8a7d;
+  --forge-status-success: #1e8449;
+  --forge-status-orphan-read: #c0392b;
+  --forge-status-orphan-write: #d68910;
+  --forge-status-healthy: #1e8449;
+
+  /* Graphs */
+  --forge-graph-node-default: #e4ddd3;
+  --forge-graph-edge-default: #c0b8a8;
+  --forge-graph-node-selected: #c0392b;
+
+  /* Spreadsheets */
+  --forge-table-row-alt: rgba(0, 0, 0, 0.02);
+  --forge-table-row-hover: rgba(0, 0, 0, 0.04);
+  --forge-table-header-bg: #f0ece4;
+
+  /* Focus */
+  --forge-focus-zone-ring: 1px solid #c0392b;
+  --forge-focus-zone-glow: 0 0 0 1px rgba(192, 57, 43, 0.3);
+  --forge-focus-divider-color: #c0392b;
+}
+
+/* ===== Semantic typography and spacing (theme-independent) ===== */
+:root {
+  /* Typography */
+  --forge-font-family-ui: 'Inter', -apple-system, sans-serif;
+  --forge-font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --forge-font-size-xs: 10px;
+  --forge-font-size-sm: 11px;
+  --forge-font-size-md: 13px;
+  --forge-font-size-lg: 15px;
+  --forge-font-weight-normal: 400;
+  --forge-font-weight-medium: 500;
+  --forge-font-weight-bold: 600;
+
+  /* Spacing scale */
+  --forge-space-xs: 2px;
+  --forge-space-sm: 4px;
+  --forge-space-md: 8px;
+  --forge-space-lg: 12px;
+  --forge-space-xl: 16px;
+  --forge-space-2xl: 24px;
+
+  /* Border radii */
+  --forge-radius-sm: 2px;
+  --forge-radius-md: 4px;
+  --forge-radius-lg: 6px;
+
+  /* Z-indices */
+  --forge-z-zone: 0;
+  --forge-z-divider: 10;
+  --forge-z-dropdown: 100;
+  --forge-z-modal: 200;
+  --forge-z-tooltip: 300;
+}
