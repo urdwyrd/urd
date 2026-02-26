@@ -10,8 +10,8 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** 2026-02-26 (Phase 1)
-**Status:** In Progress — Phase 1 complete, Phases 2–8 pending
+**Date completed:** 2026-02-26 (Phase 1), 2026-02-26 (Phase 2)
+**Status:** In Progress — Phases 1–2 complete, Phases 3–8 pending
 
 ### What was done
 
@@ -38,12 +38,40 @@ Scaffolded the Tauri 2 + Svelte 5 + Vite application at `packages/forge/` and bu
 
 **46 files, ~4600 lines of code.** Both `vite build` (frontend) and `cargo check` (Rust backend) pass clean. Tested in both browser dev mode and Tauri native mode.
 
+**Phase 2: Core Infrastructure** — completed 2026-02-26 across 8 commits (7 implementation + 1 fix).
+
+Built the core pipeline from compiler to UI, connecting all framework services:
+
+- **Selection context** (`SelectionContext.ts`) — generic `select()`/`clear()`/`subscribe()` with bus publishing on `selection.primary`.
+- **Focus service** (`FocusService.svelte.ts`) — tracks `activeZoneId`, `activeZoneType`, `activeDividerId`. FocusMode stack (`normal`/`commandPalette`/`dialog`/`contextMenu`) for nested modals. Uses `$state()` runes for Svelte 5 template reactivity. Publishes `focus.zoneChanged` on bus.
+- **Navigation broker** (`NavigationBroker.ts`) — resolves `NavigationIntent` against view registry strategies (`singleton`/`singleton-autocreate`/`multi`). Queues intents for unregistered views.
+- **Command palette** (`CommandPalette.svelte`) — modal overlay with fuzzy search over commands and views. Arrow key navigation, Enter to execute, Escape to close. Toggled via `Ctrl+Shift+P` through FocusMode stack.
+- **Filter context** (`FilterContext.ts`) — `TextFilter`/`TagFilter`/`SeverityFilter` union type, publishes `filter.changed` on bus.
+- **File system abstraction** (`FileSystem.ts`) — `ForgeFileSystem` interface with `readFile`/`writeFile`/`listDirectory`/`stat`/`exists`/`mkdir`/`watchFile`/`watchDirectory`. `TauriFileSystem` implementation using `@tauri-apps/plugin-fs`. `MemoryFileSystem` for tests and browser dev mode with `seed()` and watcher notification.
+- **Buffer map** (`BufferMap.ts`) — source of truth for compilation input. `load()` (not dirty), `set()` (marks dirty), `getAll()`, `isDirty()`, `subscribe()` for change notification. Drives the recompile pipeline.
+- **Compiler types** (`types.ts`) — full TypeScript type system: `CompilerOutput`, `Chunk<T>`, `ChunkName`, `OutputHeader`, `PhaseTiming`, `WorldCounts`, `ResolvedCompilerOutput`, `CompilerService` interface. Inner types (`AST`, `SymbolTable`, `FactSet`, `PropertyDependencyIndex`, `UrdWorld`, `Diagnostic`) with minimal shape interfaces.
+- **Compiler output cache** (`CompilerOutputCache.ts`) — hash-based memoisation, one entry per chunk name. `resolve(output)` returns `ResolvedCompilerOutput` reusing cached chunks when content hashes match.
+- **Mock compiler service** (`MockCompilerService.ts`) — returns golden fixture data with simulated chunked output. Uses content hashes so unchanged inputs return same hashes (cache-friendly). Configurable delay for async testing.
+- **Golden fixture** (`fixtures/basic-world.json`) — hand-crafted minimal world: 3 entities (Player, Sword, Shield), 2 locations (Tavern, Market), 2 exits, sample diagnostics. Shared contract between TypeScript and Rust deserialisation tests.
+- **Rust IPC bridge** (`src-tauri/src/compiler/bridge.rs`) — `BufferMapReader` implements the compiler's `FileReader` trait for in-memory buffers. `compile_project` Tauri command accepts buffer map, calls `compile_source_with_reader`, returns chunked `CompilerOutput` with SHA-256 content hashes. 3 Rust unit tests.
+- **Tauri compiler** (`TauriCompiler.ts`) — frontend `CompilerService` implementation calling `invoke('compile_project', { buffers })`.
+- **Projection registry** (`ProjectionRegistry.ts`) — lazy memoised projections. `updateSource()` stores output + hashes, `get()` triggers recomputation only when dependency hashes change. `Object.freeze` on results in dev mode. Three initial projections: `entityTable` (flat entity rows), `locationGraph` (nodes + edges), `diagnosticsByFile` (grouped by file path).
+- **Recompile pipeline** (`RecompilePipeline.ts`) — orchestrates: buffer change → configurable debounce → `compiler.started` bus signal → `CompilerService.compile()` → `CompilerOutputCache.resolve()` → `projectionRegistry.updateSource()` → `compiler.completed` bus signal. Concurrent compile protection. `start()`/`stop()`/`compileNow()` API.
+- **Floating dialogs** (`FloatingDialog.svelte`, `ActiveDialog.svelte.ts`) — Blender-style draggable floating panels for Settings and Keybindings. Backdrop click or Escape to close. Only one dialog open at a time.
+- **Settings view** (`SettingsView.svelte`) — categorised sidebar (Appearance, Editor, Behaviour) with search filter and immediate apply. Opens as floating dialog via `Ctrl+,`.
+- **Keybinding editor** (`KeybindingEditor.svelte`) — filterable table of all commands. Click keybinding cell to enter capture mode, press key combination to set, Escape cancels. Conflict detection removes previous binding. Opens as floating dialog via `Ctrl+K`.
+- **Enhanced PlaceholderBusMonitor** — now formats compiler events (`compiler.started`, `compiler.completed`) with timing data from the output header.
+- **Bus channels** — added 6 new channels: `selection.primary`, `filter.changed`, `compiler.started`, `compiler.completed`, `compiler.error`, `projection.updated`.
+- **Bootstrap wiring** — focus tracking via pointerdown on zone viewports, file system initialisation (Tauri vs Memory), project open/close handlers (buffer population, `.forge/` dir creation, pipeline start/stop), projection registration, recompile pipeline with compiler service selection.
+
+**~4100 additional lines across 44 new/modified files.** 73 frontend tests (9 test suites) + 3 Rust tests, all passing. `tauri dev` launches cleanly.
+
 ### Acceptance criteria verification
 
 | Criterion | Status | Evidence |
 |-----------|--------|---------|
 | **Phase 1** — Framework shell acceptance test passes (split/join/swap/resize/theme/workspace tabs/fullscreen) | Verified by human | All 15 steps implemented. `vite build` and `cargo check` pass. Human-tested in both browser dev mode and Tauri native — split, join, swap, resize, theme toggle, workspace tabs, fullscreen, quit, splash screen, cross-zone selection containment, Blender-style split positioning all verified working. |
-| **Phase 2** — Compiler output flows through chunks → projections → bus signals → placeholder views react | Not started | |
+| **Phase 2** — Compiler output flows through chunks → projections → bus signals → placeholder views react | Complete | Open project → MockCompiler runs → output cached with content hashes → projections recompute → BusMonitor shows `compiler.started`/`compiler.completed` events with timing. `Ctrl+,` opens Settings as floating dialog, theme toggle applies immediately. `Ctrl+Shift+P` opens command palette. Close project → Welcome screen. 73 frontend + 3 Rust tests pass. |
 | **Phase 3** — Full editing experience with compiler feedback in Code Editor singleton | Not started | |
 | **Phase 4** — Writer and Engineer workspaces fully functional with Tier 1 views | Not started | |
 | **Phase 5** — World Builder workspace fully functional with graph views | Not started | |
@@ -62,6 +90,12 @@ Scaffolded the Tauri 2 + Svelte 5 + Vite application at `packages/forge/` and bu
 - **Directional split/join labels**: "Split Horizontal/Vertical" replaced with "Split Left / Right" and "Split Top / Bottom" for clarity. Join labels use "Keep Left/Right" or "Keep Top/Bottom" based on the actual split direction.
 - **Blender-style split positioning**: After splitting a zone, the divider immediately follows the mouse cursor. Click confirms the position, Escape cancels (undoes the split). Not in the original architecture doc — added for UX quality.
 - **SplitContainer uses direct child selectors**: Svelte scoped CSS uses the same hash for all instances of the same component. Descendant selectors leaked across nested splits; changed to `>` child selectors to prevent inner dividers inheriting outer dimension constraints.
+- **FocusService uses `.svelte.ts` extension**: Same Svelte 5 rune requirement as WorkspaceManager/ProjectManager. Without `$state()` runes, `focusService.mode` was not reactive in templates — the command palette `{#if}` block never re-evaluated.
+- **Settings/Keybindings as floating dialogs instead of zone views**: The brief specified these as zone types (`forge.view.settings`, `forge.view.keybindings`) with `singleton-autocreate` navigation strategy. Changed to Blender-style floating dialogs (`FloatingDialog.svelte` + `ActiveDialog.svelte.ts`) — they overlay the workspace rather than replacing a zone. This matches the user's expectation from Blender's preferences panel and avoids disrupting the workspace layout.
+- **`onmousedown|stopPropagation` Svelte 4 syntax removed**: Svelte 5 does not support event modifiers in the `on:event|modifier` form. Replaced with `onmousedown={(e) => e.stopPropagation()}` inline handlers throughout.
+- **Compiler inner types start as minimal interfaces**: `AST`, `SymbolTable`, `FactSet`, `PropertyDependencyIndex`, `UrdWorld`, `Diagnostic` are defined with minimal shape interfaces rather than opaque `unknown`. They will be refined incrementally as views that consume them are built in later phases.
+- **File watching stubbed**: `TauriFileSystem.watchFile()` and `watchDirectory()` return no-op unsubscribe functions. Real file watching deferred to when the file browser view is built in Phase 4.
+- **`modeStack` uses immutable array operations**: The FocusService mode stack uses `[...arr, item]` and `.slice()` instead of `.push()`/`.pop()` so Svelte 5's `$state()` reactivity detects mutations.
 
 ---
 
