@@ -9,11 +9,15 @@
     "core:window:allow-is-fullscreen",
     "core:window:allow-set-fullscreen",
     "shell:allow-open",
-    "dialog:allow-open",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    "fs:allow-mkdir",
-    "fs:allow-app-read-recursive",
-    "fs:allow-app-write-recursive"
+    "dialog:default",
+    "fs:default",
+    {
+      "identifier": "fs:allow-app-read-recursive",
+      "allow": [{ "path": "$APPCONFIG/**" }]
+    },
+    {
+      "identifier": "fs:allow-app-write-recursive",
+      "allow": [{ "path": "$APPCONFIG/**" }]
+    }
   ]
 }
