@@ -36,4 +36,18 @@ export function registerFrameworkChannels(bus: MessageBus): void {
   // Project lifecycle
   bus.registerChannel({ id: 'project.opened', domain: 'project', retainLast: true });
   bus.registerChannel({ id: 'project.closed', domain: 'project', retainLast: false });
+
+  // Selection
+  bus.registerChannel({ id: 'selection.primary', domain: 'selection', retainLast: true });
+
+  // Filter
+  bus.registerChannel({ id: 'filter.changed', domain: 'filter', retainLast: true });
+
+  // Compiler lifecycle (registered at framework level so bus monitor can observe)
+  bus.registerChannel({ id: 'compiler.started', domain: 'compiler', retainLast: false });
+  bus.registerChannel({ id: 'compiler.completed', domain: 'compiler', retainLast: true });
+  bus.registerChannel({ id: 'compiler.error', domain: 'compiler', retainLast: false });
+
+  // Projections
+  bus.registerChannel({ id: 'projection.updated', domain: 'projections', retainLast: false });
 }

@@ -59,6 +59,23 @@ export interface ContextMenuTarget {
   data?: Record<string, unknown>;
 }
 
+// ===== Navigation =====
+
+export interface NavigationIntent {
+  targetViewId: string;
+  params?: Record<string, unknown>;
+  /** If set, prefer opening in the specified zone. */
+  preferZoneId?: string;
+}
+
+// ===== Focus =====
+
+export type FocusMode =
+  | 'normal'
+  | 'commandPalette'
+  | 'dialog'
+  | 'contextMenu';
+
 // ===== Menu Bar =====
 
 export interface MenuContribution {

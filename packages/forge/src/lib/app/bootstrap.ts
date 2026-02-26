@@ -13,6 +13,9 @@ import { initTheme, toggleTheme, getCurrentTheme } from '$lib/framework/theme/Th
 import { installKeybindingManager } from '$lib/framework/commands/KeybindingManager';
 import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
 import { workspaceManager } from '$lib/framework/workspace/WorkspaceManager.svelte';
+import { focusService } from '$lib/framework/focus/FocusService';
+import { selectionContext } from '$lib/framework/selection/SelectionContext';
+import { navigationBroker } from '$lib/framework/navigation/NavigationBroker';
 
 export async function bootstrap(): Promise<() => void> {
   // 1. Register framework bus channels
@@ -258,7 +261,27 @@ export async function bootstrap(): Promise<() => void> {
   // 7. Install keyboard sovereignty
   const removeKeybindings = installKeybindingManager();
 
-  // 8. Selection containment — prevent text selection crossing zone boundaries
+  // 8. Focus tracking — click on a zone viewport to focus it
+  const onZoneFocus = (e: PointerEvent) => {
+    const target = e.target as HTMLElement;
+    const viewport = target.closest('.forge-zone-viewport') as HTMLElement | null;
+    if (!viewport) return;
+    const zoneId = viewport.dataset.zoneId;
+    const zoneType = viewport.dataset.zoneType;
+    if (zoneId && zoneType) {
+      focusService.focusZone(zoneId, zoneType);
+    }
+  };
+  document.addEventListener('pointerdown', onZoneFocus);
+
+  // Expose services on window for dev tools (non-production only)
+  if (import.meta.env.DEV) {
+    Object.assign(window, {
+      __forge: { focusService, selectionContext, navigationBroker, bus, commandRegistry, viewRegistry },
+    });
+  }
+
+  // 9. Selection containment — prevent text selection crossing zone boundaries
   //    On pointerdown inside a zone viewport, set user-select: none on all OTHER
   //    viewports via inline style. On pointerup, remove the inline styles.
   //    This is targeted (no global class toggles) and prevents the browser from
@@ -320,6 +343,7 @@ export async function bootstrap(): Promise<() => void> {
   // Return cleanup function
   return () => {
     removeKeybindings();
+    document.removeEventListener('pointerdown', onZoneFocus);
     document.removeEventListener('pointerdown', onPointerDown);
     document.removeEventListener('pointerup', onPointerUp);
   };
