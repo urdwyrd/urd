@@ -1,13 +1,47 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="gloaming">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Urd Forge</title>
     <link rel="stylesheet" href="/src/app.css" />
+    <style>
+      /* Inline critical styles to prevent white flash before CSS loads */
+      html, body, #app {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        background-color: #0f1117;
+        color: #b8bcc8;
+      }
+      /* CSS-only splash shown before Svelte mounts */
+      .forge-splash {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        gap: 12px;
+        font-family: 'Outfit', system-ui, sans-serif;
+      }
+      .forge-splash__title {
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .forge-splash__subtitle {
+        font-size: 14px;
+        opacity: 0.5;
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="forge-splash">
+        <div class="forge-splash__title">Urd Forge</div>
+        <div class="forge-splash__subtitle">Loading...</div>
+      </div>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -6,6 +6,7 @@
   "permissions": [
     "core:default",
     "core:window:allow-close",
+    "core:window:allow-show",
     "core:window:allow-is-fullscreen",
     "core:window:allow-set-fullscreen",
     "shell:allow-open",

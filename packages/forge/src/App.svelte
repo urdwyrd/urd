@@ -44,6 +44,12 @@
     cleanup = await bootstrap();
     ready = true;
 
+    // Show the window now that the app is rendered (hidden by default to prevent flash)
+    if ('__TAURI_INTERNALS__' in window) {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      await getCurrentWindow().show();
+    }
+
     return () => {
       cleanup?.();
     };
