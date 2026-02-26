@@ -4,6 +4,15 @@ All notable changes to the Urd compiler are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.14] — 2026-02-26
+
+### Added
+
+- **SymbolTable and DependencyGraph on CompilationResult:** `symbol_table: Option<SymbolTable>` and `graph: Option<DependencyGraph>` fields added to `CompilationResult`. Both are `Some` whenever LINK succeeds (including validation-error paths); `None` on PARSE or IMPORT failure. Gives downstream consumers (playground, LSP, MCP) full access to the compiler's semantic model.
+- **CLI `--help` / `--version`:** `urd --help` (or `-h` or `help`) prints comprehensive usage with all commands, options, and exit codes. `urd --version` (or `-V`) prints the compiler version. Unknown flags now exit with code 1.
+- **Test report coverage fix:** `compiler-test-report.mjs` now includes all 12 test binaries in `BINARY_PHASE_MAP` (was 7). Five missing binaries (`analyze_tests`, `diff_tests`, `definition_index_tests`, `integration_tests`, `compilation_result_tests`) are now counted. ANALYZE phase added to `DIAGNOSTIC_CODES`, `DIAGNOSTIC_RANGES`, and `PHASE_ORDER`.
+- 8 new tests in `compilation_result_tests.rs` covering success path, validate-error path, PARSE failure, IMPORT failure, SymbolTable/DefinitionIndex consistency, and DependencyGraph structure. Total: 634 tests.
+
 ## [0.1.13] — 2026-02-24
 
 ### Added

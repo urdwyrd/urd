@@ -14,21 +14,54 @@ use urd_compiler::import::OsFileReader;
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     match args.get(1).map(|s| s.as_str()) {
+        Some("--help" | "-h" | "help") => { print_help(); std::process::exit(0); }
+        Some("--version" | "-V") => { print_version(); std::process::exit(0); }
         Some("diff") => run_diff(&args[2..]),
         Some("snapshot") => run_snapshot(&args[2..]),
         Some(path) if !path.starts_with('-') => run_compile(path),
-        _ => print_usage(),
+        _ => { print_help(); std::process::exit(1); }
     }
 }
 
-fn print_usage() {
-    eprintln!("Urd compiler");
+fn print_version() {
+    println!("urd {}", env!("CARGO_PKG_VERSION"));
+}
+
+fn print_help() {
+    eprintln!("urd {} — Schema Markdown compiler", env!("CARGO_PKG_VERSION"));
     eprintln!();
-    eprintln!("Usage:");
-    eprintln!("  urd <file.urd.md>                         Compile to .urd.json (stdout)");
-    eprintln!("  urd diff <a> <b> [--format json|summary]  Compare two compilations");
-    eprintln!("  urd snapshot <file.urd.md> [-o output]    Create a snapshot file");
-    std::process::exit(1);
+    eprintln!("Compiles .urd.md files through a five-phase pipeline");
+    eprintln!("(PARSE → IMPORT → LINK → VALIDATE → EMIT) to produce .urd.json.");
+    eprintln!();
+    eprintln!("USAGE:");
+    eprintln!("  urd <file.urd.md>");
+    eprintln!("  urd diff <a> <b> [OPTIONS]");
+    eprintln!("  urd snapshot <file.urd.md> [OPTIONS]");
+    eprintln!("  urd --help | -h");
+    eprintln!("  urd --version | -V");
+    eprintln!();
+    eprintln!("COMMANDS:");
+    eprintln!("  <file.urd.md>    Compile a .urd.md file and emit .urd.json to stdout.");
+    eprintln!("                   Diagnostics are printed to stderr.");
+    eprintln!("                   Exit code 0 on success, 1 on errors.");
+    eprintln!();
+    eprintln!("  diff <a> <b>     Compare two compilations and report changes.");
+    eprintln!("                   Each argument can be a .urd.md file (compiled on the");
+    eprintln!("                   fly) or a .urd.snapshot.json file.");
+    eprintln!("                   Exit code 0 if no changes, 1 if changes detected.");
+    eprintln!();
+    eprintln!("      --format <FORMAT>   Output format: json (default) or summary.");
+    eprintln!();
+    eprintln!("  snapshot <file>  Create a .urd.snapshot.json from a .urd.md file.");
+    eprintln!("                   Snapshots capture entities, locations, exits, sections,");
+    eprintln!("                   choices, rules, properties, and diagnostics for use");
+    eprintln!("                   with the diff command.");
+    eprintln!();
+    eprintln!("      -o <path>           Output path. Defaults to <file>.urd.snapshot.json.");
+    eprintln!();
+    eprintln!("OPTIONS:");
+    eprintln!("  -h, --help       Print this help message and exit.");
+    eprintln!("  -V, --version    Print the compiler version and exit.");
 }
 
 // ── Compile (default command) ──

@@ -1,6 +1,6 @@
 [package]
 name = "urd-compiler"
-version = "0.1.13"
+version = "0.1.14"
 edition = "2021"
 description = "Five-phase compiler for Urd Schema Markdown (.urd.md → .urd.json)"
 

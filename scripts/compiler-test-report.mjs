@@ -33,7 +33,12 @@ const BINARY_PHASE_MAP = {
   'validate_tests': 'validate',
   'emit_tests': 'emit',
   'facts_tests': 'facts',
+  'analyze_tests': 'analyze',
   'e2e_tests': 'e2e',
+  'diff_tests': 'diff',
+  'definition_index_tests': 'definition_index',
+  'integration_tests': 'integration',
+  'compilation_result_tests': 'compilation_result',
 };
 
 /** Diagnostic codes owned by each phase (static metadata). */
@@ -48,7 +53,12 @@ const DIAGNOSTIC_CODES = {
   ],
   emit: [],
   facts: [],
+  analyze: expandRange('URD', 601, 605),
   e2e: [],
+  diff: [],
+  definition_index: [],
+  integration: [],
+  compilation_result: [],
   scaffolding: [],
 };
 
@@ -59,8 +69,13 @@ const DIAGNOSTIC_RANGES = {
   link: '300-399',
   validate: '400-499',
   emit: '500-599',
+  analyze: '600-699',
   facts: null,
   e2e: null,
+  diff: null,
+  definition_index: null,
+  integration: null,
+  compilation_result: null,
   scaffolding: null,
 };
 
@@ -75,7 +90,7 @@ const COMPLIANCE = [
 ];
 
 /** Ordered list of phases for output. */
-const PHASE_ORDER = ['parse', 'import', 'link', 'validate', 'emit', 'facts', 'e2e', 'scaffolding'];
+const PHASE_ORDER = ['parse', 'import', 'link', 'validate', 'emit', 'facts', 'analyze', 'e2e', 'diff', 'definition_index', 'integration', 'compilation_result', 'scaffolding'];
 
 // ---------------------------------------------------------------------------
 // Helpers

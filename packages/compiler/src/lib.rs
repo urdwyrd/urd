@@ -51,6 +51,14 @@ pub struct CompilationResult {
     /// Definition index mapping identifiers to declaration spans. `Some`
     /// whenever LINK succeeds. Used by the LSP for go-to-definition and hover.
     pub definition_index: Option<definition_index::DefinitionIndex>,
+    /// The populated symbol table. `Some` whenever LINK succeeds.
+    /// Contains full type definitions with property constraints, entity
+    /// overrides, rule definitions, sequence phases, and action metadata.
+    pub symbol_table: Option<symbol_table::SymbolTable>,
+    /// The file dependency graph with annotated ASTs. `Some` whenever
+    /// LINK succeeds. Contains per-file ASTs (with annotation slots
+    /// filled by LINK), import edges, and topological ordering.
+    pub graph: Option<graph::DependencyGraph>,
 }
 
 /// Compile a single `.urd.md` source string (no import resolution).
@@ -102,6 +110,8 @@ pub fn compile_source_with_reader(
                 fact_set: None,
                 property_index: None,
                 definition_index: None,
+                symbol_table: None,
+                graph: None,
             };
         }
     };
@@ -119,14 +129,17 @@ pub fn compile_source_with_reader(
             fact_set: None,
             property_index: None,
             definition_index: None,
+            symbol_table: None,
+            graph: None,
         };
     }
 
     // Phase 3: LINK
     let linked = link::link(compilation_unit, &mut diagnostics);
+    let link::LinkedWorld { graph, symbol_table } = linked;
 
     // Phase 3a: Extract facts (always succeeds when LINK completes)
-    let fact_set = Some(facts::extract_facts(&linked.graph, &linked.symbol_table));
+    let fact_set = Some(facts::extract_facts(&graph, &symbol_table));
 
     // Phase 3b: Build property dependency index
     let property_index = fact_set
@@ -134,7 +147,7 @@ pub fn compile_source_with_reader(
         .map(facts::PropertyDependencyIndex::build);
 
     // Phase 3c: Build definition index
-    let definition_index = Some(definition_index::DefinitionIndex::build(&linked.symbol_table));
+    let definition_index = Some(definition_index::DefinitionIndex::build(&symbol_table));
 
     // Phase 3d: ANALYZE (FactSet-derived diagnostics, URD600–URD699)
     if let (Some(ref fs), Some(ref idx)) = (&fact_set, &property_index) {
@@ -144,7 +157,7 @@ pub fn compile_source_with_reader(
     }
 
     // Phase 4: VALIDATE
-    validate::validate(&linked.graph, &linked.symbol_table, &mut diagnostics);
+    validate::validate(&graph, &symbol_table, &mut diagnostics);
 
     // Phase 5: EMIT
     if diagnostics.has_errors() {
@@ -155,10 +168,12 @@ pub fn compile_source_with_reader(
             fact_set,
             property_index,
             definition_index,
+            symbol_table: Some(symbol_table),
+            graph: Some(graph),
         };
     }
 
-    let json = emit::emit(&linked.graph, &linked.symbol_table, &mut diagnostics);
+    let json = emit::emit(&graph, &symbol_table, &mut diagnostics);
 
     CompilationResult {
         success: true,
@@ -167,6 +182,8 @@ pub fn compile_source_with_reader(
         fact_set,
         property_index,
         definition_index,
+        symbol_table: Some(symbol_table),
+        graph: Some(graph),
     }
 }
 
@@ -201,6 +218,8 @@ pub fn compile(entry_file: &FilePath) -> CompilationResult {
                 fact_set: None,
                 property_index: None,
                 definition_index: None,
+                symbol_table: None,
+                graph: None,
             };
         }
     };
