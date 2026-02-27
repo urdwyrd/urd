@@ -1,20 +1,34 @@
 /**
- * Print export utility — opens a styled print window for browser/Tauri print-to-PDF.
+ * Print export utility — renders styled HTML into a hidden iframe and triggers print.
+ *
+ * Uses an iframe instead of window.open() to avoid popup-blocker issues
+ * when called from async command handlers.
  */
 
-/** Open a print-ready window with the given HTML content. */
+/** Print a styled view via a hidden iframe. */
 export function exportViewToPrint(title: string, htmlContent: string): void {
-  const printWindow = window.open('', '_blank', 'width=800,height=600');
-  if (!printWindow) {
-    console.warn('exportViewToPrint: popup blocked — cannot open print window');
-    return;
-  }
-
   const rootStyles = getComputedStyle(document.documentElement);
   const fontFamily = rootStyles.getPropertyValue('--forge-font-family-ui').trim() || 'sans-serif';
   const monoFamily = rootStyles.getPropertyValue('--forge-font-family-mono').trim() || 'monospace';
 
-  printWindow.document.write(`<!DOCTYPE html>
+  // Create a hidden iframe for printing
+  const iframe = document.createElement('iframe');
+  iframe.style.position = 'fixed';
+  iframe.style.top = '-10000px';
+  iframe.style.left = '-10000px';
+  iframe.style.width = '800px';
+  iframe.style.height = '600px';
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentDocument ?? iframe.contentWindow?.document;
+  if (!doc) {
+    console.warn('exportViewToPrint: cannot access iframe document');
+    document.body.removeChild(iframe);
+    return;
+  }
+
+  doc.open();
+  doc.write(`<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
@@ -62,14 +76,28 @@ export function exportViewToPrint(title: string, htmlContent: string): void {
   ${htmlContent}
 </body>
 </html>`);
+  doc.close();
 
-  printWindow.document.close();
-  printWindow.focus();
+  // Wait for iframe content to render, then print and clean up
+  iframe.onload = () => {
+    iframe.contentWindow?.print();
+    // Remove iframe after a short delay to let the print dialog appear
+    setTimeout(() => {
+      document.body.removeChild(iframe);
+    }, 1000);
+  };
 
-  // Slight delay to allow rendering before triggering print
+  // Fallback: if onload doesn't fire (content already loaded synchronously)
   setTimeout(() => {
-    printWindow.print();
-  }, 250);
+    if (iframe.parentNode) {
+      iframe.contentWindow?.print();
+      setTimeout(() => {
+        if (iframe.parentNode) {
+          document.body.removeChild(iframe);
+        }
+      }, 1000);
+    }
+  }, 500);
 }
 
 /** Escape HTML special characters for safe injection. */
