@@ -305,23 +305,13 @@
     if (!editorPane || !activeTabPath) return;
     const allDiags = projectionRegistry.get<FileDiagnostics[]>('urd.projection.diagnosticsByFile');
     if (!allDiags) {
-      if (import.meta.env?.DEV) {
-        console.warn('[CodeEditor] no diagnosticsByFile projection result');
-      }
       editorPane.clearDiagnostics();
       return;
-    }
-    if (import.meta.env?.DEV) {
-      console.warn('[CodeEditor] diagnostics files:', allDiags.map((fd: FileDiagnostics) => `${fd.file} (${fd.errorCount}E/${fd.warningCount}W)`),
-        'activeTab:', activeTabPath);
     }
     // The Rust compiler uses short filenames (e.g., "main.urd.md") in diagnostic
     // spans, while buffer/tab paths are full paths. Match by suffix.
     const fileDiag = allDiags.find((fd: FileDiagnostics) => filesMatch(activeTabPath!, fd.file));
     if (fileDiag) {
-      if (import.meta.env?.DEV) {
-        console.warn('[CodeEditor] applying', fileDiag.diagnostics.length, 'diagnostics for', activeTabPath);
-      }
       editorPane.setDiagnostics(fileDiag.diagnostics);
     } else {
       editorPane.clearDiagnostics();
