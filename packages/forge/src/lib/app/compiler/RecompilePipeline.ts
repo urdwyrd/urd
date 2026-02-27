@@ -18,6 +18,8 @@ export class RecompilePipeline {
   private isCompiling = false;
   private pendingRecompile = false;
   private unsubBuffer: (() => void) | null = null;
+  private unsubActiveFile: (() => void) | null = null;
+  private activeFile: string | null = null;
 
   constructor(
     private bufferMap: BufferMap,
@@ -27,17 +29,30 @@ export class RecompilePipeline {
     private debounceMs: number = 300,
   ) {}
 
-  /** Start listening for buffer changes. */
+  /** Start listening for buffer changes and active file switches. */
   start(): void {
     this.unsubBuffer = this.bufferMap.subscribe(() => {
       this.scheduleCompile();
     });
+
+    // Recompile when the active editor file changes — the entry point shifts
+    if (bus.hasChannel('editor.activeFile')) {
+      this.unsubActiveFile = bus.subscribe('editor.activeFile', (payload) => {
+        const { path } = payload as { path: string | null };
+        if (path && path !== this.activeFile && path.endsWith('.urd.md')) {
+          this.activeFile = path;
+          this.scheduleCompile();
+        }
+      });
+    }
   }
 
   /** Stop listening and cancel any pending compile. */
   stop(): void {
     this.unsubBuffer?.();
     this.unsubBuffer = null;
+    this.unsubActiveFile?.();
+    this.unsubActiveFile = null;
     this.cancelPending();
   }
 
@@ -92,7 +107,7 @@ export class RecompilePipeline {
     }
 
     try {
-      const output: CompilerOutput = await this.compiler.compile(buffers);
+      const output: CompilerOutput = await this.compiler.compile(buffers, this.activeFile ?? undefined);
 
       // Resolve through cache (de-duplicate unchanged chunks)
       const resolved = this.cache.resolve(output);
@@ -101,6 +116,14 @@ export class RecompilePipeline {
       const chunkHashes: Record<string, string> = {};
       for (const chunk of output.chunks) {
         chunkHashes[chunk.name] = chunk.contentHash;
+      }
+
+      if (import.meta.env?.DEV) {
+        console.warn('[RecompilePipeline] compile done, chunks:', Object.keys(chunkHashes),
+          'definitionIndex defs:', resolved.definitionIndex?.definitions?.length ?? 0,
+          'rawUrdJson:', resolved.rawUrdJson != null,
+          'factSet reads:', resolved.factSet?.reads?.length ?? 0,
+        );
       }
 
       // Update projections

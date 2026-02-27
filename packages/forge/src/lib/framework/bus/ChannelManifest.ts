@@ -50,4 +50,16 @@ export function registerFrameworkChannels(bus: MessageBus): void {
 
   // Projections
   bus.registerChannel({ id: 'projection.updated', domain: 'projections', retainLast: false });
+
+  // Navigation — carries resolved intent params to the target zone component
+  bus.registerChannel({ id: 'navigation.completed', domain: 'navigation', retainLast: false });
+
+  // Editor state
+  bus.registerChannel({ id: 'editor.activeFile', domain: 'editor', retainLast: true });
+
+  // Editor commands (signals dispatched from global keybindings to the active editor)
+  bus.registerChannel({ id: 'editor.closeTab', domain: 'editor', retainLast: false });
+  bus.registerChannel({ id: 'editor.nextTab', domain: 'editor', retainLast: false });
+  bus.registerChannel({ id: 'editor.prevTab', domain: 'editor', retainLast: false });
+  bus.registerChannel({ id: 'editor.save', domain: 'editor', retainLast: false });
 }

@@ -8,13 +8,16 @@
 import type { CompilerService, CompilerOutput } from './types';
 
 export class TauriCompiler implements CompilerService {
-  async compile(buffers: Record<string, string>): Promise<CompilerOutput> {
+  async compile(buffers: Record<string, string>, entryFile?: string): Promise<CompilerOutput> {
     if (!('__TAURI_INTERNALS__' in window)) {
       throw new Error('TauriCompiler: not running inside Tauri');
     }
 
     const { invoke } = await import('@tauri-apps/api/core');
-    const result = await invoke<CompilerOutput>('compile_project', { buffers });
+    const result = await invoke<CompilerOutput>('compile_project', {
+      buffers,
+      entryFile: entryFile ?? null,
+    });
     return result;
   }
 }

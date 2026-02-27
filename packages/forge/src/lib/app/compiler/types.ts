@@ -12,6 +12,7 @@ export type ChunkName =
   | 'symbolTable'
   | 'factSet'
   | 'propertyDependencyIndex'
+  | 'definitionIndex'
   | 'urdJson'
   | 'diagnostics';
 
@@ -58,11 +59,14 @@ export interface ResolvedCompilerOutput {
   symbolTable: SymbolTable;
   factSet: FactSet;
   propertyDependencyIndex: PropertyDependencyIndex;
+  definitionIndex: RichDefinitionIndex;
   urdJson: UrdWorld;
+  /** Raw urdJson before normalisation — object-keyed, matching the compiler's output exactly. */
+  rawUrdJson: Record<string, unknown> | null;
   diagnostics: Diagnostic[];
 }
 
-// ===== Inner types — minimal shapes, refined later =====
+// ===== Inner types =====
 
 export interface AST {
   nodes: unknown[];
@@ -80,29 +84,169 @@ export interface SymbolTable {
   entries: SymbolTableEntry[];
 }
 
+// ===== FactSet — full compiler analysis IR =====
+
+export interface FactSetSpan {
+  file: string;
+  start_line: number;
+  start_col: number;
+  end_line: number;
+  end_col: number;
+}
+
+export interface FactSite {
+  kind: 'choice' | 'exit' | 'rule';
+  id: string;
+}
+
+export interface PropertyRead {
+  site: FactSite;
+  entity_type: string;
+  property: string;
+  operator: string;
+  value_literal: string;
+  value_kind: string;
+  span: FactSetSpan;
+}
+
+export interface PropertyWrite {
+  site: FactSite;
+  entity_type: string;
+  property: string;
+  operator: string;
+  value_expr: string;
+  value_kind: string | null;
+  span: FactSetSpan;
+}
+
+export interface ExitEdge {
+  from_location: string;
+  to_location: string;
+  exit_name: string;
+  is_conditional: boolean;
+  guard_reads: number[];
+  span: FactSetSpan;
+}
+
+export interface JumpTarget {
+  kind: string;
+  id?: string;
+}
+
+export interface JumpEdge {
+  from_section: string;
+  target: JumpTarget;
+  span: FactSetSpan;
+}
+
+export interface ChoiceFact {
+  section: string;
+  choice_id: string;
+  label: string;
+  sticky: boolean;
+  condition_reads: number[];
+  effect_writes: number[];
+  jump_indices: number[];
+  span: FactSetSpan;
+}
+
+export interface RuleFact {
+  rule_id: string;
+  condition_reads: number[];
+  effect_writes: number[];
+  span: FactSetSpan;
+}
+
+export interface FactSet {
+  reads: PropertyRead[];
+  writes: PropertyWrite[];
+  exits: ExitEdge[];
+  jumps: JumpEdge[];
+  choices: ChoiceFact[];
+  rules: RuleFact[];
+}
+
+// Legacy alias for projections that use the old shape
 export interface Fact {
   subject: string;
   predicate: string;
   object: string;
 }
 
-export interface FactSet {
-  facts: Fact[];
+// ===== PropertyDependencyIndex — full compiler output =====
+
+export interface PropertyDependencyEntry {
+  entity_type: string;
+  property: string;
+  read_count: number;
+  write_count: number;
+  read_indices: number[];
+  write_indices: number[];
+  orphaned: string | null;
 }
 
+export interface PropertyDependencySummary {
+  total_properties: number;
+  total_reads: number;
+  total_writes: number;
+  read_never_written: number;
+  written_never_read: number;
+}
+
+export interface PropertyDependencyIndex {
+  properties: PropertyDependencyEntry[];
+  summary: PropertyDependencySummary;
+}
+
+// Legacy alias
 export interface PropertyDependency {
   property: string;
   dependsOn: string[];
 }
 
-export interface PropertyDependencyIndex {
-  dependencies: PropertyDependency[];
+// ===== Rich DefinitionIndex — from compiler's DefinitionIndex =====
+
+export interface RichDefinitionSpan {
+  file: string;
+  start_line: number;
+  start_col: number;
+  end_line: number;
+  end_col: number;
 }
+
+export interface RichDefinitionKind {
+  kind: string;
+  type_name?: string;
+  property_type?: string;
+  default?: string | null;
+  local_name?: string;
+  file_stem?: string;
+  display_name?: string;
+  from_location?: string;
+  destination?: string;
+  section_id?: string;
+  label?: string;
+}
+
+export interface RichDefinitionEntry {
+  key: string;
+  span: RichDefinitionSpan;
+  definition: RichDefinitionKind;
+}
+
+export interface RichDefinitionIndex {
+  definitions: RichDefinitionEntry[];
+  count: number;
+}
+
+// ===== World types =====
 
 export interface UrdEntity {
   id: string;
   name: string;
   properties: Record<string, unknown>;
+  type?: string;
+  contains?: string[];
 }
 
 export interface UrdLocation {
@@ -110,6 +254,7 @@ export interface UrdLocation {
   name: string;
   description: string;
   exits: UrdExit[];
+  contains?: string[];
 }
 
 export interface UrdExit {
@@ -117,10 +262,39 @@ export interface UrdExit {
   target: string;
 }
 
+export interface UrdPropertyDef {
+  type: string;
+  default?: unknown;
+  visibility?: string;
+  description?: string;
+  values?: string[];
+  min?: number;
+  max?: number;
+}
+
+export interface UrdTypeDef {
+  traits?: string[];
+  properties?: Record<string, UrdPropertyDef>;
+}
+
+export interface UrdWorldMeta {
+  name?: string;
+  version?: string;
+  start?: string;
+  entry?: string;
+  seed?: string;
+  description?: string;
+  author?: string;
+}
+
 export interface UrdWorld {
+  world?: UrdWorldMeta;
+  types?: Record<string, UrdTypeDef>;
   entities: UrdEntity[];
   locations: UrdLocation[];
 }
+
+// ===== Diagnostics =====
 
 export type DiagnosticSeverity = 'error' | 'warning' | 'info';
 
@@ -144,5 +318,5 @@ export type AnalysisType = 'full' | 'incremental';
 // ===== Compiler service interface =====
 
 export interface CompilerService {
-  compile(buffers: Record<string, string>): Promise<CompilerOutput>;
+  compile(buffers: Record<string, string>, entryFile?: string): Promise<CompilerOutput>;
 }

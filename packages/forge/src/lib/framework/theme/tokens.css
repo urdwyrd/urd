@@ -46,6 +46,18 @@
   --forge-focus-zone-ring: 1px solid #e94560;
   --forge-focus-zone-glow: 0 0 0 1px rgba(233, 69, 96, 0.3);
   --forge-focus-divider-color: #e94560;
+
+  /* Syntax highlighting */
+  --forge-syntax-keyword: #7ec699;
+  --forge-syntax-entity: #6cb6ff;
+  --forge-syntax-string: #a5d6a7;
+  --forge-syntax-comment: #606070;
+  --forge-syntax-heading: #dab860;
+  --forge-syntax-section: #dab860;
+  --forge-syntax-number: #e8c070;
+  --forge-syntax-operator: #c792ea;
+  --forge-syntax-property: #e8a060;
+  --forge-syntax-meta: #606070;
 }
 
 /* ===== Parchment (light) ===== */
@@ -94,6 +106,18 @@
   --forge-focus-zone-ring: 1px solid #c0392b;
   --forge-focus-zone-glow: 0 0 0 1px rgba(192, 57, 43, 0.3);
   --forge-focus-divider-color: #c0392b;
+
+  /* Syntax highlighting */
+  --forge-syntax-keyword: #2e7d32;
+  --forge-syntax-entity: #1565c0;
+  --forge-syntax-string: #388e3c;
+  --forge-syntax-comment: #9a9a9a;
+  --forge-syntax-heading: #8a6d18;
+  --forge-syntax-section: #8a6d18;
+  --forge-syntax-number: #a05a1a;
+  --forge-syntax-operator: #7b1fa2;
+  --forge-syntax-property: #c0392b;
+  --forge-syntax-meta: #9a9a9a;
 }
 
 /* ===== Semantic typography and spacing (theme-independent) ===== */

@@ -11,6 +11,7 @@ import { viewRegistry } from '../views/ViewRegistry';
 import { workspaceManager } from '../workspace/WorkspaceManager.svelte';
 import { focusService } from '../focus/FocusService.svelte';
 import { collectLeaves } from '../layout/ZoneTree';
+import { bus } from '../bus/MessageBus';
 
 export type NavigationResult =
   | { resolved: true; zoneId: string }
@@ -18,6 +19,8 @@ export type NavigationResult =
 
 export class NavigationBroker {
   private queue: NavigationIntent[] = [];
+  /** Pending navigation params keyed by zoneId — consumed once by the target component on mount. */
+  private pendingParams = new Map<string, { viewId: string; params: Record<string, unknown> }>();
 
   /**
    * Navigate to a view. Resolves the intent against the view registry's
@@ -39,6 +42,7 @@ export class NavigationBroker {
         const existingZoneId = this.findZoneWithType(intent.targetViewId);
         if (existingZoneId) {
           focusService.focusZone(existingZoneId, intent.targetViewId);
+          this.publishCompleted(existingZoneId, intent);
           return { resolved: true, zoneId: existingZoneId };
         }
         return { resolved: false, reason: `No existing instance of singleton view: ${intent.targetViewId}` };
@@ -49,6 +53,7 @@ export class NavigationBroker {
         const existingZoneId = this.findZoneWithType(intent.targetViewId);
         if (existingZoneId) {
           focusService.focusZone(existingZoneId, intent.targetViewId);
+          this.publishCompleted(existingZoneId, intent);
           return { resolved: true, zoneId: existingZoneId };
         }
         // Auto-create: change the focused zone's type (or the preferred zone)
@@ -60,6 +65,7 @@ export class NavigationBroker {
             newTypeId: intent.targetViewId,
           });
           focusService.focusZone(targetZoneId, intent.targetViewId);
+          this.publishCompleted(targetZoneId, intent);
           return { resolved: true, zoneId: targetZoneId };
         }
         return { resolved: false, reason: 'No zone available for singleton-autocreate' };
@@ -75,6 +81,7 @@ export class NavigationBroker {
             newTypeId: intent.targetViewId,
           });
           focusService.focusZone(targetZoneId, intent.targetViewId);
+          this.publishCompleted(targetZoneId, intent);
           return { resolved: true, zoneId: targetZoneId };
         }
         return { resolved: false, reason: 'No zone available for multi view' };
@@ -100,6 +107,33 @@ export class NavigationBroker {
   /** Returns the number of queued intents. */
   get queueSize(): number {
     return this.queue.length;
+  }
+
+  /**
+   * Consume pending navigation params for a zone. Called by components on mount
+   * to handle params from navigations that occurred before the component existed.
+   */
+  consumePendingParams(zoneId: string): { viewId: string; params: Record<string, unknown> } | null {
+    const pending = this.pendingParams.get(zoneId);
+    if (pending) {
+      this.pendingParams.delete(zoneId);
+      return pending;
+    }
+    return null;
+  }
+
+  /** Store params and publish navigation.completed for the target zone component. */
+  private publishCompleted(zoneId: string, intent: NavigationIntent): void {
+    const data = {
+      viewId: intent.targetViewId,
+      params: intent.params ?? {},
+    };
+    // Store for components that haven't mounted yet
+    this.pendingParams.set(zoneId, data);
+    // Also publish for components that are already mounted
+    if (bus.hasChannel('navigation.completed')) {
+      bus.publish('navigation.completed', { zoneId, ...data });
+    }
   }
 
   /** Find a zone in the active workspace tree that has the given view type. */

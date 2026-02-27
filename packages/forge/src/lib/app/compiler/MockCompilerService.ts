@@ -33,7 +33,7 @@ export class MockCompilerService implements CompilerService {
   /** Simulated compile delay in milliseconds. Set to 0 for tests. */
   delayMs = 50;
 
-  async compile(buffers: Record<string, string>): Promise<CompilerOutput> {
+  async compile(buffers: Record<string, string>, _entryFile?: string): Promise<CompilerOutput> {
     if (this.delayMs > 0) {
       await new Promise((resolve) => setTimeout(resolve, this.delayMs));
     }

@@ -15,13 +15,14 @@ describe('MockCompilerService', () => {
     expect(output.header).toBeDefined();
     expect(output.header.compileId).toMatch(/^mock-/);
     expect(output.header.inputFileCount).toBe(1);
-    expect(output.chunks).toHaveLength(6);
+    expect(output.chunks).toHaveLength(7);
 
     const chunkNames = output.chunks.map((c) => c.name);
     expect(chunkNames).toContain('ast');
     expect(chunkNames).toContain('symbolTable');
     expect(chunkNames).toContain('factSet');
     expect(chunkNames).toContain('propertyDependencyIndex');
+    expect(chunkNames).toContain('definitionIndex');
     expect(chunkNames).toContain('urdJson');
     expect(chunkNames).toContain('diagnostics');
   });

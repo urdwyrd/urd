@@ -38,11 +38,11 @@
       "name": "symbolTable",
       "data": {
         "entries": [
-          { "id": "ent_player", "name": "Player", "kind": "entity", "file": "main.urd.md", "line": 3 },
-          { "id": "ent_sword", "name": "Sword", "kind": "entity", "file": "main.urd.md", "line": 7 },
-          { "id": "ent_shield", "name": "Shield", "kind": "entity", "file": "main.urd.md", "line": 11 },
-          { "id": "loc_tavern", "name": "Tavern", "kind": "location", "file": "locations.urd.md", "line": 1 },
-          { "id": "loc_market", "name": "Market", "kind": "location", "file": "locations.urd.md", "line": 5 }
+          { "id": "player", "name": "Player", "kind": "entity", "file": "main.urd.md", "line": 3 },
+          { "id": "sword", "name": "Sword", "kind": "entity", "file": "main.urd.md", "line": 7 },
+          { "id": "shield", "name": "Shield", "kind": "entity", "file": "main.urd.md", "line": 11 },
+          { "id": "tavern", "name": "Tavern", "kind": "location", "file": "locations.urd.md", "line": 1 },
+          { "id": "market", "name": "Market", "kind": "location", "file": "locations.urd.md", "line": 5 }
         ]
       },
       "contentHash": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3"
@@ -50,50 +50,121 @@
     {
       "name": "factSet",
       "data": {
-        "facts": [
-          { "subject": "ent_player", "predicate": "name", "object": "Hero" },
-          { "subject": "ent_player", "predicate": "location", "object": "loc_tavern" },
-          { "subject": "ent_sword", "predicate": "name", "object": "Iron Sword" },
-          { "subject": "ent_sword", "predicate": "owner", "object": "ent_player" },
-          { "subject": "ent_shield", "predicate": "name", "object": "Wooden Shield" },
-          { "subject": "loc_tavern", "predicate": "description", "object": "A cosy tavern with a roaring fire" },
-          { "subject": "loc_market", "predicate": "description", "object": "A bustling marketplace" }
-        ]
+        "reads": [],
+        "writes": [],
+        "exits": [
+          {
+            "from_location": "tavern",
+            "to_location": "market",
+            "exit_name": "east",
+            "is_conditional": false,
+            "guard_reads": [],
+            "span": { "file": "locations.urd.md", "start_line": 3, "start_col": 1, "end_line": 3, "end_col": 20 }
+          },
+          {
+            "from_location": "market",
+            "to_location": "tavern",
+            "exit_name": "west",
+            "is_conditional": false,
+            "guard_reads": [],
+            "span": { "file": "locations.urd.md", "start_line": 7, "start_col": 1, "end_line": 7, "end_col": 20 }
+          }
+        ],
+        "jumps": [],
+        "choices": [],
+        "rules": []
       },
       "contentHash": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4"
     },
     {
       "name": "propertyDependencyIndex",
       "data": {
-        "dependencies": [
-          { "property": "ent_player.location", "dependsOn": ["loc_tavern"] },
-          { "property": "ent_sword.owner", "dependsOn": ["ent_player"] }
-        ]
+        "properties": [],
+        "summary": {
+          "total_properties": 0,
+          "total_reads": 0,
+          "total_writes": 0,
+          "read_never_written": 0,
+          "written_never_read": 0
+        }
       },
       "contentHash": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"
     },
     {
-      "name": "urdJson",
+      "name": "definitionIndex",
       "data": {
-        "entities": [
-          { "id": "ent_player", "name": "Player", "properties": { "name": "Hero", "location": "loc_tavern" } },
-          { "id": "ent_sword", "name": "Sword", "properties": { "name": "Iron Sword", "owner": "ent_player" } },
-          { "id": "ent_shield", "name": "Shield", "properties": { "name": "Wooden Shield" } }
-        ],
-        "locations": [
+        "definitions": [
           {
-            "id": "loc_tavern",
-            "name": "Tavern",
-            "description": "A cosy tavern with a roaring fire",
-            "exits": [{ "direction": "east", "target": "loc_market" }]
+            "key": "entity:@player",
+            "span": { "file": "main.urd.md", "start_line": 3, "start_col": 1, "end_line": 3, "end_col": 10 },
+            "definition": { "kind": "entity", "type_name": "Character", "display_name": "Player" }
           },
           {
-            "id": "loc_market",
-            "name": "Market",
-            "description": "A bustling marketplace",
-            "exits": [{ "direction": "west", "target": "loc_tavern" }]
+            "key": "entity:@sword",
+            "span": { "file": "main.urd.md", "start_line": 7, "start_col": 1, "end_line": 7, "end_col": 10 },
+            "definition": { "kind": "entity", "type_name": "Item", "display_name": "Sword" }
+          },
+          {
+            "key": "entity:@shield",
+            "span": { "file": "main.urd.md", "start_line": 11, "start_col": 1, "end_line": 11, "end_col": 10 },
+            "definition": { "kind": "entity", "type_name": "Item", "display_name": "Shield" }
+          },
+          {
+            "key": "location:tavern",
+            "span": { "file": "locations.urd.md", "start_line": 1, "start_col": 1, "end_line": 1, "end_col": 10 },
+            "definition": { "kind": "location", "display_name": "Tavern" }
+          },
+          {
+            "key": "location:market",
+            "span": { "file": "locations.urd.md", "start_line": 5, "start_col": 1, "end_line": 5, "end_col": 10 },
+            "definition": { "kind": "location", "display_name": "Market" }
           }
-        ]
+        ],
+        "count": 5
+      },
+      "contentHash": "d5e6f7a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"
+    },
+    {
+      "name": "urdJson",
+      "data": {
+        "world": {
+          "name": "demo",
+          "version": "1",
+          "start": "tavern"
+        },
+        "types": {
+          "Character": {
+            "traits": ["interactable", "mobile"],
+            "properties": {
+              "name": { "type": "string", "default": "Unknown" },
+              "location": { "type": "string" }
+            }
+          },
+          "Item": {
+            "traits": ["portable"],
+            "properties": {
+              "name": { "type": "string", "default": "Unknown" },
+              "owner": { "type": "ref" }
+            }
+          }
+        },
+        "entities": {
+          "player": { "type": "Character", "properties": { "name": "Hero", "location": "tavern" } },
+          "sword": { "type": "Item", "properties": { "name": "Iron Sword", "owner": "player" } },
+          "shield": { "type": "Item", "properties": { "name": "Wooden Shield" } }
+        },
+        "locations": {
+          "tavern": {
+            "description": "A cosy tavern with a roaring fire",
+            "exits": { "east": { "to": "market" } },
+            "contains": ["player", "sword"]
+          },
+          "market": {
+            "description": "A bustling marketplace",
+            "exits": { "west": { "to": "tavern" } },
+            "contains": ["shield"]
+          }
+        }
       },
       "contentHash": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6"
     },
