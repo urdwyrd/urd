@@ -1,50 +1,57 @@
 /**
- * Location graph projection — nodes and edges for graph visualisation.
+ * Location graph projection — enriched graph data for the Location Network Graph view.
  *
- * Depends on symbolTable, factSet.
+ * Nodes from urdJson.locations with diagnostic-driven flags (start, unreachable, isolated).
+ * Edges from location exits.
+ * Depends on urdJson, diagnostics.
  */
 
 import type { ProjectionDefinition } from './ProjectionRegistry';
 import type { ResolvedCompilerOutput } from '$lib/app/compiler/types';
+import type { ForgeGraphData, ForgeGraphNode, ForgeGraphEdge } from '$lib/app/views/graphs/_shared/graph-types';
 
-export interface GraphNode {
-  id: string;
-  name: string;
-  description: string;
-  exitCount: number;
-}
-
-export interface GraphEdge {
-  from: string;
-  to: string;
-  direction: string;
-}
-
-export interface LocationGraph {
-  nodes: GraphNode[];
-  edges: GraphEdge[];
-}
-
-export const locationGraphProjection: ProjectionDefinition<LocationGraph> = {
+export const locationGraphProjection: ProjectionDefinition<ForgeGraphData> = {
   id: 'urd.projection.locationGraph',
-  depends: ['symbolTable', 'urdJson'],
-  compute: (source: ResolvedCompilerOutput): LocationGraph => {
-    const { urdJson } = source;
+  depends: ['urdJson', 'diagnostics'],
+  compute: (source: ResolvedCompilerOutput): ForgeGraphData => {
+    const { urdJson, diagnostics } = source;
 
-    const nodes: GraphNode[] = urdJson.locations.map((loc) => ({
+    if (!urdJson.locations.length) {
+      return { nodes: [], edges: [] };
+    }
+
+    const startId = urdJson.world?.start;
+
+    // Track which locations participate in exits
+    const exitParticipants = new Set<string>();
+    const edges: ForgeGraphEdge[] = [];
+
+    for (const loc of urdJson.locations) {
+      for (const exit of loc.exits) {
+        exitParticipants.add(loc.id);
+        exitParticipants.add(exit.target);
+        edges.push({
+          id: `${loc.id}/${exit.direction}`,
+          source: loc.id,
+          target: exit.target,
+          label: exit.direction,
+          kind: 'normal',
+        });
+      }
+    }
+
+    const nodes: ForgeGraphNode[] = urdJson.locations.map((loc) => ({
       id: loc.id,
-      name: loc.name,
-      description: loc.description,
-      exitCount: loc.exits.length,
+      label: loc.name || loc.id,
+      kind: 'location' as const,
+      flags: {
+        start: loc.id === startId,
+        unreachable: diagnostics.some(
+          (d) => d.code === 'URD430' && d.message.includes(`'${loc.id}'`),
+        ),
+        isolated: !exitParticipants.has(loc.id),
+      },
     }));
-
-    const edges: GraphEdge[] = urdJson.locations.flatMap((loc) =>
-      loc.exits.map((exit) => ({
-        from: loc.id,
-        to: exit.target,
-        direction: exit.direction,
-      }))
-    );
 
     return { nodes, edges };
   },
