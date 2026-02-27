@@ -112,8 +112,18 @@ export async function bootstrap(): Promise<() => void> {
     component: () => import('$lib/app/views/editor/CodeEditorZone.svelte'),
     navigationStrategy: 'singleton-autocreate',
     requiresProject: true,
-    stateVersion: 1,
-    defaultState: { openTabs: [], activeTab: null },
+    stateVersion: 2,
+    defaultState: { dockviewLayout: null },
+    migrateState: (oldState: unknown, fromVersion: number) => {
+      if (fromVersion === 1) {
+        // v1 had { openTabs: TabState[], activeTab: string | null }
+        // v2 uses { dockviewLayout: SerializedDockview | null }
+        // We discard the old layout — tabs will be empty on first open.
+        // The active file will be re-opened by the project.opened handler.
+        return { dockviewLayout: null };
+      }
+      return oldState;
+    },
   });
 
   viewRegistry.register({

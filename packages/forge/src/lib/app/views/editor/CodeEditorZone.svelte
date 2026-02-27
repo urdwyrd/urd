@@ -2,45 +2,25 @@
   /**
    * CodeEditorZone — singleton zone for the Urd code editor.
    *
-   * Manages tabs, file buffers, cursor state, and compilation integration.
-   * Uses EditorPane for the CodeMirror instance and TabBar for tab navigation.
+   * Uses dockview-core to manage editor groups with drag-and-drop tab support.
+   * Each open file gets its own dockview panel with an independent CodeMirror
+   * instance (EditorPanelContent), preserving undo history across tab switches.
    */
 
   import { onMount, onDestroy, tick } from 'svelte';
+  import { createDockview, type DockviewApi, type SerializedDockview } from 'dockview-core';
+  import 'dockview-core/dist/styles/dockview.css';
+  import './dockview-forge.css';
   import { bus } from '$lib/framework/bus/MessageBus';
   import { bufferMap } from '$lib/app/compiler/BufferMap';
-  import { getCurrentTheme } from '$lib/framework/theme/ThemeEngine';
-  import { appSettings } from '$lib/framework/settings/AppSettingsService';
   import { fileSystem } from '$lib/app/bootstrap';
   import { navigationBroker } from '$lib/framework/navigation/NavigationBroker';
-  import { projectionRegistry } from '$lib/app/projections/ProjectionRegistry';
-  import type { FileDiagnostics } from '$lib/app/projections/diagnostics-by-file';
-  import type { DefinitionIndex } from '$lib/app/projections/definition-index';
-  import { urdGotoDefinition, urdDefinitionLink, type DefinitionEntry, type DefinitionResolver } from './urd-navigation';
-  import { urdHoverTooltip, type HoverDataProvider } from './urd-hover';
-  import { createUrdCompletionSource, type AutocompleteDataProvider } from './urd-autocomplete';
-  import { urdGutter, type GutterDataProvider } from './urd-gutter';
-  import type { EntityRow } from '$lib/app/projections/entity-table';
-  import type { PropertyRow } from '$lib/app/projections/property-table';
-  import type { DefinitionIndex as DefIdx } from '$lib/app/projections/definition-index';
-  import { autocompletion } from '@codemirror/autocomplete';
-  import type { Extension } from '@codemirror/state';
-  import type { FactSet, PropertyDependencyIndex, Diagnostic } from '$lib/app/compiler/types';
-  import { filesMatch, resolveCompilerPath } from './file-match';
-  import TabBar, { type TabInfo } from './TabBar.svelte';
-  import EditorPane from './EditorPane.svelte';
-  import Breadcrumb from './Breadcrumb.svelte';
+  import { resolveCompilerPath } from './file-match';
+  import { EditorPanelRenderer, EditorTabRenderer, getRenderer, type EditorPanelParams } from './DockviewEditorHost';
 
-  interface TabState {
-    path: string;
-    cursorLine: number;
-    cursorCol: number;
-    scrollTop: number;
-  }
-
+  /** Dockview state persisted to the zone. */
   interface CodeEditorState {
-    openTabs: TabState[];
-    activeTab: string | null;
+    dockviewLayout: SerializedDockview | null;
   }
 
   interface Props {
@@ -52,35 +32,88 @@
 
   let { zoneId, zoneTypeId, state: zoneState, onStateChange }: Props = $props();
 
-  let editorPane: EditorPane | undefined = $state();
-  let currentTheme: 'gloaming' | 'parchment' = $state(getCurrentTheme());
-  let activeTabPath: string | null = $state(null);
-  let openTabs: TabState[] = $state([]);
-  let cursorLine: number = $state(1);
-  let tabInfos: TabInfo[] = $derived(
-    openTabs.map((t: TabState) => ({
-      path: t.path,
-      name: t.path.split('/').pop() || t.path,
-      dirty: bufferMap.isDirty(t.path),
-    }))
-  );
+  let containerEl: HTMLDivElement | undefined = $state();
+  let dockviewApi: DockviewApi | undefined;
+  let hasAnyPanels = $state(false);
 
   const unsubscribers: (() => void)[] = [];
 
-  // Restore state or initialise
+  // --- Panel ID convention ---
+
+  function panelId(path: string): string {
+    return `panel_${path}`;
+  }
+
+  // --- Navigation callback shared across all panels ---
+
+  function handleNavigate(file: string, line: number, col?: number): void {
+    openFile(file, line, col);
+  }
+
+  // --- Dockview lifecycle ---
+
   onMount(() => {
-    if (zoneState) {
-      const s = zoneState;
-      openTabs = s.openTabs ?? [];
-      activeTabPath = s.activeTab ?? null;
+    if (!containerEl) return;
+
+    const forgeTheme = {
+      name: 'forge',
+      className: 'forge-dockview-theme',
+    };
+
+    dockviewApi = createDockview(containerEl, {
+      theme: forgeTheme,
+      createComponent: (options) => {
+        if (options.name === 'editorPanel') {
+          return new EditorPanelRenderer(handleNavigate);
+        }
+        throw new Error(`Unknown dockview component: ${options.name}`);
+      },
+      createTabComponent: (options) => {
+        if (options.name === 'editorTab') {
+          return new EditorTabRenderer();
+        }
+        return undefined;
+      },
+      disableFloatingGroups: true,
+    });
+
+    // Track panel count for empty-state overlay
+    dockviewApi.onDidAddPanel(() => {
+      hasAnyPanels = (dockviewApi?.totalPanels ?? 0) > 0;
+    });
+    dockviewApi.onDidRemovePanel(() => {
+      hasAnyPanels = (dockviewApi?.totalPanels ?? 0) > 0;
+      persistState();
+    });
+
+    // Publish active file when active panel changes
+    dockviewApi.onDidActivePanelChange((panel) => {
+      const path = panel ? (panel.params as EditorPanelParams | undefined)?.path ?? null : null;
+      publishActiveFile(path);
+      persistState();
+    });
+
+    // Persist on layout changes (group splits, moves)
+    dockviewApi.onDidMovePanel(() => persistState());
+
+    // Restore saved layout or start empty
+    const savedLayout = zoneState?.dockviewLayout;
+    if (savedLayout) {
+      try {
+        dockviewApi.fromJSON(savedLayout);
+        hasAnyPanels = (dockviewApi?.totalPanels ?? 0) > 0;
+      } catch (err) {
+        console.warn('Failed to restore dockview layout, starting fresh:', err);
+      }
     }
 
-    // Tabs are opened on navigation (openFile) — no auto-open of all buffers.
-
-    // Load active tab content after mount, then check for pending navigation
+    // Publish active file after restore
     tick().then(() => {
-      loadActiveTab();
-      publishActiveFile(activeTabPath);
+      if (dockviewApi?.activePanel) {
+        const path = (dockviewApi.activePanel.params as EditorPanelParams | undefined)?.path ?? null;
+        publishActiveFile(path);
+      }
+
       // Handle navigation that arrived before this component mounted
       const pending = navigationBroker.consumePendingParams(zoneId);
       if (pending?.viewId === 'urd.codeEditor' && pending.params.path) {
@@ -92,28 +125,13 @@
       }
     });
 
-    // Subscribe to theme changes
-    unsubscribers.push(
-      bus.subscribe('theme.changed', (payload) => {
-        const { theme } = payload as { theme: string };
-        currentTheme = theme as 'gloaming' | 'parchment';
-      })
-    );
+    // --- Bus subscriptions ---
 
-    // Subscribe to compiler completion for diagnostics and dirty state
+    // Subscribe to compiler completion — trigger dirty state update in tabs
     unsubscribers.push(
       bus.subscribe('compiler.completed', () => {
-        // Trigger reactivity on dirty state
-        openTabs = [...openTabs];
-        // Push diagnostics for the active file
-        updateDiagnostics();
-      })
-    );
-
-    // Subscribe to settings changes for editor configuration
-    unsubscribers.push(
-      bus.subscribe('settings.changed', () => {
-        // Reactivity handles this via $derived
+        // Tab renderers have their own buffer subscriptions for dirty state
+        // but we persist state in case file save changed dirty flags
       })
     );
 
@@ -153,45 +171,22 @@
   onDestroy(() => {
     for (const unsub of unsubscribers) unsub();
     persistState();
+    dockviewApi?.dispose();
+    dockviewApi = undefined;
   });
 
-  function loadActiveTab(): void {
-    if (!editorPane || !activeTabPath) return;
-    const content = bufferMap.get(activeTabPath);
-    if (content !== undefined) {
-      editorPane.setContent(content);
-      // Restore cursor and scroll
-      const tabState = openTabs.find((t: TabState) => t.path === activeTabPath);
-      if (tabState) {
-        editorPane.scrollToLine(tabState.cursorLine, tabState.cursorCol);
-        // Delay scroll restoration for layout to settle
-        requestAnimationFrame(() => {
-          editorPane?.setScrollTop(tabState.scrollTop);
-        });
-      }
-      // Refresh diagnostics for the newly loaded file
-      updateDiagnostics();
-    }
-  }
-
-  function saveTabState(): void {
-    if (!editorPane || !activeTabPath) return;
-    const tab = openTabs.find((t: TabState) => t.path === activeTabPath);
-    if (tab) {
-      const cursor = editorPane.getCursorPosition();
-      tab.cursorLine = cursor.line;
-      tab.cursorCol = cursor.col;
-      tab.scrollTop = editorPane.getScrollTop();
-    }
-  }
+  // --- State persistence ---
 
   function persistState(): void {
-    saveTabState();
-    const editorState: CodeEditorState = {
-      openTabs: openTabs.map((t: TabState) => ({ ...t })),
-      activeTab: activeTabPath,
-    };
-    onStateChange(editorState);
+    if (!dockviewApi) return;
+    try {
+      const editorState: CodeEditorState = {
+        dockviewLayout: dockviewApi.toJSON(),
+      };
+      onStateChange(editorState);
+    } catch {
+      // toJSON can fail during disposal — ignore
+    }
   }
 
   function publishActiveFile(path: string | null): void {
@@ -200,329 +195,130 @@
     }
   }
 
-  function selectTab(path: string): void {
-    if (path === activeTabPath) return;
-    saveTabState();
-    activeTabPath = path;
-    publishActiveFile(path);
-    tick().then(() => loadActiveTab());
-    persistState();
-  }
+  // --- Public API ---
 
-  function closeTab(path: string): void {
-    saveTabState();
-    const idx = openTabs.findIndex((t: TabState) => t.path === path);
-    if (idx === -1) return;
-
-    openTabs = openTabs.filter((t: TabState) => t.path !== path);
-
-    if (activeTabPath === path) {
-      // Switch to adjacent tab
-      if (openTabs.length > 0) {
-        const newIdx = Math.min(idx, openTabs.length - 1);
-        activeTabPath = openTabs[newIdx].path;
-        tick().then(() => loadActiveTab());
-      } else {
-        activeTabPath = null;
-        editorPane?.setContent('');
-      }
-    }
-
-    persistState();
-  }
-
-  function handleContentChange(content: string): void {
-    if (activeTabPath) {
-      bufferMap.set(activeTabPath, content);
-      // Trigger tab dirty state reactivity
-      openTabs = [...openTabs];
-    }
-  }
-
-  function handleCursorChange(line: number, col: number): void {
-    cursorLine = line;
-    if (!activeTabPath) return;
-    const tab = openTabs.find((t: TabState) => t.path === activeTabPath);
-    if (tab) {
-      tab.cursorLine = line;
-      tab.cursorCol = col;
-    }
-  }
-
-  /** Open a file in the editor — called externally via navigation. */
+  /** Open a file in the editor — creates or activates a dockview panel. */
   export function openFile(path: string, line?: number, col?: number): void {
-    // Resolve compiler short filenames (e.g. "sunken-citadel.urd.md") to full
-    // buffer paths so we match existing tabs instead of opening duplicates.
+    if (!dockviewApi) return;
+
+    // Resolve compiler short filenames to full buffer paths
     const resolved = resolveCompilerPath(path, bufferMap.paths());
     path = resolved;
 
-    let tab = openTabs.find((t: TabState) => t.path === path);
-    if (!tab) {
-      tab = { path, cursorLine: line ?? 1, cursorCol: col ?? 1, scrollTop: 0 };
-      openTabs = [...openTabs, tab];
-    } else if (line) {
-      tab.cursorLine = line;
-      tab.cursorCol = col ?? 1;
-    }
+    const id = panelId(path);
+    const existing = dockviewApi.getPanel(id);
 
-    if (activeTabPath !== path) {
-      saveTabState();
-      activeTabPath = path;
-      publishActiveFile(path);
-      tick().then(() => loadActiveTab());
-    } else if (line) {
-      editorPane?.scrollToLine(line, col);
+    if (existing) {
+      // Activate existing panel
+      existing.api.setActive();
+      // Scroll to line if requested
+      if (line) {
+        tick().then(() => {
+          const renderer = getRenderer(id);
+          renderer?.scrollToLine(line, col);
+        });
+      }
+    } else {
+      // Create new panel
+      const params: EditorPanelParams = {
+        path,
+      };
+
+      // Add to the active group if one exists, otherwise dockview creates one
+      dockviewApi.addPanel({
+        id,
+        component: 'editorPanel',
+        tabComponent: 'editorTab',
+        title: path.split('/').pop() || path,
+        params,
+      });
     }
 
     persistState();
   }
 
-  /** Close the active tab — used by Ctrl+W command. */
+  /** Close the active tab. */
   export function closeActiveTab(): void {
-    if (activeTabPath) {
-      closeTab(activeTabPath);
-    }
+    if (!dockviewApi?.activePanel) return;
+    dockviewApi.removePanel(dockviewApi.activePanel);
   }
 
-  /** Switch to the next tab. */
+  /** Switch to the next tab within the active group. */
   export function nextTab(): void {
-    if (openTabs.length <= 1) return;
-    const idx = openTabs.findIndex((t: TabState) => t.path === activeTabPath);
-    const nextIdx = (idx + 1) % openTabs.length;
-    selectTab(openTabs[nextIdx].path);
+    dockviewApi?.moveToNext({ includePanel: true });
   }
 
-  /** Switch to the previous tab. */
+  /** Switch to the previous tab within the active group. */
   export function prevTab(): void {
-    if (openTabs.length <= 1) return;
-    const idx = openTabs.findIndex((t: TabState) => t.path === activeTabPath);
-    const prevIdx = (idx - 1 + openTabs.length) % openTabs.length;
-    selectTab(openTabs[prevIdx].path);
+    dockviewApi?.moveToPrevious({ includePanel: true });
   }
 
-  /** Update diagnostics for the active file from the projection registry. */
-  function updateDiagnostics(): void {
-    if (!editorPane || !activeTabPath) return;
-    const allDiags = projectionRegistry.get<FileDiagnostics[]>('urd.projection.diagnosticsByFile');
-    if (!allDiags) {
-      editorPane.clearDiagnostics();
-      return;
-    }
-    // The Rust compiler uses short filenames (e.g., "main.urd.md") in diagnostic
-    // spans, while buffer/tab paths are full paths. Match by suffix.
-    const fileDiag = allDiags.find((fd: FileDiagnostics) => filesMatch(activeTabPath!, fd.file));
-    if (fileDiag) {
-      editorPane.setDiagnostics(fileDiag.diagnostics);
-    } else {
-      editorPane.clearDiagnostics();
-    }
-  }
-
-  /** Save the active file to disk. */
+  /** Save the active panel's file to disk. */
   async function saveActiveFile(): Promise<void> {
-    if (!activeTabPath || !fileSystem) return;
-    const content = bufferMap.get(activeTabPath);
+    if (!dockviewApi?.activePanel || !fileSystem) return;
+    const params = dockviewApi.activePanel.params as EditorPanelParams | undefined;
+    const path = params?.path;
+    if (!path) return;
+
+    const content = bufferMap.get(path);
     if (content === undefined) return;
 
     try {
-      await fileSystem.writeFile(activeTabPath, content);
-      bufferMap.markClean(activeTabPath);
-      openTabs = [...openTabs]; // Trigger dirty state reactivity
+      await fileSystem.writeFile(path, content);
+      bufferMap.markClean(path);
     } catch (err) {
       console.error('Failed to save file:', err);
     }
   }
 
-  /** Get the EditorPane instance for external access. */
-  export function getEditorPane(): EditorPane | undefined {
-    return editorPane;
+  /** Get the EditorPane instance for the active panel (for external access). */
+  export function getEditorPane(): unknown {
+    // Not directly available — each panel owns its own EditorPane
+    return undefined;
   }
 
-  // --- Definition resolver for go-to-definition ---
-
-  function getDefinitionResolver(): DefinitionResolver | null {
-    const index = projectionRegistry.get<DefinitionIndex>('urd.projection.definitionIndex');
-    if (!index) return null;
-
-    return {
-      findByKey(key: string): DefinitionEntry | null {
-        return index.find((e: DefinitionEntry) => e.key === key) ?? null;
-      },
-      find(predicate: (entry: DefinitionEntry) => boolean): DefinitionEntry | null {
-        return index.find(predicate) ?? null;
-      },
-      getEntityTypeName(entityId: string): string | null {
-        const raw = projectionRegistry.get<Record<string, unknown>>('urd.projection.rawUrdJson');
-        const entities = raw?.entities as Record<string, Record<string, unknown>> | undefined;
-        if (entities?.[entityId]) {
-          return (entities[entityId].type as string) ?? null;
-        }
-        return null;
-      },
-    };
-  }
-
-  function handleNavigate(file: string, line: number, col?: number): void {
-    // Resolve compiler short filename to full buffer path
-    const resolved = resolveCompilerPath(file, bufferMap.paths());
-    openFile(resolved, line, col);
-  }
-
-  function getCurrentFile(): string | null {
-    return activeTabPath;
-  }
-
-  // --- Hover data provider ---
-
-  function getHoverProvider(): HoverDataProvider | null {
-    return {
-      getParsedWorld() {
-        return projectionRegistry.get<Record<string, unknown>>('urd.projection.rawUrdJson') ?? null;
-      },
-      getDefinitionIndex() {
-        return projectionRegistry.get<DefinitionIndex>('urd.projection.definitionIndex') ?? null;
-      },
-      getFactSet() {
-        return projectionRegistry.get<FactSet>('urd.projection.factSet') ?? null;
-      },
-      getPropertyDependencyIndex() {
-        return projectionRegistry.get<PropertyDependencyIndex>('urd.projection.propertyDependencyIndex') ?? null;
-      },
-      getDiagnostics() {
-        if (!activeTabPath) return null;
-        const allDiags = projectionRegistry.get<FileDiagnostics[]>('urd.projection.diagnosticsByFile');
-        const fileDiag = allDiags?.find((fd: FileDiagnostics) => filesMatch(activeTabPath!, fd.file));
-        return fileDiag?.diagnostics ?? null;
-      },
-      getEntityTable() {
-        return projectionRegistry.get<EntityRow[]>('urd.projection.entityTable') ?? null;
-      },
-      getPropertyTable() {
-        return projectionRegistry.get<PropertyRow[]>('urd.projection.propertyTable') ?? null;
-      },
-    };
-  }
-
-  // --- Autocomplete data provider ---
-
-  function getAutocompleteProvider(): AutocompleteDataProvider | null {
-    return {
-      getWorldData() {
-        return projectionRegistry.get('urd.projection.urdJson') ?? null;
-      },
-      getDefinitionIndex() {
-        return projectionRegistry.get<DefinitionIndex>('urd.projection.definitionIndex') ?? null;
-      },
-    };
-  }
-
-  // --- Breadcrumb helpers ---
-
-  function getDocText(): string | null {
-    return editorPane?.getContent() ?? null;
-  }
-
-  function handleBreadcrumbNavigate(line: number): void {
-    editorPane?.scrollToLine(line);
-  }
-
-  // --- Gutter data provider ---
-
-  function getGutterProvider(): GutterDataProvider | null {
-    return {
-      getDiagnosticsByFile() {
-        return projectionRegistry.get<FileDiagnostics[]>('urd.projection.diagnosticsByFile');
-      },
-      getDefinitionIndex() {
-        return projectionRegistry.get<DefIdx>('urd.projection.definitionIndex');
-      },
-      getCurrentFile() {
-        return activeTabPath;
-      },
-    };
-  }
-
-  // --- Extra extensions for the editor ---
-
-  const editorExtensions: Extension[] = [
-    urdGotoDefinition(getDefinitionResolver, handleNavigate, getCurrentFile),
-    ...urdDefinitionLink(getDefinitionResolver),
-    urdHoverTooltip(getHoverProvider),
-    autocompletion({ override: [createUrdCompletionSource(getAutocompleteProvider)] }),
-    urdGutter(getGutterProvider),
-  ];
-
-  // Settings-derived values
-  let editorTabSize = $derived(appSettings.get('editorTabSize'));
-  let editorLineNumbers = $derived(appSettings.get('editorLineNumbers'));
-  let editorWordWrap = $derived(appSettings.get('editorWordWrap'));
+  // Suppress unused prop warnings
+  void zoneTypeId;
 </script>
 
 <div class="forge-code-editor-zone">
-  {#if openTabs.length > 0}
-    <TabBar
-      tabs={tabInfos}
-      activeTab={activeTabPath}
-      onSelectTab={selectTab}
-      onCloseTab={closeTab}
-    />
-  {/if}
+  <div class="forge-code-editor-zone__dockview" bind:this={containerEl}></div>
 
-  {#if activeTabPath}
-    <Breadcrumb
-      filePath={activeTabPath}
-      {cursorLine}
-      {getDocText}
-      onNavigate={handleBreadcrumbNavigate}
-    />
+  {#if !hasAnyPanels}
+    <div class="forge-code-editor-zone__empty">
+      <p>No files open</p>
+      <p class="forge-code-editor-zone__hint">Open a project to get started</p>
+    </div>
   {/if}
-
-  <div class="forge-code-editor-zone__editor">
-    {#if activeTabPath}
-      <EditorPane
-        bind:this={editorPane}
-        theme={currentTheme}
-        tabSize={editorTabSize}
-        showLineNumbers={editorLineNumbers}
-        wordWrap={editorWordWrap}
-        extraExtensions={editorExtensions}
-        onContentChange={handleContentChange}
-        onCursorChange={handleCursorChange}
-      />
-    {:else}
-      <div class="forge-code-editor-zone__empty">
-        <p>No files open</p>
-        <p class="forge-code-editor-zone__hint">Open a project to get started</p>
-      </div>
-    {/if}
-  </div>
 </div>
 
 <style>
   .forge-code-editor-zone {
-    display: flex;
-    flex-direction: column;
+    position: relative;
     width: 100%;
     height: 100%;
     overflow: hidden;
   }
 
-  .forge-code-editor-zone__editor {
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
+  .forge-code-editor-zone__dockview {
+    width: 100%;
+    height: 100%;
   }
 
   .forge-code-editor-zone__empty {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    height: 100%;
     color: var(--forge-text-muted);
     font-family: var(--forge-font-family-ui);
     font-size: var(--forge-font-size-md);
+    pointer-events: none;
   }
 
   .forge-code-editor-zone__hint {

@@ -1,0 +1,153 @@
+/**
+ * Forge dockview theme — maps dockview CSS variables to --forge-* tokens.
+ * Scoped under .forge-dockview-theme so it doesn't leak into the global scope.
+ */
+
+.forge-dockview-theme {
+  /* Tab bar */
+  --dv-tabs-and-actions-container-height: 28px;
+  --dv-tabs-and-actions-container-font-size: 11px;
+  --dv-tabs-and-actions-container-background-color: var(--forge-bg-secondary);
+
+  /* Active group, visible (selected) tab */
+  --dv-activegroup-visiblepanel-tab-background-color: var(--forge-bg-zone-viewport);
+  --dv-activegroup-visiblepanel-tab-color: var(--forge-text-primary);
+
+  /* Active group, hidden (unselected) tabs */
+  --dv-activegroup-hiddenpanel-tab-background-color: var(--forge-bg-secondary);
+  --dv-activegroup-hiddenpanel-tab-color: var(--forge-text-secondary);
+
+  /* Inactive group, visible tab */
+  --dv-inactivegroup-visiblepanel-tab-background-color: var(--forge-bg-secondary);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--forge-text-muted);
+
+  /* Inactive group, hidden tabs */
+  --dv-inactivegroup-hiddenpanel-tab-background-color: var(--forge-bg-secondary);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--forge-text-muted);
+
+  /* Group content area */
+  --dv-group-view-background-color: var(--forge-bg-zone-viewport);
+
+  /* Separator between groups */
+  --dv-separator-border: var(--forge-border-zone);
+
+  /* Tab divider */
+  --dv-tab-divider-color: var(--forge-border-zone);
+
+  /* Drag overlay */
+  --dv-drag-over-background-color: var(--forge-accent-primary-alpha, rgba(100, 149, 237, 0.2));
+  --dv-drag-over-border-color: var(--forge-accent-primary);
+
+  /* Sash (resize handle between groups) */
+  --dv-sash-color: transparent;
+  --dv-active-sash-color: var(--forge-accent-primary);
+  --dv-active-sash-transition-duration: 0.1s;
+  --dv-active-sash-transition-delay: 0.3s;
+
+  /* Scrollbar */
+  --dv-scrollbar-background-color: var(--forge-text-muted);
+  --dv-tabs-container-scrollbar-color: var(--forge-text-muted);
+
+  /* Icon hover */
+  --dv-icon-hover-background-color: var(--forge-bg-tertiary);
+
+  /* Floating group shadow */
+  --dv-floating-box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.4);
+
+  /* No border radius — forge uses sharp corners */
+  --dv-border-radius: 0px;
+  --dv-tab-margin: 0;
+  --dv-tab-font-size: var(--forge-font-size-xs);
+  --dv-overlay-z-index: 999;
+
+  /* Pane header border */
+  --dv-paneview-header-border-color: var(--forge-border-zone);
+  --dv-paneview-active-outline-color: var(--forge-accent-primary);
+}
+
+/* Tab font family override */
+.forge-dockview-theme .dv-tabs-and-actions-container {
+  font-family: var(--forge-font-family-ui);
+}
+
+/* Tab styling refinements */
+.forge-dockview-theme .dv-tab {
+  padding: 0 var(--forge-space-md, 8px);
+  gap: var(--forge-space-xs, 4px);
+  border-right: 1px solid var(--forge-border-zone);
+}
+
+/* Active tab bottom border trick (like VS Code) */
+.forge-dockview-theme .dv-active-group > .dv-tabs-and-actions-container {
+  border-bottom: 1px solid var(--forge-bg-zone-viewport);
+}
+
+/* Remove default active tab top accent — forge uses bottom overlap */
+.forge-dockview-theme .dv-active-group .dv-tab.dv-active-tab {
+  margin-bottom: -1px;
+  border-bottom: 1px solid var(--forge-bg-zone-viewport);
+}
+
+/* Drop target visual */
+.forge-dockview-theme .dv-drop-target-container .dv-drop-target-anchor {
+  border-color: var(--forge-accent-primary);
+  background-color: var(--forge-accent-primary-alpha, rgba(100, 149, 237, 0.15));
+}
+
+/* --- Custom tab renderer (EditorTabRenderer) --- */
+
+.forge-dv-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--forge-space-xs, 4px);
+  height: 100%;
+  padding: 0 2px;
+  cursor: default;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.forge-dv-tab__name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--forge-font-family-ui);
+  font-size: var(--forge-font-size-xs);
+  color: inherit;
+}
+
+.forge-dv-tab__dirty {
+  color: var(--forge-accent-primary);
+  font-size: 8px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.forge-dv-tab__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: none;
+  border-radius: var(--forge-radius-sm, 2px);
+  background: transparent;
+  color: var(--forge-text-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s, background-color 0.1s;
+  flex-shrink: 0;
+}
+
+.dv-tab:hover .forge-dv-tab__close,
+.dv-tab.dv-active-tab .forge-dv-tab__close {
+  opacity: 1;
+}
+
+.forge-dv-tab__close:hover {
+  background-color: var(--forge-accent-primary);
+  color: var(--forge-text-primary);
+}
