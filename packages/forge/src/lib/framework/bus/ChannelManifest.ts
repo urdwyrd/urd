@@ -62,4 +62,12 @@ export function registerFrameworkChannels(bus: MessageBus): void {
   bus.registerChannel({ id: 'editor.nextTab', domain: 'editor', retainLast: false });
   bus.registerChannel({ id: 'editor.prevTab', domain: 'editor', retainLast: false });
   bus.registerChannel({ id: 'editor.save', domain: 'editor', retainLast: false });
+
+  // Playback / runtime
+  bus.registerChannel({ id: 'playback.state.changed', domain: 'playback', retainLast: true });
+  bus.registerChannel({ id: 'playback.event', domain: 'playback', retainLast: false });
+
+  // Coverage
+  bus.registerChannel({ id: 'coverage.overlay.updated', domain: 'coverage', retainLast: true });
+  bus.registerChannel({ id: 'coverage.overlay.cleared', domain: 'coverage', retainLast: false });
 }

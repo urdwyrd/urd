@@ -36,11 +36,37 @@
   --forge-graph-node-default: #2a2a4a;
   --forge-graph-edge-default: #4a4a6a;
   --forge-graph-node-selected: #e94560;
+  --forge-graph-node-start: #e6a817;
+  --forge-graph-node-unreachable: #e94560;
+  --forge-graph-node-isolated: #555;
+  --forge-graph-edge-conditional: #e6a817;
+  --forge-graph-edge-choice: #4caf50;
+  --forge-graph-edge-terminal: #888;
+  --forge-graph-minimap-bg: rgba(0, 0, 0, 0.3);
+  --forge-graph-minimap-viewport: rgba(233, 69, 96, 0.4);
 
   /* Spreadsheets */
   --forge-table-row-alt: rgba(255, 255, 255, 0.02);
   --forge-table-row-hover: rgba(255, 255, 255, 0.05);
   --forge-table-header-bg: #1a1a3e;
+
+  /* Runtime — event type colours */
+  --forge-runtime-event-move: #5b9bd5;
+  --forge-runtime-event-dialogue: #e6a817;
+  --forge-runtime-event-set: #4caf50;
+  --forge-runtime-event-narration: #888;
+  --forge-runtime-event-section: #9b59b6;
+
+  /* Runtime — coverage */
+  --forge-runtime-coverage-bar-bg: rgba(255, 255, 255, 0.08);
+  --forge-runtime-coverage-bar-fill: #4caf50;
+  --forge-runtime-coverage-bar-low: #e94560;
+
+  /* Runtime — play panel */
+  --forge-runtime-play-active: #4caf50;
+  --forge-runtime-play-idle: var(--forge-text-muted);
+  --forge-runtime-location-title: var(--forge-text-primary);
+  --forge-runtime-exit-button: var(--forge-accent-primary);
 
   /* Focus */
   --forge-focus-zone-ring: 1px solid #e94560;
@@ -96,11 +122,37 @@
   --forge-graph-node-default: #e4ddd3;
   --forge-graph-edge-default: #c0b8a8;
   --forge-graph-node-selected: #c0392b;
+  --forge-graph-node-start: #d68910;
+  --forge-graph-node-unreachable: #c0392b;
+  --forge-graph-node-isolated: #999;
+  --forge-graph-edge-conditional: #d68910;
+  --forge-graph-edge-choice: #1e8449;
+  --forge-graph-edge-terminal: #999;
+  --forge-graph-minimap-bg: rgba(0, 0, 0, 0.08);
+  --forge-graph-minimap-viewport: rgba(192, 57, 43, 0.3);
 
   /* Spreadsheets */
   --forge-table-row-alt: rgba(0, 0, 0, 0.02);
   --forge-table-row-hover: rgba(0, 0, 0, 0.04);
   --forge-table-header-bg: #f0ece4;
+
+  /* Runtime — event type colours */
+  --forge-runtime-event-move: #1565c0;
+  --forge-runtime-event-dialogue: #d68910;
+  --forge-runtime-event-set: #1e8449;
+  --forge-runtime-event-narration: #9a9a9a;
+  --forge-runtime-event-section: #7b1fa2;
+
+  /* Runtime — coverage */
+  --forge-runtime-coverage-bar-bg: rgba(0, 0, 0, 0.06);
+  --forge-runtime-coverage-bar-fill: #1e8449;
+  --forge-runtime-coverage-bar-low: #c0392b;
+
+  /* Runtime — play panel */
+  --forge-runtime-play-active: #1e8449;
+  --forge-runtime-play-idle: var(--forge-text-muted);
+  --forge-runtime-location-title: var(--forge-text-primary);
+  --forge-runtime-exit-button: var(--forge-accent-primary);
 
   /* Focus */
   --forge-focus-zone-ring: 1px solid #c0392b;

@@ -42,7 +42,12 @@ import { symbolTableProjection } from '$lib/app/projections/symbol-table';
 import { factSetProjection } from '$lib/app/projections/fact-set';
 import { propertyDependencyIndexProjection } from '$lib/app/projections/property-dependency-index';
 import { rawUrdJsonProjection } from '$lib/app/projections/raw-urd-json';
-import { createWriterTemplate, createEngineerTemplate } from '$lib/app/workspaces/templates';
+import { dialogueGraphProjection } from '$lib/app/projections/dialogue-graph';
+import { typeHierarchyProjection } from '$lib/app/projections/type-hierarchy';
+import { containmentTreeProjection } from '$lib/app/projections/containment-tree';
+import { crossReferenceProjection } from '$lib/app/projections/cross-reference';
+import { createWriterTemplate, createEngineerTemplate, createWorldBuilderTemplate, createDebugTemplate } from '$lib/app/workspaces/templates';
+import { playbackService } from '$lib/app/views/runtime/_shared/PlaybackService.svelte';
 import type { CompilerService } from '$lib/app/compiler/types';
 
 /** Exported file system instance — available after bootstrap(). */
@@ -51,6 +56,9 @@ export let fileSystem: ForgeFileSystem;
 export async function bootstrap(): Promise<() => void> {
   // 1. Register framework bus channels
   registerFrameworkChannels(bus);
+
+  // 1b. Initialise playback service (after channels are registered)
+  playbackService.init();
 
   // 2. Load settings
   await appSettings.load();
@@ -276,7 +284,130 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: null,
   });
 
-  // 4k. Settings/keybindings open as floating dialogs (not zone views)
+  // 4j. Graph views
+  viewRegistry.register({
+    id: 'urd.locationGraph',
+    name: 'Location Graph',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/LocationGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.dialogueFlowGraph',
+    name: 'Dialogue Flow',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/DialogueFlowGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.typeHierarchyGraph',
+    name: 'Type Hierarchy',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/TypeHierarchyGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.propertyDataFlowGraph',
+    name: 'Property Data Flow',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/PropertyDataFlowGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.containmentTree',
+    name: 'Containment Tree',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/ContainmentTree.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.crossReferenceGraph',
+    name: 'Cross-References',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/CrossReferenceGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  // 4k. Runtime views
+  viewRegistry.register({
+    id: 'urd.playPanel',
+    name: 'Play Panel',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/PlayPanel.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.stateInspector',
+    name: 'State Inspector',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/StateInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.eventLog',
+    name: 'Event Log',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/EventLog.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.breadcrumbTrail',
+    name: 'Breadcrumb Trail',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/BreadcrumbTrail.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.coverageOverlay',
+    name: 'Coverage Overlay',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/CoverageOverlay.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  // 4l. Settings/keybindings open as floating dialogs (not zone views)
 
   // 5. Register framework commands
   commandRegistry.register({
@@ -588,6 +719,8 @@ export async function bootstrap(): Promise<() => void> {
   // 5d. Workspace template commands
   workspaceManager.registerTemplate('Writer', createWriterTemplate);
   workspaceManager.registerTemplate('Engineer', createEngineerTemplate);
+  workspaceManager.registerTemplate('World Builder', createWorldBuilderTemplate);
+  workspaceManager.registerTemplate('Debug', createDebugTemplate);
 
   commandRegistry.register({
     id: 'forge.workspace.newWriter',
@@ -605,6 +738,47 @@ export async function bootstrap(): Promise<() => void> {
     category: 'Workspace',
     execute: () => {
       workspaceManager.createFromTemplate('Engineer');
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.workspace.newWorldBuilder',
+    title: 'New World Builder Workspace',
+    category: 'Workspace',
+    execute: () => {
+      workspaceManager.createFromTemplate('World Builder');
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.workspace.newDebug',
+    title: 'New Debug Workspace',
+    category: 'Workspace',
+    execute: () => {
+      workspaceManager.createFromTemplate('Debug');
+      return null;
+    },
+  });
+
+  // 5e. Playback commands
+  commandRegistry.register({
+    id: 'urd.play.start',
+    title: 'Start Playback',
+    category: 'Play',
+    execute: () => {
+      playbackService.loadWorld();
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'urd.play.reset',
+    title: 'Reset Playback',
+    category: 'Play',
+    execute: () => {
+      playbackService.reset();
       return null;
     },
   });
@@ -716,6 +890,10 @@ export async function bootstrap(): Promise<() => void> {
   projectionRegistry.register(factSetProjection);
   projectionRegistry.register(propertyDependencyIndexProjection);
   projectionRegistry.register(rawUrdJsonProjection);
+  projectionRegistry.register(dialogueGraphProjection);
+  projectionRegistry.register(typeHierarchyProjection);
+  projectionRegistry.register(containmentTreeProjection);
+  projectionRegistry.register(crossReferenceProjection);
 
   // 8c. Recompile pipeline
   const compilerService: CompilerService = isTauri
@@ -827,6 +1005,7 @@ export async function bootstrap(): Promise<() => void> {
   return () => {
     removeKeybindings();
     recompilePipeline.stop();
+    playbackService.destroy();
     unsubProjectOpen();
     unsubProjectClose();
     document.removeEventListener('pointerdown', onZoneFocus);
