@@ -11,6 +11,7 @@
   import ZoneShell from './ZoneShell.svelte';
   import ZoneRenderer from './ZoneRenderer.svelte';
   import type { ZoneStateStore } from './ZoneStateStore';
+  import { viewRegistry } from '../views/ViewRegistry';
 
   interface Props {
     node: ZoneTree;
@@ -25,14 +26,19 @@
 </script>
 
 {#if isLeaf(node)}
+  {@const isSingleton = viewRegistry.isSingleton(node.zoneTypeId)}
   <ZoneShell
     zoneId={node.id}
     zoneTypeId={node.zoneTypeId}
-    zoneState={zoneStates.get(node.id, node.zoneTypeId)}
+    zoneState={isSingleton
+      ? zoneStates.getSingletonState(node.zoneTypeId)
+      : zoneStates.get(node.id, node.zoneTypeId)}
     {projectOpen}
     onChangeType={(typeId) => dispatch({ type: 'changeType', zoneId: node.id, newTypeId: typeId })}
     onSplit={(direction) => dispatch({ type: 'split', zoneId: node.id, direction })}
-    onStateChange={(state) => zoneStates.set(node.id, node.zoneTypeId, state)}
+    onStateChange={(state) => isSingleton
+      ? zoneStates.setSingletonState(node.zoneTypeId, state)
+      : zoneStates.set(node.id, node.zoneTypeId, state)}
     onContextMenu={(e) => onZoneContextMenu(e, node.id, node.zoneTypeId)}
   />
 {:else}

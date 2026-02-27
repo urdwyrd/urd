@@ -62,6 +62,55 @@ export class ZoneStateStore {
     });
   }
 
+  /** Returns singleton state shared across all zones of a given singleton view type. */
+  getSingletonState(zoneTypeId: string): unknown {
+    const key = `singleton::${zoneTypeId}`;
+    const entry = this.store.get(key);
+    const view = viewRegistry.get(zoneTypeId);
+
+    if (!entry || !view) {
+      return view?.defaultState ?? null;
+    }
+
+    if (entry.stateVersion === view.stateVersion) {
+      return entry.data;
+    }
+
+    // State version mismatch — try migration
+    if (view.migrateState) {
+      try {
+        const migrated = view.migrateState(entry.data, entry.stateVersion);
+        if (migrated !== undefined) {
+          this.store.set(key, { stateVersion: view.stateVersion, data: migrated });
+          return migrated;
+        }
+      } catch (err) {
+        console.warn(`Singleton state migration failed for ${key}:`, err);
+      }
+    }
+
+    return view.defaultState;
+  }
+
+  /** Persists singleton state shared across all zones of a given singleton view type. */
+  setSingletonState(zoneTypeId: string, state: unknown): void {
+    const key = `singleton::${zoneTypeId}`;
+    const view = viewRegistry.get(zoneTypeId);
+    this.store.set(key, {
+      stateVersion: view?.stateVersion ?? 1,
+      data: state,
+    });
+  }
+
+  /** Copy all singleton:: entries from another store into this one. */
+  importSingletonStates(source: ZoneStateStore): void {
+    for (const [key, value] of source.store) {
+      if (key.startsWith('singleton::')) {
+        this.store.set(key, value);
+      }
+    }
+  }
+
   /** Clears all state for a zone when it is destroyed (via merge). */
   purge(zoneId: string): void {
     const prefix = `zone:${zoneId}::`;

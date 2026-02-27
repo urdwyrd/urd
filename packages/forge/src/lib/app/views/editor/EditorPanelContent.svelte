@@ -21,7 +21,6 @@
   import { urdGutter, type GutterDataProvider } from './urd-gutter';
   import type { EntityRow } from '$lib/app/projections/entity-table';
   import type { PropertyRow } from '$lib/app/projections/property-table';
-  import type { DefinitionIndex as DefIdx } from '$lib/app/projections/definition-index';
   import { autocompletion } from '@codemirror/autocomplete';
   import type { Extension } from '@codemirror/state';
   import type { FactSet, PropertyDependencyIndex } from '$lib/app/compiler/types';
@@ -205,9 +204,6 @@
     return {
       getDiagnosticsByFile() {
         return projectionRegistry.get<FileDiagnostics[]>('urd.projection.diagnosticsByFile');
-      },
-      getDefinitionIndex() {
-        return projectionRegistry.get<DefIdx>('urd.projection.definitionIndex');
       },
       getCurrentFile() {
         return filePath;

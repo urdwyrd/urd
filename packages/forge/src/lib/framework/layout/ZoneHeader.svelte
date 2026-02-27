@@ -65,9 +65,16 @@
         {#each [...viewsByCategory()] as [category, views]}
           <div class="forge-zone-header__category">{category}</div>
           {#each views as view}
+            {@const isDisabledSingleton =
+              viewRegistry.isSingleton(view.id) &&
+              viewRegistry.isSingletonActive(view.id) &&
+              viewRegistry.getSingletonZoneId(view.id) !== zoneId}
             <button
               class="forge-zone-header__option"
               class:forge-zone-header__option--active={view.id === zoneTypeId}
+              class:forge-zone-header__option--disabled={isDisabledSingleton}
+              disabled={isDisabledSingleton}
+              title={isDisabledSingleton ? 'Already visible in another panel' : ''}
               onclick={() => selectView(view.id)}
             >
               {view.name}
@@ -168,6 +175,15 @@
 
   .forge-zone-header__option--active {
     color: var(--forge-accent-primary);
+  }
+
+  .forge-zone-header__option--disabled {
+    color: var(--forge-text-muted);
+    cursor: default;
+  }
+
+  .forge-zone-header__option--disabled:hover {
+    background: transparent;
   }
 
   .forge-zone-header__actions {

@@ -8,9 +8,8 @@
   import ZoneErrorBoundary from './ZoneErrorBoundary.svelte';
   import ZoneLoadingState from './ZoneLoadingState.svelte';
   import { viewRegistry } from '../views/ViewRegistry';
-  import { bus } from '../bus/MessageBus';
+  import { focusService } from '../focus/FocusService.svelte';
   import type { Component } from 'svelte';
-  import { onMount } from 'svelte';
 
   interface Props {
     zoneId: string;
@@ -38,12 +37,51 @@
   let loading = $state(true);
   let loadError = $state<string | null>(null);
   let reloadKey = $state(0);
+  let isSingletonBlocked = $state(false);
+
+  // Singleton lifecycle — claim/release ownership
+  $effect(() => {
+    const typeId = zoneTypeId;
+    const id = zoneId;
+    isSingletonBlocked = false;
+
+    if (viewRegistry.isSingleton(typeId)) {
+      if (viewRegistry.isSingletonActive(typeId) && viewRegistry.getSingletonZoneId(typeId) !== id) {
+        // Another zone owns this singleton — show placeholder
+        isSingletonBlocked = true;
+        loading = false;
+        loadedComponent = null;
+        loadError = null;
+        return;
+      }
+      // Claim ownership
+      viewRegistry.markSingletonActive(typeId, id);
+    }
+
+    return () => {
+      // Release ownership when zone type changes or component unmounts
+      if (viewRegistry.isSingleton(typeId) && viewRegistry.getSingletonZoneId(typeId) === id) {
+        viewRegistry.markSingletonInactive(typeId);
+      }
+    };
+  });
+
+  function focusOwner(): void {
+    const ownerZoneId = viewRegistry.getSingletonZoneId(zoneTypeId);
+    if (ownerZoneId) {
+      focusService.focusZone(ownerZoneId, zoneTypeId);
+    }
+  }
 
   // Load the view component lazily
   $effect(() => {
     // Re-run when zoneTypeId or reloadKey changes
     const typeId = zoneTypeId;
     const _key = reloadKey;
+
+    // Skip loading if this zone is blocked by singleton ownership
+    if (isSingletonBlocked) return;
+
     loading = true;
     loadError = null;
     loadedComponent = null;
@@ -85,28 +123,35 @@
 
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="forge-zone-viewport" oncontextmenu={(e) => { e.preventDefault(); onContextMenu(e); }}>
-    <ZoneErrorBoundary
-      {zoneId}
-      {zoneTypeId}
-      onReload={handleReload}
-      {onChangeType}
-    >
-      {#if loading}
-        <ZoneLoadingState />
-      {:else if loadError}
-        <div class="forge-zone-viewport__error">
-          <p>Failed to load view: {loadError}</p>
-        </div>
-      {:else if loadedComponent}
-        {@const ViewComponent = loadedComponent}
-        <ViewComponent
-          {zoneId}
-          {zoneTypeId}
-          state={zoneState}
-          {onStateChange}
-        />
-      {/if}
-    </ZoneErrorBoundary>
+    {#if isSingletonBlocked}
+      <div class="forge-zone-viewport__singleton-placeholder">
+        <p>Already visible in another panel</p>
+        <button class="forge-zone-viewport__focus-btn" onclick={focusOwner}>Focus</button>
+      </div>
+    {:else}
+      <ZoneErrorBoundary
+        {zoneId}
+        {zoneTypeId}
+        onReload={handleReload}
+        {onChangeType}
+      >
+        {#if loading}
+          <ZoneLoadingState />
+        {:else if loadError}
+          <div class="forge-zone-viewport__error">
+            <p>Failed to load view: {loadError}</p>
+          </div>
+        {:else if loadedComponent}
+          {@const ViewComponent = loadedComponent}
+          <ViewComponent
+            {zoneId}
+            {zoneTypeId}
+            state={zoneState}
+            {onStateChange}
+          />
+        {/if}
+      </ZoneErrorBoundary>
+    {/if}
   </div>
 </div>
 
@@ -135,5 +180,31 @@
     color: var(--forge-status-error);
     font-size: var(--forge-font-size-sm);
     padding: var(--forge-space-xl);
+  }
+
+  .forge-zone-viewport__singleton-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: var(--forge-space-md);
+    color: var(--forge-text-muted);
+    font-family: var(--forge-font-family-ui);
+    font-size: var(--forge-font-size-sm);
+  }
+
+  .forge-zone-viewport__focus-btn {
+    padding: var(--forge-space-xs) var(--forge-space-md);
+    border: 1px solid var(--forge-border-zone);
+    border-radius: var(--forge-radius-sm);
+    background: var(--forge-bg-secondary);
+    color: var(--forge-text-primary);
+    font-size: var(--forge-font-size-sm);
+    cursor: pointer;
+  }
+
+  .forge-zone-viewport__focus-btn:hover {
+    background: var(--forge-bg-tertiary);
   }
 </style>

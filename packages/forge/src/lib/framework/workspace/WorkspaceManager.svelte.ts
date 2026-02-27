@@ -6,6 +6,7 @@ import type { ZoneTree, ZoneTreeAction } from '../types';
 import { zoneTreeReducer, createLeaf } from '../layout/ZoneTree';
 import { ZoneStateStore } from '../layout/ZoneStateStore';
 import { bus } from '../bus/MessageBus';
+import { viewRegistry } from '../views/ViewRegistry';
 import type { SerializedWorkspace, SerializedWorkspaceSet } from './types';
 
 export interface Workspace {
@@ -50,6 +51,17 @@ export class WorkspaceManager {
 
   activate(index: number): void {
     if (index >= 0 && index < this.workspaces.length) {
+      // Transfer singleton state (e.g. Code Editor tabs) to the target workspace
+      const outgoing = this.workspaces[this.activeIndex];
+      const incoming = this.workspaces[index];
+      if (outgoing && incoming && outgoing !== incoming) {
+        incoming.zoneStates.importSingletonStates(outgoing.zoneStates);
+      }
+
+      // Clear singleton ownership before the tree re-renders — avoids race
+      // where new zones mount before old zones unmount their $effect cleanup.
+      viewRegistry.clearActiveSingletons();
+
       this.activeIndex = index;
       if (bus.hasChannel('workspace.switched')) {
         bus.publish('workspace.switched', { index, workspaceId: this.workspaces[index].id });

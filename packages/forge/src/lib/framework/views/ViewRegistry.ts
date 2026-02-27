@@ -35,7 +35,7 @@ export interface ViewRegistration {
 
 export class ViewRegistry {
   private views = new Map<string, ViewRegistration>();
-  private activeSingletons = new Set<string>();
+  private activeSingletons = new Map<string, string>(); // viewTypeId → ownerZoneId
 
   register(view: ViewRegistration): void {
     if (this.views.has(view.id)) {
@@ -78,12 +78,21 @@ export class ViewRegistry {
     return this.activeSingletons.has(id);
   }
 
-  markSingletonActive(id: string): void {
-    this.activeSingletons.add(id);
+  getSingletonZoneId(id: string): string | null {
+    return this.activeSingletons.get(id) ?? null;
+  }
+
+  markSingletonActive(id: string, zoneId: string): void {
+    this.activeSingletons.set(id, zoneId);
   }
 
   markSingletonInactive(id: string): void {
     this.activeSingletons.delete(id);
+  }
+
+  /** Release all singleton ownership. Called on workspace switch before new zones mount. */
+  clearActiveSingletons(): void {
+    this.activeSingletons.clear();
   }
 
   isSingleton(id: string): boolean {
