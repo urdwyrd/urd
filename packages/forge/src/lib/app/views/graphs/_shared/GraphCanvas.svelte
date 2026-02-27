@@ -48,6 +48,12 @@
   // Container ref
   let svgElement: SVGSVGElement | undefined = $state();
 
+  // Track whether the user has manually zoomed (prevents fitToView from resetting)
+  let userHasZoomed = false;
+
+  // Track previous node count to detect actual data changes
+  let prevNodeCount = 0;
+
   // Unique marker ID for this instance
   const markerId = `arrow-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -108,11 +114,29 @@
     };
   }
 
-  // Fit to view on initial layout or data change
+  // Fit to view on initial layout or when the graph structure actually changes.
+  // Does NOT reset when the user has manually zoomed/panned, unless data changes.
   $effect(() => {
     if (layout && svgElement) {
-      fitToView();
+      const nodeCount = layout.nodes.length;
+      if (nodeCount !== prevNodeCount) {
+        prevNodeCount = nodeCount;
+        userHasZoomed = false;
+        fitToView();
+      } else if (!userHasZoomed) {
+        fitToView();
+      }
     }
+  });
+
+  // Attach wheel listener with { passive: false } so preventDefault() works.
+  // Svelte's onwheel registers passive listeners by default, which silently
+  // ignores preventDefault and lets the parent viewport scroll instead.
+  $effect(() => {
+    const svg = svgElement;
+    if (!svg) return;
+    svg.addEventListener('wheel', handleWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', handleWheel);
   });
 
   function fitToView() {
@@ -152,24 +176,27 @@
   }
 
   function handlePointerUp() {
+    if (dragging) userHasZoomed = true;
     dragging = false;
   }
 
-  // Zoom handler
+  // Zoom handler — attached via addEventListener with { passive: false }
   function handleWheel(e: WheelEvent) {
     e.preventDefault();
+    e.stopPropagation();
     const rect = svgElement!.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
 
     const oldScale = viewScale;
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.max(0.2, Math.min(4, viewScale * delta));
+    const newScale = Math.max(0.1, Math.min(10, viewScale * delta));
 
     // Zoom towards mouse position
     viewX = mouseX - (mouseX - viewX) * (newScale / oldScale);
     viewY = mouseY - (mouseY - viewY) * (newScale / oldScale);
     viewScale = newScale;
+    userHasZoomed = true;
   }
 </script>
 
@@ -186,7 +213,6 @@
       onpointerdown={handlePointerDown}
       onpointermove={handlePointerMove}
       onpointerup={handlePointerUp}
-      onwheel={handleWheel}
     >
       <defs>
         <marker
@@ -219,17 +245,17 @@
     <div class="forge-graph-canvas__toolbar">
       <button
         class="forge-graph-canvas__btn"
-        onclick={fitToView}
+        onclick={() => { userHasZoomed = false; fitToView(); }}
         title="Fit to view"
       >⊡</button>
       <button
         class="forge-graph-canvas__btn"
-        onclick={() => { viewScale = Math.min(4, viewScale * 1.2); }}
+        onclick={() => { viewScale = Math.min(10, viewScale * 1.2); userHasZoomed = true; }}
         title="Zoom in"
       >+</button>
       <button
         class="forge-graph-canvas__btn"
-        onclick={() => { viewScale = Math.max(0.2, viewScale * 0.8); }}
+        onclick={() => { viewScale = Math.max(0.1, viewScale * 0.8); userHasZoomed = true; }}
         title="Zoom out"
       >−</button>
     </div>
