@@ -18,11 +18,16 @@
     onSwap: () => void;
     onReset: () => void;
     onContextMenu: (e: MouseEvent) => void;
+    /** Called when drag enters/exits merge zone. null clears the preview. */
+    onMergePreview?: (direction: 'first' | 'second' | null) => void;
   }
 
-  let { splitNode, onResize, onJoin, onSwap, onReset, onContextMenu }: Props = $props();
+  let { splitNode, onResize, onJoin, onSwap, onReset, onContextMenu, onMergePreview }: Props = $props();
+
+  const MERGE_THRESHOLD = 0.05;
 
   let dragging = $state(false);
+  let mergeDirection = $state<'first' | 'second' | null>(null);
   let splitRect: DOMRect | null = null;
 
   function findSplitContainer(el: HTMLElement): HTMLElement | null {
@@ -54,10 +59,32 @@
       ratio = (e.clientY - splitRect.top) / splitRect.height;
     }
 
+    // Detect merge zones
+    let newMerge: 'first' | 'second' | null = null;
+    if (ratio < MERGE_THRESHOLD) {
+      newMerge = 'first';
+    } else if (ratio > 1 - MERGE_THRESHOLD) {
+      newMerge = 'second';
+    }
+
+    if (newMerge !== mergeDirection) {
+      mergeDirection = newMerge;
+      onMergePreview?.(mergeDirection);
+    }
+
     onResize(Math.max(0.1, Math.min(0.9, ratio)));
   }
 
   function onPointerUp() {
+    if (mergeDirection) {
+      // Commit the merge — keep the opposite pane
+      const keep = mergeDirection === 'first' ? 'second' : 'first';
+      mergeDirection = null;
+      onMergePreview?.(null);
+      onJoin(keep);
+    } else {
+      onMergePreview?.(null);
+    }
     dragging = false;
     splitRect = null;
   }

@@ -5,18 +5,29 @@
 
   import type { SplitNode } from '../types';
   import type { Snippet } from 'svelte';
+  import MergeOverlay from './MergeOverlay.svelte';
 
   interface Props {
     splitNode: SplitNode;
     first: Snippet;
     second: Snippet;
     divider: Snippet;
+    /** Which pane is being targeted for merge (set by Divider via onMergePreview). */
+    mergePreview?: 'first' | 'second' | null;
   }
 
-  let { splitNode, first, second, divider }: Props = $props();
+  let { splitNode, first, second, divider, mergePreview = null }: Props = $props();
 
   let firstSize = $derived(`${splitNode.ratio * 100}%`);
   let secondSize = $derived(`${(1 - splitNode.ratio) * 100}%`);
+
+  let mergeOverlayDirection = $derived.by(() => {
+    if (!mergePreview) return null;
+    if (splitNode.direction === 'horizontal') {
+      return mergePreview === 'first' ? 'right' as const : 'left' as const;
+    }
+    return mergePreview === 'first' ? 'down' as const : 'up' as const;
+  });
 </script>
 
 <div
@@ -27,12 +38,18 @@
 >
   <div class="forge-split__pane forge-split__pane--first" style:flex-basis={firstSize}>
     {@render first()}
+    {#if mergePreview === 'first' && mergeOverlayDirection}
+      <MergeOverlay direction={mergeOverlayDirection} />
+    {/if}
   </div>
   <div class="forge-split__divider-slot">
     {@render divider()}
   </div>
   <div class="forge-split__pane forge-split__pane--second" style:flex-basis={secondSize}>
     {@render second()}
+    {#if mergePreview === 'second' && mergeOverlayDirection}
+      <MergeOverlay direction={mergeOverlayDirection} />
+    {/if}
   </div>
 </div>
 

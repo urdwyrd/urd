@@ -19,6 +19,8 @@
     onNodeClick?: (nodeId: string) => void;
     onNodeDblClick?: (nodeId: string) => void;
     emptyMessage?: string;
+    /** Bindable ref to the underlying SVG element (for export). */
+    svgRef?: SVGSVGElement | undefined;
   }
 
   let {
@@ -31,6 +33,7 @@
     onNodeClick,
     onNodeDblClick,
     emptyMessage = 'No data to display',
+    svgRef = $bindable(undefined),
   }: Props = $props();
 
   // Pan/zoom state
@@ -107,6 +110,11 @@
       height: graphMeta.height ?? 0,
     };
   }
+
+  // Expose SVG ref to parent via bindable prop
+  $effect(() => {
+    svgRef = svgElement;
+  });
 
   // Fit to view on initial layout or data change
   $effect(() => {

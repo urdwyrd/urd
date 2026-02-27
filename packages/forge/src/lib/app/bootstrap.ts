@@ -1307,6 +1307,98 @@ export async function bootstrap(): Promise<() => void> {
     },
   });
 
+  // 5f. Export commands
+  commandRegistry.register({
+    id: 'forge.export.csv',
+    title: 'Export as CSV',
+    category: 'File',
+    execute: async () => {
+      const zoneType = focusService.activeZoneType;
+      if (!zoneType) return null;
+
+      const { spreadsheetExportRegistry } = await import('$lib/app/export/spreadsheet-export-registry');
+      const entry = spreadsheetExportRegistry[zoneType];
+      if (!entry) return null;
+
+      const data = projectionRegistry.get(entry.projectionId);
+      if (!data || !Array.isArray(data)) return null;
+
+      const { exportTableToCSV } = await import('$lib/framework/export/csv-export');
+      const timestamp = new Date().toISOString().slice(0, 10);
+      exportTableToCSV(entry.columns, data as Record<string, unknown>[], `${entry.label}-${timestamp}`);
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.export.svg',
+    title: 'Export as SVG',
+    category: 'File',
+    execute: async () => {
+      const zoneType = focusService.activeZoneType;
+      if (!zoneType) return null;
+
+      // Find the focused zone's SVG element
+      const zoneId = focusService.activeZoneId;
+      if (!zoneId) return null;
+
+      const zoneEl = document.querySelector(`[data-zone-id="${zoneId}"]`);
+      const svgEl = zoneEl?.querySelector('svg') as SVGSVGElement | null;
+      if (!svgEl) return null;
+
+      const { exportSvgFromElement } = await import('$lib/framework/export/svg-export');
+      const timestamp = new Date().toISOString().slice(0, 10);
+      const viewName = zoneType.replace(/^urd\./, '').replace(/([A-Z])/g, '-$1').toLowerCase();
+      exportSvgFromElement(svgEl, `${viewName}-${timestamp}`);
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.export.print',
+    title: 'Print View',
+    category: 'File',
+    execute: async () => {
+      const zoneType = focusService.activeZoneType;
+      if (!zoneType) return null;
+
+      // Try spreadsheet export first
+      const { spreadsheetExportRegistry } = await import('$lib/app/export/spreadsheet-export-registry');
+      const entry = spreadsheetExportRegistry[zoneType];
+      if (entry) {
+        const data = projectionRegistry.get(entry.projectionId);
+        if (data && Array.isArray(data)) {
+          const rows = data as Record<string, unknown>[];
+          const headerCells = entry.columns.map((c) => `<th>${c.label}</th>`).join('');
+          const bodyRows = rows.map((row) => {
+            const cells = entry.columns.map((col) => {
+              const val = row[col.key];
+              return `<td>${val == null ? '' : String(val)}</td>`;
+            }).join('');
+            return `<tr>${cells}</tr>`;
+          }).join('\n');
+          const html = `<table><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+
+          const { exportViewToPrint } = await import('$lib/framework/export/print-export');
+          exportViewToPrint(entry.label, html);
+          return null;
+        }
+      }
+
+      // Fallback: print the zone viewport content
+      const zoneId = focusService.activeZoneId;
+      if (zoneId) {
+        const zoneEl = document.querySelector(`[data-zone-id="${zoneId}"]`);
+        const viewport = zoneEl?.querySelector('.forge-zone-viewport');
+        if (viewport) {
+          const { exportViewToPrint } = await import('$lib/framework/export/print-export');
+          exportViewToPrint(zoneType, viewport.innerHTML);
+        }
+      }
+      return null;
+    },
+  });
+
   // 6. Register menu contributions
   registerMenuContribution({ menu: 'file', group: 'project', order: 1, commandId: 'forge.project.open', label: 'Open Project' });
   registerMenuContribution({ menu: 'file', group: 'project', order: 2, commandId: 'forge.project.close', label: 'Close Project' });
@@ -1315,6 +1407,10 @@ export async function bootstrap(): Promise<() => void> {
   registerMenuContribution({ menu: 'edit', group: 'palette', order: 1, commandId: 'forge.edit.commandPalette', label: 'Command Palette' });
   registerMenuContribution({ menu: 'edit', group: 'settings', order: 10, commandId: 'forge.settings.open', label: 'Settings' });
   registerMenuContribution({ menu: 'edit', group: 'settings', order: 11, commandId: 'forge.settings.openKeybindings', label: 'Keybindings' });
+
+  registerMenuContribution({ menu: 'file', group: 'export', order: 10, commandId: 'forge.export.csv', label: 'Export as CSV' });
+  registerMenuContribution({ menu: 'file', group: 'export', order: 11, commandId: 'forge.export.svg', label: 'Export as SVG' });
+  registerMenuContribution({ menu: 'file', group: 'export', order: 12, commandId: 'forge.export.print', label: 'Print View' });
 
   registerMenuContribution({ menu: 'view', group: 'fullscreen', order: 1, commandId: 'forge.window.toggleFullscreen', label: 'Toggle Fullscreen' });
   registerMenuContribution({ menu: 'view', group: 'theme', order: 2, commandId: 'forge.theme.toggle', label: 'Toggle Theme' });
@@ -1363,6 +1459,20 @@ export async function bootstrap(): Promise<() => void> {
         }
       }
       await scanDir(path);
+      // Load per-project settings overrides from .forge/project.json
+      try {
+        const projectJsonPath = `${path}/.forge/project.json`;
+        const projectJsonExists = await fileSystem.exists(projectJsonPath);
+        if (projectJsonExists) {
+          const raw = await fileSystem.readFile(projectJsonPath);
+          const parsed = JSON.parse(raw);
+          if (parsed.settings && typeof parsed.settings === 'object') {
+            appSettings.setProjectOverrides(parsed.settings);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load project settings:', err);
+      }
     } catch (err) {
       console.error('Failed to populate buffers on project open:', err);
     }
@@ -1390,11 +1500,12 @@ export async function bootstrap(): Promise<() => void> {
     }
   });
 
-  // On project close: clear buffer map and projections, stop pipeline
+  // On project close: clear buffer map, projections, and project overrides; stop pipeline
   const unsubProjectClose = bus.subscribe('project.closed', () => {
     recompilePipeline.stop();
     bufferMap.clear();
     projectionRegistry.clear();
+    appSettings.setProjectOverrides(null);
   });
 
   // 8b. Register projections
@@ -1451,6 +1562,39 @@ export async function bootstrap(): Promise<() => void> {
 
   // (Pipeline start + initial compile + auto-open are handled in the
   //  project.opened handler above, after buffer population completes.)
+
+  // 8d. Debug commands — registered after compiler service is available
+  commandRegistry.register({
+    id: 'forge.debug.loadStressFixture',
+    title: 'Load Stress Fixture (50k entities)',
+    category: 'Debug',
+    execute: async () => {
+      if (compilerService instanceof MockCompilerService) {
+        const output = await compilerService.loadFixture('stress-50k-entities');
+        const resolved = compilerCache.resolve(output);
+        const hashes: Record<string, string> = {};
+        for (const chunk of output.chunks) hashes[chunk.name] = chunk.contentHash;
+        projectionRegistry.updateSource(resolved, hashes);
+      }
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.debug.loadStressDiagnostics',
+    title: 'Load Stress Fixture (huge diagnostics)',
+    category: 'Debug',
+    execute: async () => {
+      if (compilerService instanceof MockCompilerService) {
+        const output = await compilerService.loadFixture('stress-huge-diagnostics');
+        const resolved = compilerCache.resolve(output);
+        const hashes: Record<string, string> = {};
+        for (const chunk of output.chunks) hashes[chunk.name] = chunk.contentHash;
+        projectionRegistry.updateSource(resolved, hashes);
+      }
+      return null;
+    },
+  });
 
   // Auto-reopen last project on startup (or mock project in browser dev mode)
   if (!isTauri) {

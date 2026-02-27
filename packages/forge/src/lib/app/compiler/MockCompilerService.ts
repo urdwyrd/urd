@@ -77,4 +77,32 @@ export class MockCompilerService implements CompilerService {
 
     return output;
   }
+
+  /**
+   * Load a named stress fixture and use it as the compile output.
+   * Fixtures are loaded via fetch to avoid Rollup bundling issues.
+   * Run `pnpm generate:fixtures` to create them before using.
+   */
+  async loadFixture(name: 'stress-50k-entities' | 'stress-huge-diagnostics'): Promise<CompilerOutput> {
+    const url = `/fixtures/${name}.json`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Stress fixture not found: ${url}. Run: pnpm generate:fixtures`);
+    }
+    const fixture = (await response.json()) as CompilerOutput;
+    compileCounter++;
+
+    const output: CompilerOutput = {
+      header: {
+        ...fixture.header,
+        compileId: `stress-${compileCounter}`,
+        timestamp: Date.now(),
+      },
+      chunks: fixture.chunks,
+    };
+
+    this.lastInputHash = null;
+    this.lastOutput = output;
+    return output;
+  }
 }

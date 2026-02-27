@@ -1,0 +1,2 @@
+# Generated stress fixtures — regenerate with: pnpm generate:fixtures
+stress-*.json

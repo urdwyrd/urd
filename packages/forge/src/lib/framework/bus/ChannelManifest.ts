@@ -11,6 +11,7 @@ export function registerFrameworkChannels(bus: MessageBus): void {
 
   // Settings changes (retainLast so late subscribers see current state)
   bus.registerChannel({ id: 'settings.changed', domain: 'settings', retainLast: true });
+  bus.registerChannel({ id: 'settings.projectOverride.changed', domain: 'settings', retainLast: true });
 
   // Theme changes
   bus.registerChannel({ id: 'theme.changed', domain: 'theme', retainLast: true });

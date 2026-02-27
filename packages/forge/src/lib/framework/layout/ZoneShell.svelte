@@ -7,6 +7,7 @@
   import ZoneHeader from './ZoneHeader.svelte';
   import ZoneErrorBoundary from './ZoneErrorBoundary.svelte';
   import ZoneLoadingState from './ZoneLoadingState.svelte';
+  import CornerHotspot from './CornerHotspot.svelte';
   import { viewRegistry } from '../views/ViewRegistry';
   import { focusService } from '../focus/FocusService.svelte';
   import type { Component } from 'svelte';
@@ -123,6 +124,7 @@
 
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="forge-zone-viewport" oncontextmenu={(e) => { e.preventDefault(); onContextMenu(e); }}>
+    <CornerHotspot {onSplit} />
     {#if isSingletonBlocked}
       <div class="forge-zone-viewport__singleton-placeholder">
         <p>Already visible in another panel</p>

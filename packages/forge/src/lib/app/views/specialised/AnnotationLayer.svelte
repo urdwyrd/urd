@@ -11,6 +11,9 @@
   import { bus } from '$lib/framework/bus/MessageBus';
   import { navigationBroker } from '$lib/framework/navigation/NavigationBroker';
   import { selectionContext } from '$lib/framework/selection/SelectionContext';
+  import { AnnotationService, type PersistedAnnotation } from '$lib/app/services/AnnotationService';
+  import { fileSystem } from '$lib/app/bootstrap';
+  import { projectManager } from '$lib/framework/project/ProjectManager.svelte';
 
   interface Props {
     zoneId: string;
@@ -22,7 +25,7 @@
   let { zoneId, zoneTypeId, state: zoneState, onStateChange }: Props = $props();
 
   interface Annotation {
-    id: number;
+    id: string;
     file: string;
     line: number;
     note: string;
@@ -34,13 +37,52 @@
   let noteText = $state('');
   let noteFile = $state('');
   let noteLine = $state(1);
-  let nextId = $state(1);
+
+  const annotationService = new AnnotationService(fileSystem);
+
+  // Load annotations when project opens
+  let unsubOpen: (() => void) | undefined;
+  let unsubClose: (() => void) | undefined;
+
+  onMount(() => {
+    // If a project is already open, load annotations immediately
+    if (projectManager.isOpen) {
+      loadAnnotations();
+    }
+
+    unsubOpen = bus.subscribe('project.opened', () => {
+      loadAnnotations();
+    });
+
+    unsubClose = bus.subscribe('project.closed', () => {
+      annotations = [];
+    });
+  });
+
+  onDestroy(() => {
+    unsubOpen?.();
+    unsubClose?.();
+    annotationService.dispose();
+  });
+
+  async function loadAnnotations(): Promise<void> {
+    const path = projectManager.currentPath;
+    if (!path) return;
+    const loaded = await annotationService.load(path);
+    annotations = loaded;
+  }
+
+  function persistAnnotations(): void {
+    const path = projectManager.currentPath;
+    if (!path) return;
+    annotationService.save(path, annotations as PersistedAnnotation[]);
+  }
 
   function handleAddNote(): void {
     if (!noteText.trim()) return;
 
     const annotation: Annotation = {
-      id: nextId++,
+      id: crypto.randomUUID(),
       file: noteFile.trim() || '(no file)',
       line: noteLine,
       note: noteText.trim(),
@@ -48,14 +90,16 @@
     };
 
     annotations = [...annotations, annotation];
+    persistAnnotations();
     noteText = '';
     noteFile = '';
     noteLine = 1;
     showForm = false;
   }
 
-  function handleRemove(id: number): void {
+  function handleRemove(id: string): void {
     annotations = annotations.filter((a) => a.id !== id);
+    persistAnnotations();
   }
 
   function handleNavigate(annotation: Annotation): void {

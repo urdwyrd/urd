@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "lint": "eslint src/ && svelte-check",
-    "typecheck": "svelte-check --tsconfig tsconfig.json"
+    "typecheck": "svelte-check --tsconfig tsconfig.json",
+    "generate:fixtures": "tsx scripts/generate-stress-fixtures.ts"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^5.0.0",

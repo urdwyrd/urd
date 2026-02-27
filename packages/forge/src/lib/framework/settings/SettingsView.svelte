@@ -54,6 +54,11 @@
       case 'Behaviour': return ['Auto Save on Compile', 'Recompile Debounce', 'Open Last Project on Launch'];
     }
   }
+
+  /** Show a project override badge if the setting is overridden. */
+  function isOverridden(key: keyof AppSettings): boolean {
+    return appSettings.isOverriddenByProject(key);
+  }
 </script>
 
 <div class="forge-settings">
@@ -85,7 +90,7 @@
       <h3 class="forge-settings__heading">Appearance</h3>
 
       <label class="forge-settings__row">
-        <span class="forge-settings__label">Theme</span>
+        <span class="forge-settings__label">Theme {#if isOverridden('theme')}<span class="forge-settings__badge" title="Overridden by project">P</span>{/if}</span>
         <select
           class="forge-settings__select"
           value={appSettings.get('theme')}
@@ -97,7 +102,7 @@
       </label>
 
       <label class="forge-settings__row">
-        <span class="forge-settings__label">UI Font Size</span>
+        <span class="forge-settings__label">UI Font Size {#if isOverridden('uiFontSize')}<span class="forge-settings__badge" title="Overridden by project">P</span>{/if}</span>
         <input
           class="forge-settings__input forge-settings__input--number"
           type="number"
@@ -135,7 +140,7 @@
       </label>
 
       <label class="forge-settings__row">
-        <span class="forge-settings__label">Tab Size</span>
+        <span class="forge-settings__label">Tab Size {#if isOverridden('editorTabSize')}<span class="forge-settings__badge" title="Overridden by project">P</span>{/if}</span>
         <input
           class="forge-settings__input forge-settings__input--number"
           type="number"
@@ -313,6 +318,20 @@
   .forge-settings__label {
     color: var(--forge-text-secondary);
     font-size: var(--forge-font-size-sm);
+  }
+
+  .forge-settings__badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 4px;
+    border-radius: 3px;
+    background: var(--forge-accent-primary, #5b9bd5);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 16px;
+    vertical-align: middle;
+    letter-spacing: 0.05em;
   }
 
   .forge-settings__select {

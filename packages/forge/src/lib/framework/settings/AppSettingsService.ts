@@ -128,6 +128,7 @@ export class MemorySettingsIO implements SettingsIO {
 
 export class AppSettingsService {
   private settings: AppSettings = { ...DEFAULT_SETTINGS };
+  private projectOverrides: Partial<AppSettings> | null = null;
   private io: SettingsIO;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private loaded = false;
@@ -137,11 +138,30 @@ export class AppSettingsService {
   }
 
   get current(): Readonly<AppSettings> {
+    if (this.projectOverrides) {
+      return { ...this.settings, ...this.projectOverrides };
+    }
     return this.settings;
   }
 
   get<K extends keyof AppSettings>(key: K): AppSettings[K] {
+    if (this.projectOverrides && key in this.projectOverrides) {
+      return this.projectOverrides[key] as AppSettings[K];
+    }
     return this.settings[key];
+  }
+
+  /** Set project-level overrides. Pass null to clear. */
+  setProjectOverrides(overrides: Partial<AppSettings> | null): void {
+    this.projectOverrides = overrides;
+    if (bus.hasChannel('settings.projectOverride.changed')) {
+      bus.publish('settings.projectOverride.changed', { overrides });
+    }
+  }
+
+  /** Check whether a key is overridden by project settings. */
+  isOverriddenByProject(key: keyof AppSettings): boolean {
+    return this.projectOverrides !== null && key in this.projectOverrides;
   }
 
   set<K extends keyof AppSettings>(key: K, value: AppSettings[K]): void {
