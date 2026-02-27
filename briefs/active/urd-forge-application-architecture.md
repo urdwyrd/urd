@@ -10,8 +10,8 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** 2026-02-26 (Phase 1), 2026-02-26 (Phase 2)
-**Status:** In Progress — Phases 1–2 complete, Phases 3–8 pending
+**Date completed:** 2026-02-26 (Phase 1), 2026-02-26 (Phase 2), 2026-02-27 (Phases 3–6)
+**Status:** In Progress — Phases 1–6 complete, Phases 7–8 pending
 
 ### What was done
 
@@ -66,16 +66,66 @@ Built the core pipeline from compiler to UI, connecting all framework services:
 
 **~4100 additional lines across 44 new/modified files.** 73 frontend tests (9 test suites) + 3 Rust tests, all passing. `tauri dev` launches cleanly.
 
+**Phases 3–4: Code Editor + Tier 1 Views** — completed 2026-02-27 across multiple commits.
+
+Built the full editing experience and first-class views:
+
+- **Code Editor** (`CodeEditorZone.svelte`) — singleton view using `dockview-core` for VS Code-style tab groups. Each tab hosts a `EditorPanelContent.svelte` with CodeMirror 6: Urd syntax highlighting (`urd-language.ts`), inline/gutter diagnostics (`urd-diagnostics.ts`, `urd-gutter.ts`), autocomplete (`urd-autocomplete.ts`), hover tooltips (`urd-hover.ts`), code lens (`urd-code-lens.ts`), cursor-aware navigation (`urd-navigation.ts`, `cursor-resolver.ts`), breadcrumb trail (`Breadcrumb.svelte`), tab bar (`TabBar.svelte`). Custom theme (`urd-theme.ts`) and dockview CSS override (`dockview-forge.css`).
+- **Singleton enforcement** — `ViewRegistry.activeSingletons` Map tracks owner zone per singleton type. `ZoneShell.svelte` claims/releases ownership via `$effect`. Duplicate zones show "Already visible" placeholder with Focus button. `ZoneRenderer.svelte` routes singleton state via `getSingletonState`/`setSingletonState`. `ZoneHeader.svelte` disables active singletons in dropdown. State transfers across workspace switches via `importSingletonStates()`.
+- **Spreadsheet views** (6) — Entity, Type, Property, Location, Section, Diagnostic spreadsheets. All use shared `VirtualTable.svelte` with `ColumnHeader.svelte`, `FilterBar.svelte`, and `SortControls`. Reactive data from projections via `compiler.completed` bus events.
+- **Inspector views** — `PropertyInspector.svelte` with `InspectorPanel.svelte`/`InspectorSection.svelte` shared components.
+- **Navigation views** — `FileBrowser.svelte` with `FileTreeNode.svelte` tree rendering. `OutlinePanel.svelte` for document structure. `GlobalSymbolSearch.svelte` for cross-file symbol search.
+- **Analysis views** — `WorldStatsDashboard.svelte` (stat cards grid), `DeadCodePanel.svelte`.
+- **Projections** (15 total) — entityTable, locationGraph, diagnosticsByFile, definitionIndex, typeTable, propertyTable, locationTable, sectionTable, worldStats, deadCode, outline, urdJson, symbolTable, factSet, propertyDependencyIndex, rawUrdJson.
+- **Workspace templates** — Writer (File Browser | Code Editor | Outline + Inspector) and Engineer (File Browser | Code Editor | Properties + Diagnostics).
+
+**Phase 5: Graph Views** — completed 2026-02-27 in 1 commit.
+
+Built the full graph visualisation layer:
+
+- **`@dagrejs/dagre`** (~15KB) added as dependency for hierarchical directed-graph layout.
+- **GraphCanvas shared component** (`views/graphs/_shared/GraphCanvas.svelte`) — receives `ForgeGraphData`, runs dagre layout, renders SVG with `<g transform>` wrapper. Pan via pointer events, zoom via wheel (clamped 0.2–4.0x), fit-to-view button. Toolbar with zoom in/out/fit controls. `GraphNodeElement.svelte` renders nodes with kind/flag-based CSS classes (start, unreachable, isolated, orphaned, selected). `GraphEdgeElement.svelte` renders edge paths with kind-based styling (normal, conditional, choice_sticky, choice_oneshot, terminal, inheritance, containment, reference). Arrowhead markers via SVG `<defs>`.
+- **Shared graph types** (`graph-types.ts`) — `ForgeGraphNode` (7 kinds, 5 flag fields), `ForgeGraphEdge` (8 kinds), `ForgeGraphData`, `LayoutNode`, `LayoutEdge`, `GraphLayout`.
+- **Location Network Graph** — top-to-bottom layout. Nodes from `urdJson.locations` with diagnostic-driven flags: start (gold accent, `▶` badge), unreachable (dashed rose border via URD430), isolated (dashed faded). Edges from location exits. Node click selects, double-click navigates to Code Editor.
+- **Dialogue Flow Graph** — left-to-right layout. Section nodes from `factSet.jumps`/`factSet.choices`. Terminal pseudo-nodes for `end` and exit targets. Edges annotated with `ChoiceFact` data via `jump_indices` correlation: `+` prefix for sticky, `•` for one-shot. Edge kinds: `choice_sticky` (green solid), `choice_oneshot` (green dashed), `terminal` (grey dotted).
+- **Type Hierarchy Graph** — bottom-to-top layout. Type nodes from `urdJson.types`, inheritance edges from `UrdTypeDef.traits`.
+- **Property Data Flow Graph** — left-to-right layout. Property nodes from `PropertyDependencyIndex`, edges inferred from shared read/write indices. Orphaned properties flagged.
+- **Containment Tree** — top-to-bottom layout. World root → location nodes → entity nodes. Entity placement derived from `UrdLocation.contains`. Nested containment from `UrdEntity.contains`.
+- **Cross-Reference Graph** — left-to-right layout. Location and type nodes from `urdJson`. Reference edges from `factSet.exits` (location→location) and `factSet.reads` (site→type).
+- **4 new projections** — dialogueGraph (factSet+diagnostics), typeHierarchy (urdJson), containmentTree (urdJson), crossReference (factSet+urdJson). Enriched existing `locationGraphProjection` with `ForgeGraphData` model, diagnostic flags, and edge kinds.
+- **World Builder workspace template** — Code Editor (50%) + Location Graph (50%) on top (65%), Entity Spreadsheet on bottom (35%). Registered as template with `forge.workspace.newWorldBuilder` command.
+- **Graph theme tokens** — `--forge-graph-node-start`, `--forge-graph-node-unreachable`, `--forge-graph-node-isolated`, `--forge-graph-edge-conditional`, `--forge-graph-edge-choice`, `--forge-graph-edge-terminal`, `--forge-graph-minimap-bg`, `--forge-graph-minimap-viewport` — defined for both Gloaming (dark) and Parchment (light) themes.
+
+**14 new files, 5 modified files, ~1100 lines.** 95 frontend tests (10 suites) pass. No new type errors beyond pre-existing bootstrap Component type pattern (6 additional, same as all other view registrations).
+
+**Phase 6: Runtime Integration** — completed 2026-02-27 in 1 commit.
+
+Built the mock runtime integration layer for in-IDE playback:
+
+- **Playback types** (`playback-types.ts`) — `PlaybackState` (status, currentLocation, entities, availableExits, activeSection, choices, visitedLocations, turnCount), `PlaybackEvent` (9 event types: move, narration, dialogue, set, section_enter, choice_made, exhausted, world_loaded, world_reset), `CoverageData` with `CoverageCategory` (visited/total tracking per category). Factory functions for initial state.
+- **PlaybackService** (`PlaybackService.svelte.ts`) — Reactive singleton using Svelte 5 `$state()` runes. Mock implementation consuming compiled `urdJson` + `factSet` projections directly (Wyrd runtime doesn't exist yet). `loadWorld()` reads projections, initialises at `world.start` location. `move(direction)` navigates exits, updates coverage, emits events. `enterSection(sectionId)` activates dialogue. `choose(choiceId)` handles sticky/one-shot choices with jump following. `reset()` re-initialises from same urdJson. Auto-reloads on `compiler.completed`. Deferred `init()` pattern to avoid subscribing to bus channels before they're registered.
+- **PlayPanel** (`PlayPanel.svelte`) — Primary interaction view with toolbar (Play/Reset buttons, status indicator, turn counter), location display (name + description), exit direction buttons, dialogue choice buttons, entity tags at current location. Subscribes to `playback.state.changed` and `compiler.completed`.
+- **EventLog** (`EventLog.svelte`) — Scrolling chronological log with type-coloured badges (move=blue, dialogue=amber, set=green, narration=grey, section=purple). Auto-scroll follows new events unless user scrolls up. Clear button. Catches up with existing events on mount.
+- **StateInspector** (`StateInspector.svelte`) — Uses `InspectorPanel`/`InspectorSection` shared components. Current location details (name, description, exit count, turn number). Entity list with type badges and property key-value display. Active choices section (collapsed). Entity click publishes to `selectionContext`.
+- **BreadcrumbTrail** (`BreadcrumbTrail.svelte`) — Horizontal trail of visited locations with `→` separators. Current location highlighted with accent colour. Reads location names from `urdJson` projection. Breadcrumb click selects location via `selectionContext`.
+- **CoverageOverlay** (`CoverageOverlay.svelte`) — Overall percentage display + 4 category progress bars (Locations, Sections, Choices, Exits) with visited/total counts. Low coverage (<50%) shown in red. Subscribes to `coverage.overlay.updated`/`cleared`.
+- **Bus channels** (4) — `playback.state.changed` (retainLast), `playback.event`, `coverage.overlay.updated` (retainLast), `coverage.overlay.cleared`.
+- **Debug workspace template** — Play Panel + Event Log (left, 60/40 vertical) | Code Editor + State Inspector (right, 60/40 vertical), 50/50 horizontal split. Registered as template with `forge.workspace.newDebug` command.
+- **Commands** — `urd.play.start` (Start Playback) and `urd.play.reset` (Reset Playback) in Play category.
+- **Runtime theme tokens** — Event type colours, coverage bar colours, play panel accents for both Gloaming and Parchment themes.
+
+**7 new files, 4 modified files, ~2000 lines.** 95 frontend tests pass. `vite build` succeeds with all runtime chunks visible.
+
 ### Acceptance criteria verification
 
 | Criterion | Status | Evidence |
 |-----------|--------|---------|
 | **Phase 1** — Framework shell acceptance test passes (split/join/swap/resize/theme/workspace tabs/fullscreen) | Verified by human | All 15 steps implemented. `vite build` and `cargo check` pass. Human-tested in both browser dev mode and Tauri native — split, join, swap, resize, theme toggle, workspace tabs, fullscreen, quit, splash screen, cross-zone selection containment, Blender-style split positioning all verified working. |
 | **Phase 2** — Compiler output flows through chunks → projections → bus signals → placeholder views react | Complete | Open project → MockCompiler runs → output cached with content hashes → projections recompute → BusMonitor shows `compiler.started`/`compiler.completed` events with timing. `Ctrl+,` opens Settings as floating dialog, theme toggle applies immediately. `Ctrl+Shift+P` opens command palette. Close project → Welcome screen. 73 frontend + 3 Rust tests pass. |
-| **Phase 3** — Full editing experience with compiler feedback in Code Editor singleton | Not started | |
-| **Phase 4** — Writer and Engineer workspaces fully functional with Tier 1 views | Not started | |
-| **Phase 5** — World Builder workspace fully functional with graph views | Not started | |
-| **Phase 6** — Debug workspace fully functional with runtime integration | Not started | |
+| **Phase 3** — Full editing experience with compiler feedback in Code Editor singleton | Complete | Code Editor with dockview-core tab groups, CodeMirror 6 editors, syntax highlighting, diagnostics (inline + gutter), autocomplete, hover tooltips, code lens, breadcrumb, cursor-aware definition resolution. Singleton enforcement with "Already visible" placeholder, shared state via `singleton::` key, workspace state transfer. |
+| **Phase 4** — Writer and Engineer workspaces fully functional with Tier 1 views | Complete | File Browser with tree navigation and double-click-to-open. 6 spreadsheet views (Entity, Type, Property, Location, Section, Diagnostic) with VirtualTable, column sorting, filter bar. Property Inspector, Outline Panel, Global Symbol Search, World Stats Dashboard, Dead Code Panel. Writer and Engineer workspace templates. |
+| **Phase 5** — World Builder workspace fully functional with graph views | Complete | GraphCanvas shared component (dagre layout, SVG rendering, pan/zoom, fit-to-view toolbar). 6 graph views: Location Network (TB layout, start/unreachable/isolated flags), Dialogue Flow (LR layout, choice correlation via jump_indices), Type Hierarchy (BT layout, trait inheritance edges), Property Data Flow (read/write flow from PropertyDependencyIndex), Containment Tree (world→locations→entities hierarchy), Cross-Reference Graph (symbol references from FactSet). 4 new projections + enriched locationGraph projection. World Builder workspace template. Graph theme tokens for Gloaming and Parchment. 14 new files, ~1100 lines. 95 tests pass. |
+| **Phase 6** — Debug workspace fully functional with runtime integration | Complete | PlaybackService mock consuming urdJson/factSet projections. 5 runtime views: PlayPanel (location navigation, exit buttons, dialogue choices), EventLog (type-coloured badges, auto-scroll), StateInspector (entity properties, location details), BreadcrumbTrail (visited path with selection), CoverageOverlay (4-category progress bars). 4 bus channels. Debug workspace template (Play Panel + Event Log | Code Editor + State Inspector). `urd.play.start`/`urd.play.reset` commands. Runtime theme tokens for Gloaming and Parchment. 7 new files, ~2000 lines. 95 tests pass. |
 | **Phase 7** — All 85+ views implemented | Not started | |
 | **Phase 8** — Architecture litmus test passes (50k entities, 10 keystrokes/s, 60fps scrolling) | Not started | |
 
