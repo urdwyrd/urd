@@ -5,6 +5,7 @@
  * Engineer: File Browser | Code Editor | Property Spreadsheet + Diagnostic Spreadsheet
  * World Builder: Code Editor + Location Graph (top) | Entity Spreadsheet (bottom)
  * Debug: Play Panel + Event Log (left) | Code Editor + State Inspector (right)
+ * QA: Code Editor (left 40%) | Coverage + Monte Carlo + Dead Code (right)
  */
 
 import type { ZoneTree } from '$lib/framework/types';
@@ -92,5 +93,27 @@ export function createDebugTemplate(): ZoneTree {
       0.6,
     ),
     0.5,
+  );
+}
+
+/**
+ * QA workspace: Code Editor (40%) | Coverage (33%) + Monte Carlo + Dead Code (67%) on right
+ */
+export function createQATemplate(): ZoneTree {
+  return createSplit(
+    'horizontal',
+    createLeaf('urd.codeEditor'),
+    createSplit(
+      'vertical',
+      createLeaf('urd.coverageOverlay'),
+      createSplit(
+        'vertical',
+        createLeaf('urd.monteCarloDashboard'),
+        createLeaf('urd.deadCodePanel'),
+        0.5,
+      ),
+      0.33,
+    ),
+    0.4,
   );
 }

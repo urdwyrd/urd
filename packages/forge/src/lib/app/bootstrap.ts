@@ -46,7 +46,24 @@ import { dialogueGraphProjection } from '$lib/app/projections/dialogue-graph';
 import { typeHierarchyProjection } from '$lib/app/projections/type-hierarchy';
 import { containmentTreeProjection } from '$lib/app/projections/containment-tree';
 import { crossReferenceProjection } from '$lib/app/projections/cross-reference';
-import { createWriterTemplate, createEngineerTemplate, createWorldBuilderTemplate, createDebugTemplate } from '$lib/app/workspaces/templates';
+import { choiceTableProjection } from '$lib/app/projections/choice-table';
+import { ruleTableProjection } from '$lib/app/projections/rule-table';
+import { exitTableProjection } from '$lib/app/projections/exit-table';
+import { jumpTableProjection } from '$lib/app/projections/jump-table';
+import { readTableProjection } from '$lib/app/projections/read-table';
+import { writeTableProjection } from '$lib/app/projections/write-table';
+import { sequenceTableProjection } from '$lib/app/projections/sequence-table';
+import { fileTableProjection } from '$lib/app/projections/file-table';
+import { fileDependencyGraphProjection } from '$lib/app/projections/file-dependency-graph';
+import { ruleTriggerNetworkProjection } from '$lib/app/projections/rule-trigger-network';
+import { sequenceTimelineProjection } from '$lib/app/projections/sequence-timeline';
+import { choiceTreeProjection } from '$lib/app/projections/choice-tree';
+import { enumCoverageProjection } from '$lib/app/projections/enum-coverage';
+import { thresholdAnalysisProjection } from '$lib/app/projections/threshold-analysis';
+import { visibilityAuditProjection } from '$lib/app/projections/visibility-audit';
+import { circularDependencyProjection } from '$lib/app/projections/circular-dependency';
+import { narrativeFlowProjection } from '$lib/app/projections/narrative-flow';
+import { createWriterTemplate, createEngineerTemplate, createWorldBuilderTemplate, createDebugTemplate, createQATemplate } from '$lib/app/workspaces/templates';
 import { playbackService } from '$lib/app/views/runtime/_shared/PlaybackService.svelte';
 import type { CompilerService } from '$lib/app/compiler/types';
 
@@ -213,6 +230,94 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: { sort: null, filterText: '' },
   });
 
+  viewRegistry.register({
+    id: 'urd.choiceSpreadsheet',
+    name: 'Choice Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/ChoiceSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.ruleSpreadsheet',
+    name: 'Rule Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/RuleSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.exitSpreadsheet',
+    name: 'Exit Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/ExitSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.jumpSpreadsheet',
+    name: 'Jump Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/JumpSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.readSpreadsheet',
+    name: 'Read Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/ReadSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.writeSpreadsheet',
+    name: 'Write Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/WriteSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.sequenceSpreadsheet',
+    name: 'Sequence Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/SequenceSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
+  viewRegistry.register({
+    id: 'urd.fileSpreadsheet',
+    name: 'File Spreadsheet',
+    icon: '▸',
+    category: 'Spreadsheets',
+    component: () => import('$lib/app/views/spreadsheets/FileSpreadsheet.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { sort: null, filterText: '' },
+  });
+
   // 4e. Navigation views
   viewRegistry.register({
     id: 'urd.fileBrowser',
@@ -233,6 +338,72 @@ export async function bootstrap(): Promise<() => void> {
     icon: '▸',
     category: 'Inspectors',
     component: () => import('$lib/app/views/inspectors/PropertyInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.entityInspector',
+    name: 'Entity Inspector',
+    icon: '▸',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/inspectors/EntityInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.typeInspector',
+    name: 'Type Inspector',
+    icon: '▸',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/inspectors/TypeInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.locationInspector',
+    name: 'Location Inspector',
+    icon: '▸',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/inspectors/LocationInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.sectionInspector',
+    name: 'Section Inspector',
+    icon: '▸',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/inspectors/SectionInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.ruleInspector',
+    name: 'Rule Inspector',
+    icon: '▸',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/inspectors/RuleInspector.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.diagnosticInspector',
+    name: 'Diagnostic Inspector',
+    icon: '▸',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/inspectors/DiagnosticInspector.svelte'),
     requiresProject: true,
     stateVersion: 1,
     defaultState: null,
@@ -261,6 +432,94 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: null,
   });
 
+  viewRegistry.register({
+    id: 'urd.reachabilityMatrix',
+    name: 'Reachability Matrix',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/ReachabilityMatrix.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.conditionEffectMatrix',
+    name: 'Condition/Effect Matrix',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/ConditionEffectMatrix.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.enumCoverage',
+    name: 'Enum Coverage',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/EnumCoverage.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.thresholdAnalysis',
+    name: 'Threshold Analysis',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/ThresholdAnalysis.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.visibilityAudit',
+    name: 'Visibility Audit',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/VisibilityAudit.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.circularDependency',
+    name: 'Circular Dependencies',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/CircularDependency.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.diffView',
+    name: 'Diff View',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/DiffView.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.narrativeFlowVisualiser',
+    name: 'Narrative Flow',
+    icon: '▸',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/NarrativeFlowVisualiser.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
   // 4i. Search/Outline views
   viewRegistry.register({
     id: 'urd.outlinePanel',
@@ -279,6 +538,83 @@ export async function bootstrap(): Promise<() => void> {
     icon: '▸',
     category: 'Navigation',
     component: () => import('$lib/app/views/search/GlobalSymbolSearch.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.findReferences',
+    name: 'Find References',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/FindReferences.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.whereUsed',
+    name: 'Where Used',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/WhereUsed.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.whatIf',
+    name: 'What If',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/WhatIf.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.impactAnalysis',
+    name: 'Impact Analysis',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/ImpactAnalysis.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.regexSearch',
+    name: 'Regex Search',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/RegexSearch.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.propertyValueSearch',
+    name: 'Property Value Search',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/PropertyValueSearch.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.conditionPredicateSearch',
+    name: 'Condition Predicate Search',
+    icon: '▸',
+    category: 'Search',
+    component: () => import('$lib/app/views/search/ConditionPredicateSearch.svelte'),
     requiresProject: true,
     stateVersion: 1,
     defaultState: null,
@@ -351,6 +687,50 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: { viewport: null },
   });
 
+  viewRegistry.register({
+    id: 'urd.fileDependencyGraph',
+    name: 'File Dependencies',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/FileDependencyGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.ruleTriggerNetwork',
+    name: 'Rule Triggers',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/RuleTriggerNetwork.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.sequenceTimeline',
+    name: 'Sequence Timeline',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/SequenceTimeline.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.choiceTree',
+    name: 'Choice Tree',
+    icon: '▸',
+    category: 'Graphs',
+    component: () => import('$lib/app/views/graphs/ChoiceTree.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
   // 4k. Runtime views
   viewRegistry.register({
     id: 'urd.playPanel',
@@ -405,6 +785,139 @@ export async function bootstrap(): Promise<() => void> {
     requiresProject: true,
     stateVersion: 1,
     defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.monteCarloDashboard',
+    name: 'Monte Carlo Dashboard',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/MonteCarloDashboard.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.deterministicReplay',
+    name: 'Deterministic Replay',
+    icon: '▸',
+    category: 'Runtime',
+    component: () => import('$lib/app/views/runtime/DeterministicReplay.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  // 4m. Specialised views
+  viewRegistry.register({
+    id: 'urd.worldMap',
+    name: 'World Map',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/WorldMap.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.propertyTimeline',
+    name: 'Property Timeline',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/PropertyTimeline.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.dialoguePreview',
+    name: 'Dialogue Preview',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/DialoguePreview.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.dependencyHeatmap',
+    name: 'Dependency Heatmap',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/DependencyHeatmap.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.compilationPipeline',
+    name: 'Compilation Pipeline',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/CompilationPipeline.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.schemaBrowser',
+    name: 'Schema Browser',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/SchemaBrowser.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.testReportDashboard',
+    name: 'Test Report',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/TestReportDashboard.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.comparisonView',
+    name: 'Comparison View',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/ComparisonView.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.annotationLayer',
+    name: 'Annotation Layer',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/AnnotationLayer.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.aiAssistantPanel',
+    name: 'AI Assistant',
+    icon: '▸',
+    category: 'Specialised',
+    component: () => import('$lib/app/views/specialised/AiAssistantPanel.svelte'),
+    requiresProject: false,
+    stateVersion: 1,
+    defaultState: null,
   });
 
   // 4l. Settings/keybindings open as floating dialogs (not zone views)
@@ -721,6 +1234,7 @@ export async function bootstrap(): Promise<() => void> {
   workspaceManager.registerTemplate('Engineer', createEngineerTemplate);
   workspaceManager.registerTemplate('World Builder', createWorldBuilderTemplate);
   workspaceManager.registerTemplate('Debug', createDebugTemplate);
+  workspaceManager.registerTemplate('QA', createQATemplate);
 
   commandRegistry.register({
     id: 'forge.workspace.newWriter',
@@ -758,6 +1272,16 @@ export async function bootstrap(): Promise<() => void> {
     category: 'Workspace',
     execute: () => {
       workspaceManager.createFromTemplate('Debug');
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.workspace.newQA',
+    title: 'New QA Workspace',
+    category: 'Workspace',
+    execute: () => {
+      workspaceManager.createFromTemplate('QA');
       return null;
     },
   });
@@ -894,6 +1418,23 @@ export async function bootstrap(): Promise<() => void> {
   projectionRegistry.register(typeHierarchyProjection);
   projectionRegistry.register(containmentTreeProjection);
   projectionRegistry.register(crossReferenceProjection);
+  projectionRegistry.register(choiceTableProjection);
+  projectionRegistry.register(ruleTableProjection);
+  projectionRegistry.register(exitTableProjection);
+  projectionRegistry.register(jumpTableProjection);
+  projectionRegistry.register(readTableProjection);
+  projectionRegistry.register(writeTableProjection);
+  projectionRegistry.register(sequenceTableProjection);
+  projectionRegistry.register(fileTableProjection);
+  projectionRegistry.register(fileDependencyGraphProjection);
+  projectionRegistry.register(ruleTriggerNetworkProjection);
+  projectionRegistry.register(sequenceTimelineProjection);
+  projectionRegistry.register(choiceTreeProjection);
+  projectionRegistry.register(enumCoverageProjection);
+  projectionRegistry.register(thresholdAnalysisProjection);
+  projectionRegistry.register(visibilityAuditProjection);
+  projectionRegistry.register(circularDependencyProjection);
+  projectionRegistry.register(narrativeFlowProjection);
 
   // 8c. Recompile pipeline
   const compilerService: CompilerService = isTauri

@@ -70,4 +70,9 @@ export function registerFrameworkChannels(bus: MessageBus): void {
   // Coverage
   bus.registerChannel({ id: 'coverage.overlay.updated', domain: 'coverage', retainLast: true });
   bus.registerChannel({ id: 'coverage.overlay.cleared', domain: 'coverage', retainLast: false });
+
+  // Analysis
+  bus.registerChannel({ id: 'analysis.monteCarlo.progress', domain: 'analysis', retainLast: true });
+  bus.registerChannel({ id: 'analysis.monteCarlo.completed', domain: 'analysis', retainLast: true });
+  bus.registerChannel({ id: 'analysis.baseline.saved', domain: 'analysis', retainLast: true });
 }

@@ -10,8 +10,8 @@
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** 2026-02-26 (Phase 1), 2026-02-26 (Phase 2), 2026-02-27 (Phases 3–6)
-**Status:** In Progress — Phases 1–6 complete, Phases 7–8 pending
+**Date completed:** 2026-02-26 (Phase 1), 2026-02-26 (Phase 2), 2026-02-27 (Phases 3–7)
+**Status:** In Progress — Phases 1–7 complete, Phase 8 pending
 
 ### What was done
 
@@ -115,6 +115,25 @@ Built the mock runtime integration layer for in-IDE playback:
 - **Runtime theme tokens** — Event type colours, coverage bar colours, play panel accents for both Gloaming and Parchment themes.
 
 **7 new files, 4 modified files, ~2000 lines.** 95 frontend tests pass. `vite build` succeeds with all runtime chunks visible.
+
+**Phase 7: Advanced Analysis + Remaining Views** — completed 2026-02-27 in 1 commit.
+
+Built the complete view catalogue, adding 45 new views and 17 new projections to reach 74 registered views (29 existing + 45 new):
+
+- **8 table projections** (`choice-table.ts`, `rule-table.ts`, `exit-table.ts`, `jump-table.ts`, `read-table.ts`, `write-table.ts`, `sequence-table.ts`, `file-table.ts`) — transform FactSet/SymbolTable data into flat row arrays for spreadsheet consumption. Each follows the `entity-table.ts` pattern with `ProjectionDefinition<Row[]>`.
+- **8 spreadsheet views** (`ChoiceSpreadsheet`, `RuleSpreadsheet`, `ExitSpreadsheet`, `JumpSpreadsheet`, `ReadSpreadsheet`, `WriteSpreadsheet`, `SequenceSpreadsheet`, `FileSpreadsheet`) — all follow the EntitySpreadsheet pattern with VirtualTable + FilterBar, column sorting, selection integration, and navigation on double-click.
+- **6 inspector views** (`EntityInspector`, `TypeInspector`, `LocationInspector`, `SectionInspector`, `RuleInspector`, `DiagnosticInspector`) — selection-driven detail panels using InspectorPanel/InspectorSection shared components. Each filters by selection kind and pulls data from existing projections.
+- **4 graph projections** (`file-dependency-graph.ts`, `rule-trigger-network.ts`, `sequence-timeline.ts`, `choice-tree.ts`) — return `ForgeGraphData` for the GraphCanvas shared component. File dependencies inferred from cross-file symbol references, rule triggers from condition/effect reads/writes, sequence timeline from section jumps, choice tree from choice facts.
+- **4 graph views** (`FileDependencyGraph`, `RuleTriggerNetwork`, `SequenceTimeline`, `ChoiceTree`) — pass projection data to GraphCanvas with appropriate layouts (TB/LR).
+- **5 analysis projections** (`enum-coverage.ts`, `threshold-analysis.ts`, `visibility-audit.ts`, `circular-dependency.ts`, `narrative-flow.ts`) — auto-recomputed on compiler output. Circular dependency uses DFS cycle detection across location exits and section jumps.
+- **8 analysis views** (`ReachabilityMatrix`, `ConditionEffectMatrix`, `EnumCoverage`, `ThresholdAnalysis`, `VisibilityAudit`, `CircularDependency`, `DiffView`, `NarrativeFlowVisualiser`) — ReachabilityMatrix and ConditionEffectMatrix use on-demand "Compute" button pattern (O(n²) operations). DiffView captures baseline snapshots for comparison. NarrativeFlowVisualiser displays vertical section flow with branching indicators.
+- **7 search views** (`FindReferences`, `WhereUsed`, `WhatIf`, `ImpactAnalysis`, `RegexSearch`, `PropertyValueSearch`, `ConditionPredicateSearch`) — all follow GlobalSymbolSearch pattern with text input, filtered results list, keyboard navigation, and click-to-navigate. FindReferences/WhereUsed/WhatIf/ImpactAnalysis are selection-driven. RegexSearch searches raw source via `bufferMap.getAll()`.
+- **2 runtime views** (`MonteCarloDashboard`, `DeterministicReplay`) — Monte Carlo runs N random-walk simulations through location exits with coverage stats and bar chart visualisation. Deterministic Replay provides Record/Stop/Play/Step controls for session recording and playback.
+- **10 specialised views** (`WorldMap`, `PropertyTimeline`, `DialoguePreview`, `DependencyHeatmap`, `CompilationPipeline`, `SchemaBrowser`, `TestReportDashboard`, `ComparisonView`, `AnnotationLayer`, `AiAssistantPanel`) — WorldMap uses SVG force-directed layout with BFS grid placement and pan/zoom. SchemaBrowser renders a collapsible tree of types with properties and traits. DialoguePreview renders section text with choice buttons. AiAssistantPanel is a branded "Coming soon" placeholder.
+- **3 bus channels** — `analysis.monteCarlo.progress` (retainLast), `analysis.monteCarlo.completed` (retainLast), `analysis.baseline.saved` (retainLast).
+- **QA workspace template** — Code Editor (40%) | Coverage Overlay (33%) + Monte Carlo Dashboard + Dead Code Panel (67%) on right. Registered with `forge.workspace.newQA` command.
+
+**62 new files, 3 modified files, ~7600 lines.** No new type errors beyond pre-existing bootstrap Component pattern. `vite build` succeeds in 2.4s with all 74 view chunks visible in output.
 
 ### Acceptance criteria verification
 
