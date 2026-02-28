@@ -22,6 +22,10 @@ import type {
   UrdEntity,
   UrdLocation,
   UrdExit,
+  UrdEffect,
+  UrdAction,
+  UrdSequence,
+  UrdRule,
   Diagnostic,
 } from './types';
 
@@ -55,6 +59,22 @@ function normaliseUrdJson(raw: unknown): UrdWorld {
   // Preserve type definitions (object-keyed, no normalisation needed)
   if (data.types && typeof data.types === 'object') {
     result.types = data.types as Record<string, UrdTypeDef>;
+  }
+
+  // Preserve dialogue tree (passthrough — consumed by the runtime)
+  if (data.dialogue && typeof data.dialogue === 'object') {
+    result.dialogue = data.dialogue as Record<string, unknown>;
+  }
+
+  // Preserve actions, sequences, rules (passthrough — consumed by the runtime)
+  if (data.actions && typeof data.actions === 'object') {
+    result.actions = data.actions as Record<string, UrdAction>;
+  }
+  if (data.sequences && typeof data.sequences === 'object') {
+    result.sequences = data.sequences as Record<string, UrdSequence>;
+  }
+  if (data.rules && typeof data.rules === 'object') {
+    result.rules = data.rules as Record<string, UrdRule>;
   }
 
   return result;
@@ -110,10 +130,14 @@ function normaliseExits(raw: unknown): UrdExit[] {
   if (typeof raw === 'object') {
     return Object.entries(raw as Record<string, unknown>).map(([direction, val]) => {
       const obj = val as Record<string, unknown>;
-      return {
+      const exit: UrdExit = {
         direction,
         target: (obj.to as string) ?? '',
       };
+      if (obj.condition) exit.condition = obj.condition as string;
+      if (obj.blocked_message) exit.blocked_message = obj.blocked_message as string;
+      if (obj.effects) exit.effects = obj.effects as UrdEffect[];
+      return exit;
     });
   }
   return [];

@@ -12,6 +12,7 @@
   import ZoneRenderer from './ZoneRenderer.svelte';
   import type { ZoneStateStore } from './ZoneStateStore';
   import { viewRegistry } from '../views/ViewRegistry';
+  import { bus } from '../bus/MessageBus';
 
   interface Props {
     node: ZoneTree;
@@ -36,9 +37,16 @@
     {projectOpen}
     onChangeType={(typeId) => dispatch({ type: 'changeType', zoneId: node.id, newTypeId: typeId })}
     onSplit={(direction) => dispatch({ type: 'split', zoneId: node.id, direction })}
-    onStateChange={(state) => isSingleton
-      ? zoneStates.setSingletonState(node.zoneTypeId, state)
-      : zoneStates.set(node.id, node.zoneTypeId, state)}
+    onStateChange={(state) => {
+      if (isSingleton) {
+        zoneStates.setSingletonState(node.zoneTypeId, state);
+      } else {
+        zoneStates.set(node.id, node.zoneTypeId, state);
+      }
+      if (bus.hasChannel('workspace.stateChanged')) {
+        bus.publish('workspace.stateChanged', { zoneId: node.id, zoneTypeId: node.zoneTypeId });
+      }
+    }}
     onContextMenu={(e) => onZoneContextMenu(e, node.id, node.zoneTypeId)}
   />
 {:else}

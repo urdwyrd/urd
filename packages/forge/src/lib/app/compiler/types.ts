@@ -257,9 +257,20 @@ export interface UrdLocation {
   contains?: string[];
 }
 
+export interface UrdEffect {
+  set?: string;
+  to?: string | number | boolean;
+  move?: string;
+  destroy?: string;
+  reveal?: string;
+}
+
 export interface UrdExit {
   direction: string;
   target: string;
+  condition?: string;
+  blocked_message?: string;
+  effects?: UrdEffect[];
 }
 
 export interface UrdPropertyDef {
@@ -287,11 +298,60 @@ export interface UrdWorldMeta {
   author?: string;
 }
 
+export interface UrdAction {
+  description?: string;
+  actor?: string;
+  target?: string;
+  target_type?: string;
+  conditions?: string[] | { any: string[] };
+  effects: UrdEffect[];
+}
+
+export interface UrdSequencePhase {
+  id: string;
+  prompt?: string;
+  auto?: boolean;
+  action?: string;
+  actions?: string[];
+  rule?: string;
+  effects?: UrdEffect[];
+  advance: string;
+  condition?: string;
+}
+
+export interface UrdSequence {
+  description?: string;
+  phases: UrdSequencePhase[];
+}
+
+export interface UrdRuleSelect {
+  from: string[];
+  as: string;
+  where?: string[];
+}
+
+export interface UrdRule {
+  description?: string;
+  actor?: string;
+  trigger: string;
+  conditions?: string[];
+  select?: UrdRuleSelect;
+  effects: UrdEffect[];
+}
+
 export interface UrdWorld {
   world?: UrdWorldMeta;
   types?: Record<string, UrdTypeDef>;
   entities: UrdEntity[];
   locations: UrdLocation[];
+  /** Dialogue tree — keyed by dialogue node id. */
+  dialogue?: Record<string, unknown>;
+  /** Actions — keyed by action id. */
+  actions?: Record<string, UrdAction>;
+  /** Sequences — keyed by sequence id. */
+  sequences?: Record<string, UrdSequence>;
+  /** Rules — keyed by rule id. */
+  rules?: Record<string, UrdRule>;
 }
 
 // ===== Diagnostics =====

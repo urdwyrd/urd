@@ -30,6 +30,7 @@ export function registerFrameworkChannels(bus: MessageBus): void {
 
   // Workspace events
   bus.registerChannel({ id: 'workspace.switched', domain: 'workspace', retainLast: true });
+  bus.registerChannel({ id: 'workspace.stateChanged', domain: 'workspace', retainLast: false });
 
   // Command execution log
   bus.registerChannel({ id: 'command.executed', domain: 'commands', retainLast: false });

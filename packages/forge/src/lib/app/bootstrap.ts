@@ -42,6 +42,7 @@ import { symbolTableProjection } from '$lib/app/projections/symbol-table';
 import { factSetProjection } from '$lib/app/projections/fact-set';
 import { propertyDependencyIndexProjection } from '$lib/app/projections/property-dependency-index';
 import { rawUrdJsonProjection } from '$lib/app/projections/raw-urd-json';
+import { compilerOutputProjection } from '$lib/app/projections/compiler-output';
 import { dialogueGraphProjection } from '$lib/app/projections/dialogue-graph';
 import { typeHierarchyProjection } from '$lib/app/projections/type-hierarchy';
 import { containmentTreeProjection } from '$lib/app/projections/containment-tree';
@@ -65,6 +66,11 @@ import { circularDependencyProjection } from '$lib/app/projections/circular-depe
 import { narrativeFlowProjection } from '$lib/app/projections/narrative-flow';
 import { createWriterTemplate, createEngineerTemplate, createWorldBuilderTemplate, createDebugTemplate, createQATemplate } from '$lib/app/workspaces/templates';
 import { playbackService } from '$lib/app/views/runtime/_shared/PlaybackService.svelte';
+import {
+  WorkspacePersistenceService,
+  TauriGlobalLayoutIO,
+  MemoryGlobalLayoutIO,
+} from '$lib/app/services/WorkspacePersistenceService';
 import type { CompilerService } from '$lib/app/compiler/types';
 
 /** Exported file system instance — available after bootstrap(). */
@@ -409,6 +415,17 @@ export async function bootstrap(): Promise<() => void> {
     defaultState: null,
   });
 
+  viewRegistry.register({
+    id: 'urd.compilerOutput',
+    name: 'Compiler Output',
+    icon: '{ }',
+    category: 'Inspectors',
+    component: () => import('$lib/app/views/data/CompilerOutputPanel.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { activeTab: 'urdJson', expandDepth: 3 },
+  });
+
   // 4h. Analysis views
   viewRegistry.register({
     id: 'urd.worldStatsDashboard',
@@ -625,7 +642,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.locationGraph',
     name: 'Location Graph',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/LocationGraph.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -636,7 +653,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.dialogueFlowGraph',
     name: 'Dialogue Flow',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/DialogueFlowGraph.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -647,7 +664,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.typeHierarchyGraph',
     name: 'Type Hierarchy',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/TypeHierarchyGraph.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -658,7 +675,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.propertyDataFlowGraph',
     name: 'Property Data Flow',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/PropertyDataFlowGraph.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -669,7 +686,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.containmentTree',
     name: 'Containment Tree',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/ContainmentTree.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -680,7 +697,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.crossReferenceGraph',
     name: 'Cross-References',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/CrossReferenceGraph.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -691,7 +708,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.fileDependencyGraph',
     name: 'File Dependencies',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/FileDependencyGraph.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -702,7 +719,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.ruleTriggerNetwork',
     name: 'Rule Triggers',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/RuleTriggerNetwork.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -713,7 +730,7 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.sequenceTimeline',
     name: 'Sequence Timeline',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/SequenceTimeline.svelte'),
     requiresProject: true,
     stateVersion: 1,
@@ -724,14 +741,159 @@ export async function bootstrap(): Promise<() => void> {
     id: 'urd.choiceTree',
     name: 'Choice Tree',
     icon: '▸',
-    category: 'Graphs',
+    category: 'Graphs (SVG)',
     component: () => import('$lib/app/views/graphs/ChoiceTree.svelte'),
     requiresProject: true,
     stateVersion: 1,
     defaultState: { viewport: null },
   });
 
-  // 4k. Runtime views
+  // 4k. Force-directed graph views
+  viewRegistry.register({
+    id: 'urd.force.locationGraph',
+    name: 'Location Graph',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/LocationGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.dialogueFlowGraph',
+    name: 'Dialogue Flow',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/DialogueFlowGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.typeHierarchyGraph',
+    name: 'Type Hierarchy',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/TypeHierarchyGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.propertyDataFlowGraph',
+    name: 'Property Data Flow',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/PropertyDataFlowGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.containmentTree',
+    name: 'Containment Tree',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/ContainmentTree.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.crossReferenceGraph',
+    name: 'Cross-References',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/CrossReferenceGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.fileDependencyGraph',
+    name: 'File Dependencies',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/FileDependencyGraph.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.ruleTriggerNetwork',
+    name: 'Rule Triggers',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/RuleTriggerNetwork.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.sequenceTimeline',
+    name: 'Sequence Timeline',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/SequenceTimeline.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.force.choiceTree',
+    name: 'Choice Tree',
+    icon: '▸',
+    category: 'Graphs (Force)',
+    component: () => import('$lib/app/views/graphs/force/ChoiceTree.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  // 4l. Graph World views
+  viewRegistry.register({
+    id: 'urd.world.containment',
+    name: 'Containment World',
+    icon: '▸',
+    category: 'Graph World',
+    component: () => import('$lib/app/views/graphs/world/ContainmentWorld.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.world.dialogue',
+    name: 'Dialogue World',
+    icon: '▸',
+    category: 'Graph World',
+    component: () => import('$lib/app/views/graphs/world/DialogueWorld.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  viewRegistry.register({
+    id: 'urd.world.properties',
+    name: 'Property World',
+    icon: '▸',
+    category: 'Graph World',
+    component: () => import('$lib/app/views/graphs/world/PropertyWorld.svelte'),
+    requiresProject: true,
+    stateVersion: 1,
+    defaultState: { viewport: null },
+  });
+
+  // 4m. Runtime views
   viewRegistry.register({
     id: 'urd.playPanel',
     name: 'Play Panel',
@@ -1318,6 +1480,8 @@ export async function bootstrap(): Promise<() => void> {
 
   registerMenuContribution({ menu: 'view', group: 'fullscreen', order: 1, commandId: 'forge.window.toggleFullscreen', label: 'Toggle Fullscreen' });
   registerMenuContribution({ menu: 'view', group: 'theme', order: 2, commandId: 'forge.theme.toggle', label: 'Toggle Theme' });
+  registerMenuContribution({ menu: 'view', group: 'layout', order: 10, commandId: 'forge.layout.saveAsDefault', label: 'Save Layout as Default' });
+  registerMenuContribution({ menu: 'view', group: 'layout', order: 11, commandId: 'forge.layout.loadDefault', label: 'Load Default Layout' });
 
   // 7. Install keyboard sovereignty
   const removeKeybindings = installKeybindingManager();
@@ -1334,6 +1498,31 @@ export async function bootstrap(): Promise<() => void> {
     });
   }
 
+  // 8a. Workspace persistence service
+  const globalLayoutIO = isTauri ? new TauriGlobalLayoutIO() : new MemoryGlobalLayoutIO();
+  const workspacePersistence = new WorkspacePersistenceService(fileSystem, workspaceManager, globalLayoutIO);
+
+  // Layout persistence commands (registered after service creation)
+  commandRegistry.register({
+    id: 'forge.layout.saveAsDefault',
+    title: 'Save Layout as Default',
+    category: 'Window',
+    execute: async () => {
+      await workspacePersistence.saveGlobalDefault();
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.layout.loadDefault',
+    title: 'Load Default Layout',
+    category: 'Window',
+    execute: async () => {
+      await workspacePersistence.loadGlobalDefault();
+      return null;
+    },
+  });
+
   // On project open: start pipeline, scan for .urd.md files, then compile.
   // Pipeline starts first so buffer.load() calls during scanning schedule
   // debounced recompiles. After scanning completes we force an immediate compile.
@@ -1348,6 +1537,12 @@ export async function bootstrap(): Promise<() => void> {
       const forgeExists = await fileSystem.exists(forgePath);
       if (!forgeExists) {
         await fileSystem.mkdir(forgePath);
+      }
+
+      // Restore workspace layout from project or global default
+      const layoutLoaded = await workspacePersistence.loadProject(path);
+      if (!layoutLoaded) {
+        await workspacePersistence.loadGlobalDefault();
       }
 
       // Recursively scan for .urd.md files
@@ -1404,15 +1599,30 @@ export async function bootstrap(): Promise<() => void> {
     }
   });
 
-  // On project close: clear buffer map, projections, and project overrides; stop pipeline
-  const unsubProjectClose = bus.subscribe('project.closed', () => {
+  // On project close: save layout, then clear buffer map, projections, and project overrides; stop pipeline
+  const unsubProjectClose = bus.subscribe('project.closed', async (payload) => {
+    const { path: closedPath } = payload as { path: string | null };
+    if (closedPath) {
+      await workspacePersistence.saveProjectNow(closedPath);
+    }
     recompilePipeline.stop();
     bufferMap.clear();
     projectionRegistry.clear();
     appSettings.setProjectOverrides(null);
   });
 
-  // 8b. Register projections
+  // 8b. Auto-save workspace layout on structural or state changes
+  const triggerLayoutSave = () => {
+    if (projectManager.currentPath) {
+      workspacePersistence.saveProject(projectManager.currentPath);
+    }
+  };
+  const unsubLayoutSave = bus.subscribe('layout.changed', triggerLayoutSave);
+  const unsubWorkspaceSwitchSave = bus.subscribe('workspace.switched', triggerLayoutSave);
+  const unsubZoneTypeSave = bus.subscribe('zone.typeChanged', triggerLayoutSave);
+  const unsubStateSave = bus.subscribe('workspace.stateChanged', triggerLayoutSave);
+
+  // 8c. Register projections
   projectionRegistry.register(entityTableProjection);
   projectionRegistry.register(locationGraphProjection);
   projectionRegistry.register(diagnosticsByFileProjection);
@@ -1429,6 +1639,7 @@ export async function bootstrap(): Promise<() => void> {
   projectionRegistry.register(factSetProjection);
   projectionRegistry.register(propertyDependencyIndexProjection);
   projectionRegistry.register(rawUrdJsonProjection);
+  projectionRegistry.register(compilerOutputProjection);
   projectionRegistry.register(dialogueGraphProjection);
   projectionRegistry.register(typeHierarchyProjection);
   projectionRegistry.register(containmentTreeProjection);
@@ -1595,8 +1806,13 @@ export async function bootstrap(): Promise<() => void> {
     removeKeybindings();
     recompilePipeline.stop();
     playbackService.destroy();
+    workspacePersistence.dispose();
     unsubProjectOpen();
     unsubProjectClose();
+    unsubLayoutSave();
+    unsubWorkspaceSwitchSave();
+    unsubZoneTypeSave();
+    unsubStateSave();
     document.removeEventListener('pointerdown', onZoneFocus);
     document.removeEventListener('pointerdown', onPointerDown);
     document.removeEventListener('pointerup', onPointerUp);

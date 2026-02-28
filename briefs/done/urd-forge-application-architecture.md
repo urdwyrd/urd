@@ -2,7 +2,7 @@
 
 **Version**: 0.1.0 (Architectural Foundation)
 **Date**: February 2026
-**Status**: Design Phase
+**Status**: Done
 
 > **Document status: BRIEF** — Full architecture specification for the Urd Forge desktop IDE. Covers BSP tiling layout engine, 85+ specialised views, command registry, message bus, projection layer, workspace management, theme engine, and eight-phase implementation plan.
 

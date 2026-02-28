@@ -11,11 +11,11 @@
       { "phase": "emit", "durationMs": 5 }
     ],
     "worldCounts": {
-      "entities": 3,
-      "locations": 2,
-      "exits": 2,
-      "properties": 5,
-      "rules": 1
+      "entities": 6,
+      "locations": 4,
+      "exits": 5,
+      "properties": 14,
+      "rules": 0
     },
     "inputFileCount": 2
   },
@@ -24,12 +24,16 @@
       "name": "ast",
       "data": {
         "nodes": [
-          { "kind": "world", "name": "Demo" },
-          { "kind": "entity", "name": "Player" },
-          { "kind": "entity", "name": "Sword" },
-          { "kind": "entity", "name": "Shield" },
+          { "kind": "world", "name": "The Locked Garden" },
+          { "kind": "entity", "name": "Greta" },
+          { "kind": "entity", "name": "Iron Sword" },
+          { "kind": "entity", "name": "Wooden Shield" },
+          { "kind": "entity", "name": "Old Map" },
+          { "kind": "entity", "name": "Garden Gate" },
           { "kind": "location", "name": "Tavern" },
-          { "kind": "location", "name": "Market" }
+          { "kind": "location", "name": "Market" },
+          { "kind": "location", "name": "Alley" },
+          { "kind": "location", "name": "Garden" }
         ]
       },
       "contentHash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
@@ -38,11 +42,15 @@
       "name": "symbolTable",
       "data": {
         "entries": [
-          { "id": "player", "name": "Player", "kind": "entity", "file": "main.urd.md", "line": 3 },
-          { "id": "sword", "name": "Sword", "kind": "entity", "file": "main.urd.md", "line": 7 },
-          { "id": "shield", "name": "Shield", "kind": "entity", "file": "main.urd.md", "line": 11 },
+          { "id": "greta", "name": "Greta", "kind": "entity", "file": "main.urd.md", "line": 3 },
+          { "id": "sword", "name": "Iron Sword", "kind": "entity", "file": "main.urd.md", "line": 7 },
+          { "id": "shield", "name": "Wooden Shield", "kind": "entity", "file": "main.urd.md", "line": 11 },
+          { "id": "old_map", "name": "Old Map", "kind": "entity", "file": "main.urd.md", "line": 15 },
+          { "id": "garden_gate", "name": "Garden Gate", "kind": "entity", "file": "main.urd.md", "line": 19 },
           { "id": "tavern", "name": "Tavern", "kind": "location", "file": "locations.urd.md", "line": 1 },
-          { "id": "market", "name": "Market", "kind": "location", "file": "locations.urd.md", "line": 5 }
+          { "id": "market", "name": "Market", "kind": "location", "file": "locations.urd.md", "line": 5 },
+          { "id": "alley", "name": "Alley", "kind": "location", "file": "locations.urd.md", "line": 9 },
+          { "id": "garden", "name": "Garden", "kind": "location", "file": "locations.urd.md", "line": 13 }
         ]
       },
       "contentHash": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3"
@@ -53,22 +61,11 @@
         "reads": [],
         "writes": [],
         "exits": [
-          {
-            "from_location": "tavern",
-            "to_location": "market",
-            "exit_name": "east",
-            "is_conditional": false,
-            "guard_reads": [],
-            "span": { "file": "locations.urd.md", "start_line": 3, "start_col": 1, "end_line": 3, "end_col": 20 }
-          },
-          {
-            "from_location": "market",
-            "to_location": "tavern",
-            "exit_name": "west",
-            "is_conditional": false,
-            "guard_reads": [],
-            "span": { "file": "locations.urd.md", "start_line": 7, "start_col": 1, "end_line": 7, "end_col": 20 }
-          }
+          { "from_location": "tavern", "to_location": "market", "exit_name": "east", "is_conditional": false, "guard_reads": [], "span": { "file": "locations.urd.md", "start_line": 3, "start_col": 1, "end_line": 3, "end_col": 20 } },
+          { "from_location": "market", "to_location": "tavern", "exit_name": "west", "is_conditional": false, "guard_reads": [], "span": { "file": "locations.urd.md", "start_line": 7, "start_col": 1, "end_line": 7, "end_col": 20 } },
+          { "from_location": "market", "to_location": "alley", "exit_name": "north", "is_conditional": false, "guard_reads": [], "span": { "file": "locations.urd.md", "start_line": 8, "start_col": 1, "end_line": 8, "end_col": 20 } },
+          { "from_location": "alley", "to_location": "market", "exit_name": "south", "is_conditional": false, "guard_reads": [], "span": { "file": "locations.urd.md", "start_line": 11, "start_col": 1, "end_line": 11, "end_col": 20 } },
+          { "from_location": "alley", "to_location": "garden", "exit_name": "gate", "is_conditional": true, "guard_reads": [], "span": { "file": "locations.urd.md", "start_line": 12, "start_col": 1, "end_line": 12, "end_col": 30 } }
         ],
         "jumps": [],
         "choices": [],
@@ -80,13 +77,7 @@
       "name": "propertyDependencyIndex",
       "data": {
         "properties": [],
-        "summary": {
-          "total_properties": 0,
-          "total_reads": 0,
-          "total_writes": 0,
-          "read_never_written": 0,
-          "written_never_read": 0
-        }
+        "summary": { "total_properties": 0, "total_reads": 0, "total_writes": 0, "read_never_written": 0, "written_never_read": 0 }
       },
       "contentHash": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"
     },
@@ -94,33 +85,17 @@
       "name": "definitionIndex",
       "data": {
         "definitions": [
-          {
-            "key": "entity:@player",
-            "span": { "file": "main.urd.md", "start_line": 3, "start_col": 1, "end_line": 3, "end_col": 10 },
-            "definition": { "kind": "entity", "type_name": "Character", "display_name": "Player" }
-          },
-          {
-            "key": "entity:@sword",
-            "span": { "file": "main.urd.md", "start_line": 7, "start_col": 1, "end_line": 7, "end_col": 10 },
-            "definition": { "kind": "entity", "type_name": "Item", "display_name": "Sword" }
-          },
-          {
-            "key": "entity:@shield",
-            "span": { "file": "main.urd.md", "start_line": 11, "start_col": 1, "end_line": 11, "end_col": 10 },
-            "definition": { "kind": "entity", "type_name": "Item", "display_name": "Shield" }
-          },
-          {
-            "key": "location:tavern",
-            "span": { "file": "locations.urd.md", "start_line": 1, "start_col": 1, "end_line": 1, "end_col": 10 },
-            "definition": { "kind": "location", "display_name": "Tavern" }
-          },
-          {
-            "key": "location:market",
-            "span": { "file": "locations.urd.md", "start_line": 5, "start_col": 1, "end_line": 5, "end_col": 10 },
-            "definition": { "kind": "location", "display_name": "Market" }
-          }
+          { "key": "entity:@greta", "span": { "file": "main.urd.md", "start_line": 3, "start_col": 1, "end_line": 3, "end_col": 10 }, "definition": { "kind": "entity", "type_name": "Character", "display_name": "Greta" } },
+          { "key": "entity:@sword", "span": { "file": "main.urd.md", "start_line": 7, "start_col": 1, "end_line": 7, "end_col": 10 }, "definition": { "kind": "entity", "type_name": "Item", "display_name": "Iron Sword" } },
+          { "key": "entity:@shield", "span": { "file": "main.urd.md", "start_line": 11, "start_col": 1, "end_line": 11, "end_col": 10 }, "definition": { "kind": "entity", "type_name": "Item", "display_name": "Wooden Shield" } },
+          { "key": "entity:@old_map", "span": { "file": "main.urd.md", "start_line": 15, "start_col": 1, "end_line": 15, "end_col": 10 }, "definition": { "kind": "entity", "type_name": "Item", "display_name": "Old Map" } },
+          { "key": "entity:@garden_gate", "span": { "file": "main.urd.md", "start_line": 19, "start_col": 1, "end_line": 19, "end_col": 10 }, "definition": { "kind": "entity", "type_name": "Lock", "display_name": "Garden Gate" } },
+          { "key": "location:tavern", "span": { "file": "locations.urd.md", "start_line": 1, "start_col": 1, "end_line": 1, "end_col": 10 }, "definition": { "kind": "location", "display_name": "Tavern" } },
+          { "key": "location:market", "span": { "file": "locations.urd.md", "start_line": 5, "start_col": 1, "end_line": 5, "end_col": 10 }, "definition": { "kind": "location", "display_name": "Market" } },
+          { "key": "location:alley", "span": { "file": "locations.urd.md", "start_line": 9, "start_col": 1, "end_line": 9, "end_col": 10 }, "definition": { "kind": "location", "display_name": "Alley" } },
+          { "key": "location:garden", "span": { "file": "locations.urd.md", "start_line": 13, "start_col": 1, "end_line": 13, "end_col": 10 }, "definition": { "kind": "location", "display_name": "Garden" } }
         ],
-        "count": 5
+        "count": 9
       },
       "contentHash": "d5e6f7a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5"
     },
@@ -128,41 +103,138 @@
       "name": "urdJson",
       "data": {
         "world": {
-          "name": "demo",
+          "name": "The Locked Garden",
           "version": "1",
-          "start": "tavern"
+          "start": "tavern",
+          "description": "A small medieval town with a secret garden behind a locked gate"
         },
         "types": {
           "Character": {
-            "traits": ["interactable", "mobile"],
+            "traits": ["interactable"],
             "properties": {
               "name": { "type": "string", "default": "Unknown" },
-              "location": { "type": "string" }
+              "trust": { "type": "integer", "default": 0, "min": 0, "max": 100 },
+              "mood": { "type": "enum", "default": "neutral", "values": ["wary", "neutral", "friendly"] },
+              "role": { "type": "string", "visibility": "hidden" }
             }
           },
           "Item": {
             "traits": ["portable"],
             "properties": {
-              "name": { "type": "string", "default": "Unknown" },
-              "owner": { "type": "ref" }
+              "name": { "type": "string", "default": "Unknown" }
+            }
+          },
+          "Lock": {
+            "traits": ["interactable"],
+            "properties": {
+              "locked": { "type": "boolean", "default": true }
             }
           }
         },
         "entities": {
-          "player": { "type": "Character", "properties": { "name": "Hero", "location": "tavern" } },
-          "sword": { "type": "Item", "properties": { "name": "Iron Sword", "owner": "player" } },
-          "shield": { "type": "Item", "properties": { "name": "Wooden Shield" } }
+          "greta": {
+            "type": "Character",
+            "properties": { "name": "Greta", "role": "Innkeeper", "mood": "neutral", "trust": 0 }
+          },
+          "sword": {
+            "type": "Item",
+            "properties": { "name": "Iron Sword" }
+          },
+          "shield": {
+            "type": "Item",
+            "properties": { "name": "Wooden Shield" }
+          },
+          "old_map": {
+            "type": "Item",
+            "properties": { "name": "Old Map" }
+          },
+          "garden_gate": {
+            "type": "Lock",
+            "properties": { "locked": true }
+          }
         },
         "locations": {
           "tavern": {
-            "description": "A cosy tavern with a roaring fire",
-            "exits": { "east": { "to": "market" } },
-            "contains": ["player", "sword"]
+            "description": "A cosy tavern with a roaring fire. The smell of fresh bread drifts from the kitchen.",
+            "contains": ["greta", "sword"],
+            "exits": { "east": { "to": "market" } }
           },
           "market": {
-            "description": "A bustling marketplace",
-            "exits": { "west": { "to": "tavern" } },
-            "contains": ["shield"]
+            "description": "A bustling marketplace filled with the calls of merchants and the clatter of carts.",
+            "contains": ["shield"],
+            "exits": {
+              "west": { "to": "tavern" },
+              "north": { "to": "alley" }
+            }
+          },
+          "alley": {
+            "description": "A narrow alley behind the market stalls. An old iron gate stands at the far end, choked with ivy.",
+            "contains": ["old_map", "garden_gate"],
+            "exits": {
+              "south": { "to": "market" },
+              "gate": { "to": "garden", "condition": "garden_gate.locked == false", "blocked_message": "The iron gate is sealed shut. Perhaps someone in town knows how to open it." }
+            }
+          },
+          "garden": {
+            "description": "Overgrown paths wind between crumbling statues. Wildflowers push through the cracks in ancient flagstones. The air is still and sweet.",
+            "contains": [],
+            "exits": { "gate": { "to": "alley" } }
+          }
+        },
+        "dialogue": {
+          "tavern/greet": {
+            "id": "tavern/greet",
+            "prompt": { "speaker": "greta", "text": "Welcome, traveller! Sit down, warm yourself by the fire." },
+            "choices": [
+              {
+                "id": "tavern/greet/ask-market",
+                "label": "What can you tell me about the market?",
+                "sticky": true,
+                "response": { "speaker": "greta", "text": "The market's lively today. Watch your coin purse, though — there's been talk of trouble near the north alley." },
+                "effects": [{ "set": "greta.trust", "to": "greta.trust + 1" }]
+              },
+              {
+                "id": "tavern/greet/ask-sword",
+                "label": "Know anything about this old sword?",
+                "sticky": true,
+                "response": { "speaker": "greta", "text": "That old blade? Looks like it's seen better days. The blacksmith at the edge of town might mend it — if he's sober." }
+              },
+              {
+                "id": "tavern/greet/show-map",
+                "label": "Show her the old map",
+                "sticky": false,
+                "conditions": ["old_map.container == player"],
+                "response": { "speaker": "greta", "text": "Where did you find this? I haven't seen this map in years. It shows the path to the old garden..." },
+                "effects": [{ "set": "greta.trust", "to": "greta.trust + 5" }, { "set": "greta.mood", "to": "friendly" }]
+              },
+              {
+                "id": "tavern/greet/ask-gate",
+                "label": "Tell me about the gate in the alley",
+                "sticky": false,
+                "conditions": ["greta.trust >= 3"],
+                "response": { "speaker": "greta", "text": "The garden gate? It's been locked for years. But since you showed me that map... I think it's time someone opened it." },
+                "effects": [{ "set": "garden_gate.locked", "to": false }],
+                "goto": "tavern/farewell"
+              },
+              {
+                "id": "tavern/greet/farewell",
+                "label": "I should be going. Farewell.",
+                "sticky": false,
+                "response": { "speaker": "greta", "text": "Safe travels, stranger. The fire will be here when you return." }
+              }
+            ]
+          },
+          "tavern/farewell": {
+            "id": "tavern/farewell",
+            "prompt": { "speaker": "greta", "text": "Take care out there. The garden remembers what we buried." },
+            "choices": [
+              {
+                "id": "tavern/farewell/thanks",
+                "label": "Thank you, Greta.",
+                "sticky": false,
+                "response": { "speaker": "greta", "text": "Don't mention it. Just keep your wits about you." }
+              }
+            ]
           }
         }
       },
@@ -171,18 +243,7 @@
     {
       "name": "diagnostics",
       "data": [
-        {
-          "severity": "warning",
-          "message": "Entity 'Shield' has no location assigned",
-          "code": "W001",
-          "span": { "file": "main.urd.md", "startLine": 11, "startCol": 1, "endLine": 11, "endCol": 20 }
-        },
-        {
-          "severity": "info",
-          "message": "Compilation successful with 3 entities and 2 locations",
-          "code": "I001",
-          "span": null
-        }
+        { "severity": "info", "message": "Compilation successful with 6 entities and 4 locations", "code": "I001", "span": null }
       ],
       "contentHash": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1"
     }

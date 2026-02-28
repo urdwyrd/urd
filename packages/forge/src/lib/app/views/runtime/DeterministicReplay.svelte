@@ -105,18 +105,18 @@
   function replayAction(action: RecordedAction): void {
     switch (action.type) {
       case 'move': {
-        const direction = action.details?.direction as string | undefined;
-        if (direction) playbackService.move(direction);
+        const locationId = action.details?.locationId as string | undefined;
+        if (locationId) playbackService.moveTo(locationId);
         break;
       }
       case 'choice_made': {
-        const choiceId = action.details?.choiceId as string | undefined;
-        if (choiceId) playbackService.choose(choiceId);
+        const choiceIndex = action.details?.choiceIndex as number | undefined;
+        if (choiceIndex !== undefined) playbackService.chooseDialogue(choiceIndex);
         break;
       }
-      case 'section_enter': {
-        const sectionId = action.details?.sectionId as string | undefined;
-        if (sectionId) playbackService.enterSection(sectionId);
+      case 'interact': {
+        const dialogueId = action.details?.dialogueId as string | undefined;
+        if (dialogueId) playbackService.enterDialogue(dialogueId);
         break;
       }
     }
