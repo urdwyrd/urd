@@ -1,9 +1,11 @@
 ---
 title: IDE
-status: active
-subtitle: "A dedicated editor for world authoring."
+status: complete
+subtitle: "88-view desktop IDE built in two days."
 order: 2
 era: the-authors-workshop
+link: "/articles/forge-two-days"
+linkLabel: "Two Days →"
 ---
 
-Custom code editor with deep integration into the compiler, FactSet, PropertyDependencyIndex, diagnostics, graph visualisation, semantic diff, and MCP query surface. Details to be specified.
+Urd Forge: Tauri desktop IDE with Blender-style BSP layout, 88 registered views (spreadsheets, graphs, inspectors, analysis, search, runtime), two themes, five workspace templates, 35 commands, spec-complete interactive fiction runtime, and a projection architecture over a single compiler output. 38,786 lines across 234 source files.
