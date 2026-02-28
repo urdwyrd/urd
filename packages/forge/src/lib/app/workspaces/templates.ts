@@ -1,11 +1,12 @@
 /**
- * Workspace templates — predefined layouts for Writer, Engineer, World Builder, and Debug workflows.
+ * Workspace templates — predefined layouts for Writer, Engineer, World Builder, Debug, QA, and Analyst workflows.
  *
  * Writer: File Browser | Code Editor | Outline + Inspector
  * Engineer: File Browser | Code Editor | Property Spreadsheet + Diagnostic Spreadsheet
  * World Builder: Code Editor + Location Graph (top) | Entity Spreadsheet (bottom)
  * Debug: Play Panel + Event Log (left) | Code Editor + State Inspector (right)
  * QA: Code Editor (left 40%) | Coverage + Monte Carlo + Dead Code (right)
+ * Analyst: Code Editor (60%) | World Insight (40%)
  */
 
 import type { ZoneTree } from '$lib/framework/types';
@@ -115,5 +116,17 @@ export function createQATemplate(): ZoneTree {
       0.33,
     ),
     0.4,
+  );
+}
+
+/**
+ * Analyst workspace: Code Editor (60%) | World Insight (40%)
+ */
+export function createAnalystTemplate(): ZoneTree {
+  return createSplit(
+    'horizontal',
+    createLeaf('urd.codeEditor'),
+    createLeaf('urd.worldInsight'),
+    0.6,
   );
 }

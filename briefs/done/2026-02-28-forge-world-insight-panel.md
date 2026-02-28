@@ -10,16 +10,37 @@ February 2026 | Active
 
 > **Instructions for AI:** Before this brief is moved to `briefs/done/`, fill in this section completely. Be specific and honest — this is the project's permanent record of what happened.
 
-**Date completed:** —
-**Status:** Not started
+**Date completed:** 2026-02-28
+**Status:** Complete
 
 ### What was done
 
-*(To be filled on completion.)*
+Built the complete World Insight Panel as a singleton-autocreate analysis view (`urd.worldInsight`) with all 7 sections specified in the brief:
+
+1. **World Summary** — always-visible metadata grid with world name, start/entry links, count badges (entities, locations, sections, types, rules, facts), diagnostic counts, compile time. Badge clicks scroll to relevant section.
+2. **Entity Atlas** — type-grouped entity tree with trait badges. Expandable to show per-entity properties table with read/write counts, orphan indicators, containment info, and affecting rules. Type filter dropdown.
+3. **Property Flow** — property dependency list with summary bar and filter modes (All/Read-only/Write-only/Orphaned). Expandable rows show individual read and write sites with kind, operator, value, and clickable source references.
+4. **Dialogue Outline** — sections grouped from FactSet choices and jumps, ordered by source line. Expandable to show choice markers (*one-shot/+sticky), labels, condition lines (?), effect lines (>), jump targets, and badges.
+5. **Location Map** — location outline with exit count, entity count, and start badge. Expandable to show exits with targets/conditions, entities with inline property snapshots.
+6. **Rules Engine** — rules from world.rules cross-referenced with factSet.rules. Expandable to show conditions, effects, selectors, triggers.
+7. **Diagnostics** — grouped by file with per-file counts. Severity icons (error/warning/info) with colour coding.
+
+Cross-cutting features:
+- Global filter input with 150ms debounce, filtering across all sections simultaneously
+- Selection context integration: when an entity is selected elsewhere, the atlas auto-expands to it and properties filter to its type
+- Keyboard navigation (arrow keys, Enter to expand, Ctrl+Enter to navigate)
+- Bidirectional source navigation via NavigationBroker
+- Collapsed/expanded state persistence via zone state
+- Analyst workspace template (Code Editor 60% | World Insight 40%)
+
+16 files created, 2 files modified. All data sourced from existing projections (urdJson, factSet, propertyDependencyIndex, diagnosticsByFile, entityTable, symbolTable, worldStats). No compiler changes needed.
 
 ### What changed from the brief
 
-*(To be filled on completion.)*
+- The placeholder `2026-02-28-forge-analysis-panel.md` brief was deleted as it contained no specification.
+- Phase 5's cursor-tracking (Source-to-Insight navigation via `editor.cursorChanged`) was not implemented because no such bus channel exists. Selection context provides the equivalent functionality.
+- Data flow arrows in Property Flow (mini inline diagram showing write sites -> property -> read sites) were not implemented to keep complexity manageable. The read/write site expansion provides the same information in a more detailed format.
+- Keyboard navigation uses a simpler approach than the brief's flat-list model: arrow keys navigate between focusable elements using the browser's existing tabindex system rather than maintaining a separate virtual cursor position.
 
 ---
 

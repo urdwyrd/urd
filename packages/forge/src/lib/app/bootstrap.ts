@@ -64,7 +64,7 @@ import { thresholdAnalysisProjection } from '$lib/app/projections/threshold-anal
 import { visibilityAuditProjection } from '$lib/app/projections/visibility-audit';
 import { circularDependencyProjection } from '$lib/app/projections/circular-dependency';
 import { narrativeFlowProjection } from '$lib/app/projections/narrative-flow';
-import { createWriterTemplate, createEngineerTemplate, createWorldBuilderTemplate, createDebugTemplate, createQATemplate } from '$lib/app/workspaces/templates';
+import { createWriterTemplate, createEngineerTemplate, createWorldBuilderTemplate, createDebugTemplate, createQATemplate, createAnalystTemplate } from '$lib/app/workspaces/templates';
 import { playbackService } from '$lib/app/views/runtime/_shared/PlaybackService.svelte';
 import {
   WorkspacePersistenceService,
@@ -535,6 +535,29 @@ export async function bootstrap(): Promise<() => void> {
     requiresProject: true,
     stateVersion: 1,
     defaultState: null,
+  });
+
+  viewRegistry.register({
+    id: 'urd.worldInsight',
+    name: 'World Insight',
+    icon: '\u25C6',
+    category: 'Analysis',
+    component: () => import('$lib/app/views/analysis/world-insight/WorldInsightZone.svelte'),
+    navigationStrategy: 'singleton-autocreate',
+    requiresProject: true,
+    capabilities: {
+      supportsSelection: true,
+      supportsFilter: true,
+    },
+    stateVersion: 1,
+    defaultState: {
+      collapsedSections: {},
+      filterText: '',
+      expandedRows: {},
+      expandedDetails: {},
+      propertyFilterMode: 'all',
+      entityTypeFilter: null,
+    },
   });
 
   // 4i. Search/Outline views
@@ -1397,6 +1420,7 @@ export async function bootstrap(): Promise<() => void> {
   workspaceManager.registerTemplate('World Builder', createWorldBuilderTemplate);
   workspaceManager.registerTemplate('Debug', createDebugTemplate);
   workspaceManager.registerTemplate('QA', createQATemplate);
+  workspaceManager.registerTemplate('Analyst', createAnalystTemplate);
 
   commandRegistry.register({
     id: 'forge.workspace.newWriter',
@@ -1444,6 +1468,16 @@ export async function bootstrap(): Promise<() => void> {
     category: 'Workspace',
     execute: () => {
       workspaceManager.createFromTemplate('QA');
+      return null;
+    },
+  });
+
+  commandRegistry.register({
+    id: 'forge.workspace.newAnalyst',
+    title: 'New Analyst Workspace',
+    category: 'Workspace',
+    execute: () => {
+      workspaceManager.createFromTemplate('Analyst');
       return null;
     },
   });
